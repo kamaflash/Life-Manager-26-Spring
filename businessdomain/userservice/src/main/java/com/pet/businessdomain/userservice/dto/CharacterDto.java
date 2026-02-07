@@ -1,0 +1,41 @@
+package com.pet.businessdomain.userservice.dto;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@Data
+public class CharacterDto {
+
+    private Long id;
+    private Long uid;
+
+    private String name;
+    private Integer age;
+    private LocalDateTime birthDate;
+    private String gender;
+
+    private String city;
+    private String residentialCity;
+    private StatsDto stats;
+
+    private Map<String, SkillStateDto> skills;
+
+    private List<EducationExperienceDto> education;
+    private List<JobExperienceDto> jobs;
+    private List<SocialExperienceDto> social;
+
+    private List<String> interests;
+    private List<String> friends;
+
+    private String partnerId;
+    private List<String> familyIds;
+
+    private List<ItemDto> inventory;
+
+    private String createdAt;
+    private String updatedAt;
+    private List<SFinanceAccountResponseDto> accounts;
+}

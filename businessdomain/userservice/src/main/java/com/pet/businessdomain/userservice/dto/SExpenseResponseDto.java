@@ -1,0 +1,22 @@
+package com.pet.businessdomain.userservice.dto;
+
+import com.pet.businessdomain.userservice.entities.enumentities.SEnumAccount;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Data
+public class SExpenseResponseDto {
+    private Long id;
+    private String concept;
+    private BigDecimal amount;
+    private SEnumAccount.ExpenseCategory category;
+    private SEnumAccount.Frequency frequency;
+    private boolean essential;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private boolean active;
+    private String externalRefType;
+    private Long externalRefId;
+}

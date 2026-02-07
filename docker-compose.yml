@@ -1,0 +1,248 @@
+## YAML Template.
+---
+services:
+
+  # =========================
+  # EUREKA
+  # =========================
+  registry-discovery:
+    container_name: id-eureka
+    image: eurekaservice:0.0.1-SNAPSHOT
+    ports:
+      - "8761:8761"
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+    networks:
+      - buddy-net
+
+
+  # =========================
+  # CONFIG SERVER
+  # =========================
+  configserver:
+    container_name: bd-configserver
+    image: configserver:0.0.1-SNAPSHOT
+    ports:
+      - "8888:8888"
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+      REPOSITORY_PATH: /repo
+    volumes:
+      - /d/Proyectos/Game/career-life-manager-spring/config-server-repo:/repo
+    depends_on:
+      - registry-discovery
+    networks:
+      - buddy-net
+
+  keycloackadapter:
+    container_name: keycloackadapter
+    image: keycloackadapter:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      KEYCLOACK_SERVER: http://keycloak_server:8080/realms/
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+      KEYCLOACK_REAL_ID: 7-OgEx9kBooJWnA3fVHzCHf_Z_Vfi5XIquc_f3rcWqo
+    depends_on:
+      - registry-discovery
+    ports:
+      - 8088:8088
+    networks:
+      - buddy-net
+
+  # =========================
+  # ADMIN SERVICE
+  # =========================
+  admin_service:
+    container_name: bd-admin_service
+    image: admin:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+    networks:
+      - buddy-net
+
+
+  # =========================
+  # USER SERVICE
+  # =========================
+  userservice:
+    container_name: bd-user_service
+    image: userservice:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
+
+  # =========================
+  # PERSON SERVICE
+  # =========================
+  personservice:
+    container_name: bd-person_service
+    image: personservice:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
+
+  # =========================
+  # FORMATION SERVICE
+  # =========================
+  formationservice:
+    container_name: bd-formation_service
+    image: formationservice:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
+
+  # =========================
+  # SYSTEM SERVICE
+  # =========================
+  systemservice:
+    container_name: bd-system_service
+    image: systemservice:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
+
+  # =========================
+  # FINANCES SERVICE
+  # =========================
+  financeservice:
+    container_name: bd-finance_service
+    image: financeservice:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
+  # =========================
+  # API GATEWAY
+  # =========================
+  apigateway:
+    container_name: id-apigateway
+    image: apigateway:0.0.1-SNAPSHOT
+    ports:
+      - "8080:8080"
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+    networks:
+      - buddy-net
+
+
+  # =========================
+  # POSTGRES
+  # =========================
+  postgres_db:
+    container_name: postgres_db
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qwerty
+      POSTGRES_DB: career
+    volumes:
+      - ./dbfiles:/docker-entrypoint-initdb.d
+      - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - buddy-net
+
+
+  # =========================
+  # PGADMIN
+  # =========================
+  pgadmin4:
+    image: dpage/pgadmin4
+    ports:
+      - "80:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: qwerty
+    depends_on:
+      - postgres_db
+    networks:
+      - buddy-net
+
+
+  # =========================
+  # KEYCLOAK
+  # =========================
+  keycloak_server:
+    container_name: id-keycloak
+    image: quay.io/keycloak/keycloak:24.0.1
+    command: start-dev
+    ports:
+      - "8091:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres_db:5432/career
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: qwerty
+    depends_on:
+      - postgres_db
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - buddy-net
+
+      #BD para postgres
+  #keycloak:
+  #  container_name: keycloak
+   # image: quay.io/keycloak/keycloak:24.0.3
+   # command: start-dev
+   # ports:
+   #   - 8080:8080
+   # environment:
+   #   KC_DB: postgres
+   #   KC_DB_URL: jdbc:postgresql://postgres_db:5432/postgres
+   #   KC_DB_USERNAME: postgres
+   #   KC_DB_PASSWORD: qwerty
+   #   KEYCLOAK_ADMIN: admin
+   #   KEYCLOAK_ADMIN_PASSWORD: admin
+   # depends_on:
+   #   - postgres_db
+# =========================
+# NETWORKS & VOLUMES
+# =========================
+networks:
+  buddy-net:
+    external: true
+
+volumes:
+  keycloak_data:

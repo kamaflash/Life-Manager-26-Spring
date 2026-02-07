@@ -1,0 +1,79 @@
+## YAML Template.
+---
+
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka}
+
+server:
+  port:8080
+  
+spring:
+  application:
+    name: apigateway
+  cloud:
+    gateway:
+      cors-configurations:
+        '[/**]':
+          allowed-origins: "http://localhost:4200" # Solo uno, no múltiples orígenes
+          allowed-methods: "*"
+          allowed-headers: "*"
+          allow-credentials: true
+      routes:
+      - id: user_full
+        uri: lb://businessdomain-userservice
+        predicates:
+          - Path=/api/users/full/**
+        filter:
+          - AuthenticationFiltering
+
+      - id: user_service
+        uri: lb://businessdomain-userservice
+        predicates:
+        - Path=/api/users/**
+
+      - id: person_service
+        uri: lb://businessdomain-personservice
+        predicates:
+        - Path=/api/characters/**
+
+      - id: system_service
+        uri: lb://businessdomain-systemservice
+        predicates:
+          - Path=/api/systems/**
+
+      - id: formation_service_formations
+        uri: lb://businessdomain-formationservice
+        predicates:
+          - Path=/api/formations/**
+
+      - id: formation_service_trainer
+        uri: lb://businessdomain-formationservice
+        predicates:
+          - Path=/api/trainer/**
+
+      - id: finances_service_trainer
+        uri: lb://businessdomain-financeservice
+        predicates:
+          - Path=/api/accounts/**
+
+      - id: finances_service_trainer
+        uri: lb://businessdomain-financeservice
+        predicates:
+          - Path=/api/expenses/**
+
+      - id: finances_service_trainer
+        uri: lb://businessdomain-financeservice
+        predicates:
+          - Path=/api/incomes/**
+
+      - id: finances_service_trainer
+        uri: lb://businessdomain-financeservice
+        predicates:
+          - Path=/api/transactions/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG

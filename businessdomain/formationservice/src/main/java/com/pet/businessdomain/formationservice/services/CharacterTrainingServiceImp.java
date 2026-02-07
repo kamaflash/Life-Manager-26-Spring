@@ -1,0 +1,127 @@
+package com.pet.businessdomain.formationservice.services;
+
+import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
+import com.pet.businessdomain.formationservice.dto.PersonDto;
+import com.pet.businessdomain.formationservice.entities.CharacterTraining;
+import com.pet.businessdomain.formationservice.entities.Formation;
+import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
+import com.pet.businessdomain.formationservice.repository.FormationRepository;
+import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
+import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@Slf4j
+public class CharacterTrainingServiceImp implements ICharacterTrainingService{
+    @Autowired
+    private ICharacterTrainingRepository trainingRepo;
+
+    @Autowired
+    private FormationRepository formationRepo;
+
+    @Autowired
+    private BusinessTransactions businessTransactions;
+    // Todos los cursos del personaje
+    public List<CharacterTraining> getTrainingsForCharacter(Long characterId) {
+        return trainingRepo.findByCharacterId(characterId);
+    }
+
+    // Cursos completados
+    public List<CharacterTraining> getCompletedTrainings(Long characterId) {
+        return trainingRepo.findByCharacterIdAndStatus(characterId, Enum.TrainingStatus.COMPLETED);
+    }
+
+    // Cursos disponibles (puede incluir lógicos según XP y nivel)
+    public List<Formation> getAvailableFormations(Long characterId, Enum.EducationLevel eduLevel, int academicXp, int academicLevel, Enum.CareerInterest career) {
+        return formationRepo.findAvailableFormations(eduLevel, academicLevel, academicXp, career);
+    }
+
+    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto) throws BusinessRuleException {
+        // Verificar si ya está inscrito
+        boolean exists = trainingRepo.existsByCharacterIdAndTrainingId(dto.getCharacterId(), dto.getTrainingId());
+        if (exists) {
+            throw new BusinessRuleException(
+                    "1001",                               // código de error
+                    "Ya estas matriculado",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        // Buscar la formación
+        Formation formation = formationRepo.findById(dto.getTrainingId())
+                .orElseThrow(() -> new BusinessRuleException(
+                        "1001",                               // código de error
+                        "El código de la formación es obligatorio",
+                        HttpStatus.BAD_REQUEST
+                ));
+
+        // Crear la entidad CharacterTraining
+        CharacterTraining training = new CharacterTraining();
+        training.setCharacterId(dto.getCharacterId());
+        training.setTrainingId(dto.getTrainingId());
+        training.setStatus(Enum.TrainingStatus.AVAILABLE);
+        training.setProgress(0);
+        training.setInvestedHours(0);
+        training.setStartedAt(LocalDateTime.now());
+        training.setFinishedAt(null);
+        training.setAcademicXpGained(0);
+        training.setApplied(false);
+
+        trainingRepo.save(training);
+
+        // Mapear al DTO incluyendo info opcional
+        dto.setId(training.getId());
+        dto.setStatus(training.getStatus());
+        dto.setProgress(training.getProgress());
+        dto.setInvestedHours(training.getInvestedHours());
+        dto.setStartedAt(training.getStartedAt());
+        dto.setFinishedAt(training.getFinishedAt());
+        dto.setAcademicXpGained(training.getAcademicXpGained());
+        dto.setApplied(training.getApplied());
+
+        dto.setTrainingName(formation.getName());
+        dto.setTrainingType(formation.getType());
+        dto.setTrainingDifficulty(formation.getDifficulty());
+
+        return dto;
+    }
+
+    @Override
+    public List<Formation> getAvailableCoursesForCharacter(Long characterId) {
+
+        PersonDto personDto = businessTransactions.getPerson(characterId);
+
+        List<Formation> allTrainings = formationRepo.findAllByActiveTrue();
+
+        List<CharacterTraining> listTraining =
+                trainingRepo.findByCharacterId(personDto.getId());
+
+        Set<Long> completedFormationIds = listTraining.stream()
+                .map(CharacterTraining::getTrainingId)
+                .collect(Collectors.toSet());
+
+        return allTrainings.stream()
+                .filter(training ->
+                        !completedFormationIds.contains(training.getId())
+                                && training.getCategory() != null
+                                && personDto.getCareerInterest() != null
+                                && training.getCategory() ==
+                                Enum.CareerInterest.valueOf(personDto.getCareerInterest().name())
+                                && personDto.getAcademicXp() != null
+                                && training.getMinAcademicXp() != null
+                                && training.getMaxAcademicXp() != null
+                                && personDto.getAcademicXp() >= training.getMinAcademicXp()
+                                && personDto.getAcademicXp() < training.getMaxAcademicXp()
+                )
+                .toList();
+    }
+}
