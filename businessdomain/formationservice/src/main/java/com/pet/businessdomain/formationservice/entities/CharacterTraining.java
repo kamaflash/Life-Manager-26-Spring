@@ -31,6 +31,9 @@ public class CharacterTraining {
     // AVAILABLE, IN_PROGRESS, COMPLETED, FAILED
 
     private Integer progress; // 0-100
+    private String trainingName;
+    private Enum.TrainingType trainingType;
+    private Enum.DifficultyLevel trainingDifficulty;
 
     private Integer investedHours;
     private LocalDateTime startedAt;

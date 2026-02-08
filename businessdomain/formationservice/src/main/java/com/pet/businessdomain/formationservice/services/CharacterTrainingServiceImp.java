@@ -37,7 +37,7 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
 
     // Cursos completados
     public List<CharacterTraining> getCompletedTrainings(Long characterId) {
-        return trainingRepo.findByCharacterIdAndStatus(characterId, Enum.TrainingStatus.COMPLETED);
+        return trainingRepo.findByCharacterId(characterId);
     }
 
     // Cursos disponibles (puede incluir lógicos según XP y nivel)
@@ -68,12 +68,15 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         CharacterTraining training = new CharacterTraining();
         training.setCharacterId(dto.getCharacterId());
         training.setTrainingId(dto.getTrainingId());
+        training.setTrainingName(dto.getTrainingName());
+        training.setTrainingType(dto.getTrainingType());
+        training.setTrainingDifficulty(dto.getTrainingDifficulty());
         training.setStatus(Enum.TrainingStatus.AVAILABLE);
         training.setProgress(0);
         training.setInvestedHours(0);
         training.setStartedAt(LocalDateTime.now());
         training.setFinishedAt(null);
-        training.setAcademicXpGained(0);
+        training.setAcademicXpGained(dto.getAcademicXpGained());
         training.setApplied(false);
 
         trainingRepo.save(training);

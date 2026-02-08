@@ -1,10 +1,7 @@
 package com.pet.businessdomain.personservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.pet.businessdomain.personservice.dto.SCreateFinanceAccountRequestDto;
-import com.pet.businessdomain.personservice.dto.SExpenseResponseDto;
-import com.pet.businessdomain.personservice.dto.SFinanceAccountResponseDto;
-import com.pet.businessdomain.personservice.dto.SIncomeResponseDto;
+import com.pet.businessdomain.personservice.dto.*;
 import com.pet.businessdomain.personservice.repository.CharacterRepository;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
@@ -84,35 +81,21 @@ public class BusinessTransactions {
                 .bodyToMono(SFinanceAccountResponseDto.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
     }
-    public SIncomeResponseDto setIncome(Long accountId, SIncomeResponseDto dto) {
+    public List<CharacterTrainingDto> getEducation(Long id) {
 
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
-                .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/incomes")
+                .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/trainer")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
-
-        return webClient.post()
-                .uri("/{accountId}", accountId) // llamamos a /api/incomes/{accountId}
-                .bodyValue(dto)                  // enviamos el DTO en el body
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/character/{id}")
+                        .build(id))
                 .retrieve()
-                .bodyToMono(SIncomeResponseDto.class) // esperamos un solo DTO de respuesta
-                .block();                           // bloqueamos hasta recibir la respuesta
-    }
-    public SExpenseResponseDto setExpenses(Long accountId, SExpenseResponseDto dto) {
-
-        WebClient webClient = webClientBuilder
-                .clientConnector(new ReactorClientHttpConnector(client))
-                .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/expenses")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
-
-        return webClient.post()
-                .uri("/{accountId}", accountId) // llamamos a /api/incomes/{accountId}
-                .bodyValue(dto)                  // enviamos el DTO en el body
-                .retrieve()
-                .bodyToMono(SExpenseResponseDto.class) // esperamos un solo DTO de respuesta
-                .block();                           // bloqueamos hasta recibir la respuesta
+                .bodyToFlux(CharacterTrainingDto.class)
+                .collectList()
+                .block();
     }
 
 }

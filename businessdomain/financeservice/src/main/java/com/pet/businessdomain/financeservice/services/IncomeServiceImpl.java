@@ -108,6 +108,13 @@ public class IncomeServiceImpl implements IncomeService {
         entity.setActive(true);
 
         incomeRepository.save(entity);
+        TransactionEntity tx = new TransactionEntity();
+        tx.setAccount(account);
+        tx.setType(Enum.TransactionType.INCOME);
+        tx.setAmount(incomeDto.getAmount());
+        tx.setDescription(incomeDto.getSource());
+        tx.setExecutedAt(LocalDateTime.now());
+        transactionRepository.save(tx);
 
         return incomeDto;
     }

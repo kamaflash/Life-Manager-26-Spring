@@ -2,6 +2,8 @@ package com.pet.businessdomain.financeservice.controller;
 
 import com.pet.businessdomain.financeservice.dto.CreateExpenseRequestDto;
 import com.pet.businessdomain.financeservice.dto.ExpenseResponseDto;
+import com.pet.businessdomain.financeservice.entities.ExpenseEntity;
+import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import com.pet.businessdomain.financeservice.repository.ExpenseRepository;
 import com.pet.businessdomain.financeservice.services.ExpenseService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,10 @@ public class ExpenseController {
     ) {
         return expenseService.addExpense(accountId, dto);
     }
-
+    @GetMapping
+    public List<ExpenseEntity> getIncomes() {
+        return expenseRepository.findAll();
+    }
     @GetMapping("/{accountId}")
     public List<CreateExpenseRequestDto> getExpenses(@PathVariable(name = "accountId") Long accountId) {
         return expenseService.getExpenses(accountId);

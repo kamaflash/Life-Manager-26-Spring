@@ -36,6 +36,12 @@ public class CharacterTrainingController {
     private ICharacterTrainingService characterTrainingService;
     @Autowired
     private ICharacterTrainingRepository iCharacterTrainingRepository;
+
+    @GetMapping
+    public ResponseEntity<?> getCharacterAll() {
+        return ResponseEntity.ok(iCharacterTrainingRepository.findAll());
+    }
+
     /**
      * 🔹 Obtener todos los entrenamientos de un personaje específico.
      *
@@ -92,6 +98,19 @@ public class CharacterTrainingController {
     public ResponseEntity<?> getCompletedTrainings(@PathVariable(name = "id") Long id) {
         List<CharacterTraining> trainings = characterTrainingService.getCompletedTrainings(id);
         return ResponseEntity.ok(trainings);
+    }
+
+    /**
+     * 🔹 Obtener los entrenamientos subscritos por un personaje específico.
+     *
+     * @param id ID del personaje
+     * @return Lista de entrenamientos completados
+     */
+    @GetMapping("/character/{id}")
+    public ResponseEntity<?> getTrainingsByCharacterId(@PathVariable(name = "id") Long id) {
+        List<CharacterTraining> trainings = characterTrainingService.getTrainingsForCharacter(id);
+        List<CharacterTrainingDto> trainingDtos = formationMapper.toDtoListFull(trainings);
+        return ResponseEntity.ok(trainingDtos);
     }
     /**
      * 🔹 Suscribir a un personaje a un curso de entrenamiento.

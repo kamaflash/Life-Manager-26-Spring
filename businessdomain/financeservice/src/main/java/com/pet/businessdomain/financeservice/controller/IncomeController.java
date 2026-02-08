@@ -2,6 +2,7 @@ package com.pet.businessdomain.financeservice.controller;
 
 import com.pet.businessdomain.financeservice.dto.CreateIncomeRequestDto;
 import com.pet.businessdomain.financeservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import com.pet.businessdomain.financeservice.repository.IncomeRepository;
 import com.pet.businessdomain.financeservice.services.IncomeService;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,13 @@ public class IncomeController {
         return incomeService.addIncome(accountId, dto);
     }
 
+    @GetMapping
+    public List<IncomeEntity> getIncomes() {
+        return incomeRepository.findAll();
+    }
+
     @GetMapping("/{accountId}")
-    public List<CreateIncomeRequestDto> getIncomes(@PathVariable(name = "accountId") Long accountId) {
+    public List<CreateIncomeRequestDto> getIncomesByAccountId(@PathVariable(name = "accountId") Long accountId) {
         return incomeService.getIncomes(accountId);
     }
 

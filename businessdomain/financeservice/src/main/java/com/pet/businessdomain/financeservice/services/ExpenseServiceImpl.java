@@ -104,6 +104,13 @@ public class ExpenseServiceImpl implements ExpenseService {
         ExpenseEntity expenseEntity = expenseMapper.fromCreate(expenseDto);
 
         expenseEntity.setAccount(account); // 🔥 CLAVE
+        TransactionEntity tx = new TransactionEntity();
+        tx.setAccount(account);
+        tx.setType(Enum.TransactionType.EXPENSE);
+        tx.setAmount(expenseDto.getAmount());
+        tx.setDescription(expenseDto.getConcept());
+        tx.setExecutedAt(LocalDateTime.now());
+        transactionRepository.save(tx);
 
         expenseRepository.save(expenseEntity);
 

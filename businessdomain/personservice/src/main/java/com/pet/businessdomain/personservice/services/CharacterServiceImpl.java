@@ -2,6 +2,7 @@ package com.pet.businessdomain.personservice.services;
 
 import com.pet.businessdomain.personservice.dto.*;
 import com.pet.businessdomain.personservice.entities.CharacterEntity;
+import com.pet.businessdomain.personservice.entities.EducationExperienceEntity;
 import com.pet.businessdomain.personservice.entities.enumentities.SEnumAccount;
 import com.pet.businessdomain.personservice.mapper.CharacterMapper;
 import com.pet.businessdomain.personservice.repository.CharacterRepository;
@@ -49,6 +50,7 @@ public class CharacterServiceImpl implements CharacterService {
         CharacterEntity entity = characterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Character not found with id " + id));
         entity.setAccounts(businessTransactions.getAccount(id));
+        entity.setEducation(getTrainer(entity));
         return characterMapper.toDto(entity);
     }
 
@@ -57,7 +59,7 @@ public class CharacterServiceImpl implements CharacterService {
         CharacterEntity entity = characterRepository.findByUid(uid)
                 .orElseThrow(() -> new RuntimeException("Character not found with id " + uid));
         entity.setAccounts(businessTransactions.getAccount(entity.getId()));
-
+        entity.setEducation(getTrainer(entity));
         return characterMapper.toDto(entity);
     }
 
@@ -102,6 +104,62 @@ public class CharacterServiceImpl implements CharacterService {
         return sfinanceAccountResponseDto;
     }
 
+    private static List<EducationExperienceEntity> mapEducation(CharacterEntity character) {
+        if (character == null || character.getEducation() == null) {
+            return new ArrayList<>();
+        }
 
+        return character.getEducation().stream()
+                .map(e -> {
+                    EducationExperienceEntity edu = new EducationExperienceEntity();
+                    edu.setId(e.getId());
+                    edu.setInstitution(e.getInstitution());
+                    edu.setCourseName(e.getCourseName());
+                    edu.setStartDate(e.getStartDate());
+                    edu.setEndDate(e.getEndDate());
+                    edu.setHours(e.getHours());
+                    edu.setLevel(e.getLevel());
+                    edu.setGrade(e.getGrade());
+                    edu.setSkillsGained(e.getSkillsGained());
+                    edu.setNotes(e.getNotes());
+                    edu.setType(e.getType());
+                    edu.setPerformance(e.getPerformance());
+                    edu.setCompleted(e.getCompleted());
+                    return edu;
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    private List<EducationExperienceEntity> getTrainer(CharacterEntity entity) {
+
+        List<EducationExperienceEntity> listEducation = entity.getEducation();
+        if (listEducation == null) {
+            listEducation = new ArrayList<>();
+            entity.setEducation(listEducation);
+        }
+
+        List<CharacterTrainingDto> listCharacterTrainingDto =
+                businessTransactions.getEducation(entity.getId());
+
+        List<EducationExperienceEntity> mappedList = listCharacterTrainingDto.stream()
+                .map(this::mapTrainingToEducation)
+                .collect(Collectors.toList());
+
+        // MUY IMPORTANTE: no reemplazar la lista (orphanRemoval)
+        listEducation.addAll(mappedList);
+
+        return listEducation;
+    }
+
+    private EducationExperienceEntity mapTrainingToEducation(CharacterTrainingDto dto) {
+        EducationExperienceEntity edu = new EducationExperienceEntity();
+        edu.setCourseName(dto.getTrainingName());
+        edu.setType(dto.getTrainingType() != null ? dto.getTrainingType().name() : null);
+        edu.setLevel(dto.getTrainingDifficulty() != null ? dto.getTrainingDifficulty().name() : null);
+        edu.setHours(dto.getInvestedHours());
+        edu.setCompleted(dto.getStatus() != null);
+        return edu;
+    }
 }
 

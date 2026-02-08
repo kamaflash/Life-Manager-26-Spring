@@ -4,7 +4,10 @@ import com.pet.businessdomain.financeservice.dto.*;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
 import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
 import com.pet.businessdomain.financeservice.mapper.FinanceAccountMapper;
+import com.pet.businessdomain.financeservice.repository.ExpenseRepository;
 import com.pet.businessdomain.financeservice.repository.FinanceAccountRepository;
+import com.pet.businessdomain.financeservice.repository.IncomeRepository;
+import com.pet.businessdomain.financeservice.repository.TransactionRepository;
 import com.pet.businessdomain.financeservice.services.ExpenseService;
 import com.pet.businessdomain.financeservice.services.FinanceAccountService;
 import com.pet.businessdomain.financeservice.services.IncomeService;
@@ -39,6 +42,15 @@ public class FinanceAccountController {
 
     @Autowired
     private final FinanceAccountRepository financeAccountRepository;
+
+    @Autowired
+    private final IncomeRepository incomeRepository;
+
+    @Autowired
+    private final ExpenseRepository expenseRepository;
+
+    @Autowired
+    private final TransactionRepository transactionRepository;
 
 
     @Autowired
@@ -132,5 +144,9 @@ public class FinanceAccountController {
     @DeleteMapping("/all")
     public void deleteAccountAll() {
         financeAccountRepository.deleteAll();
+        incomeRepository.deleteAll();
+        expenseRepository.deleteAll();
+        transactionRepository.deleteAll();
+
     }
 }

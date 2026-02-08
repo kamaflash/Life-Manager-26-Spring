@@ -18,8 +18,13 @@ public class TransactionController {
     @Autowired
     private final TransactionRepository transactionRepository;
 
+    @GetMapping
+    public void findAll() {
+        transactionRepository.findAll();
+    }
+
     @GetMapping("/{accountId}")
-    public List<TransactionResponseDto> getTransactions(@PathVariable Long accountId) {
+    public List<TransactionResponseDto> getTransactions(@PathVariable(name = "accountId") Long accountId) {
         return transactionService.getTransactionsByAccount(accountId);
     }
     @DeleteMapping("/all")
