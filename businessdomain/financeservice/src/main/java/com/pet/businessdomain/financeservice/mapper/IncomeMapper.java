@@ -14,4 +14,6 @@ public interface IncomeMapper {
     IncomeEntity fromCreate(CreateIncomeRequestDto dto);
 
     IncomeResponseDto toDto(IncomeEntity entity);
+
+    CreateIncomeRequestDto toDtoCreate(IncomeEntity entity);
 }

@@ -1,30 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.pet.businessdomain.formationservice.entities;
 
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 import jakarta.persistence.*;
-
-import java.util.List;
-
 import lombok.Data;
 
-/**
- *
- * @author Pc
- */
+import java.util.List;
+import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 @Entity
 @Data
 @Table(name = "formations")
 public class Formation {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // ===== IDENTIDAD =====
-    private String code;              // ej: JAVA_BASIC_01
+    private String code;          // Ej: JAVA_BASIC_01
     private String name;
 
     @Column(length = 1000)
@@ -33,7 +24,7 @@ public class Formation {
     // ===== CLASIFICACIÓN =====
     @Enumerated(EnumType.STRING)
     private Enum.CareerInterest category;
-    // TECHNOLOGY, BUSINESS, ARTS, HEALTH...
+    // Tecnología, Negocios, Artes, Salud, etc.
 
     @Enumerated(EnumType.STRING)
     private Enum.TrainingType type;
@@ -43,29 +34,36 @@ public class Formation {
     private Enum.DifficultyLevel difficulty;
     // BASIC, INTERMEDIATE, ADVANCED
 
-    // ===== REQUISITOS =====
+    // ===== REQUISITOS EDUCATIVOS =====
     @Enumerated(EnumType.STRING)
-    private Enum.EducationLevel minEducationLevel;
+    private Enum.EducationLevel minEducationLevel;  // Nivel educativo mínimo requerido
 
-    private Integer minAcademicLevel;
-    private Integer minAcademicXp;
-    private Integer maxAcademicXp;
+    private Integer minAcademicLevel; // Nivel mínimo de conocimiento previo
+    private Integer minAcademicXp;    // Experiencia mínima requerida
+    private Integer maxAcademicXp;    // Experiencia máxima permitida
 
     @ElementCollection
-    private List<Enum.CareerInterest> allowedCareers;
+    private List<Enum.CareerInterest> allowedCareers; // Carreras permitidas
 
     // ===== COSTE =====
-    private Integer durationHours;
-    private Double cost;
-    private Integer effort; // energía / estrés requerido
+    private Integer durationHours;    // Duración en horas
+    private Double cost;              // Coste monetario
+    private Integer effort;           // Energía / estrés requerido
 
-    // ===== RESULTADO =====
-    private Integer academicXpReward;
+    // ===== RESULTADO / BENEFICIOS =====
+    private Integer academicXpReward; // XP que otorga al completar
 
     @ElementCollection
-    private List<String> skillsUnlocked;
+    private List<String> skillsUnlocked; // Habilidades desbloqueadas (valores clave, ej: "basic_computer")
 
-    private Boolean repeatable;
-    private Boolean active;
+    private Boolean repeatable; // Si se puede repetir
+    private Boolean active;     // Si la formación está activa
+
+    // ===== TRACKING / ESTADÍSTICAS =====
+    private Integer level = 1;      // Nivel de dificultad interno
+    private Integer xp = 0;         // XP ganado por el usuario en esta formación
+    private Boolean locked = false; // Si la formación está bloqueada
+    private String lastPracticed;   // Fecha de última práctica
+    private String decayRate;       // Ritmo de decaimiento del conocimiento
 
 }

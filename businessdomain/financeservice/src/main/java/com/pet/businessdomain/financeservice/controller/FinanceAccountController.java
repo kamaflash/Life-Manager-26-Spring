@@ -52,9 +52,9 @@ public class FinanceAccountController {
     @PostMapping("/{income}/{expense}")
     public FinanceAccountResponseDto createAccount(@RequestBody FinanceAccountResponseDto dto,@PathVariable(name = "income") BigDecimal income,@PathVariable(name = "expense") BigDecimal expense) {
         FinanceAccountResponseDto resp = accountService.createAccount(dto);
-        CreateIncomeRequestDto dtoIncome = incomeService.mapperCreateIncomesInit(resp,income);
-        CreateExpenseRequestDto dtoExpense = expenseService.mapperCreateExpense(expense, Enum.ExpenseCategory.HOUSING,"Habitación",resp);
-        CreateExpenseRequestDto dtoExpense2 = expenseService.mapperCreateExpense(BigDecimal.valueOf(200), Enum.ExpenseCategory.FOOD,"Alimentación",resp);
+        CreateIncomeRequestDto dtoIncome = accountService.setIncome(resp, income);
+        CreateExpenseRequestDto dtoExpense = accountService.setExpense(Enum.ExpenseCategory.HOUSING, expense,resp ,"Habitación");
+        CreateExpenseRequestDto dtoExpense2 = accountService.setExpense(Enum.ExpenseCategory.FOOD, BigDecimal.valueOf(200),resp ,"Alimentación");
 
         List<CreateIncomeRequestDto> listIncomes = new ArrayList();
         listIncomes.add(dtoIncome);
@@ -101,6 +101,8 @@ public class FinanceAccountController {
     public List<FinanceAccountResponseDto> getAccountsByOwnerIdfull(
             @PathVariable(name = "ownerId") Long ownerId
     ) {
+
+
         return accountService.getAccountsByOwnerId(ownerId);
     }
 

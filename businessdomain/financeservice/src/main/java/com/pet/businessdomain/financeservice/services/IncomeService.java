@@ -11,9 +11,11 @@ public interface IncomeService {
 
     IncomeResponseDto addIncome(Long accountId, CreateIncomeRequestDto dto);
 
-    List<IncomeResponseDto> getIncomes(Long accountId);
+    List<CreateIncomeRequestDto> getIncomes(Long accountId);
 
     void deactivateIncome(Long incomeId);
 
     CreateIncomeRequestDto mapperCreateIncomesInit(FinanceAccountResponseDto sfinanceAccountResponseDto, BigDecimal income);
+
+    List<IncomeResponseDto> getIncomesByExternalRefId(Long externalRefId);
 }

@@ -63,10 +63,10 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ExpenseResponseDto> getExpenses(Long accountId) {
+    public List<CreateExpenseRequestDto> getExpenses(Long accountId) {
         return expenseRepository.findByAccount_Id(accountId)
                 .stream()
-                .map(expenseMapper::toDto)
+                .map(expenseMapper::toDtoCreate)
                 .toList();
     }
 

@@ -11,14 +11,14 @@ public class FormationDto {
     private Long id;
 
     // ===== IDENTIDAD =====
-    private String code;
+    private String code;          // ej: JAVA_BASIC_01
     private String name;
     private String description;
 
     // ===== CLASIFICACIÓN =====
-    private Enum.CareerInterest category;
-    private Enum.TrainingType type;
-    private Enum.DifficultyLevel difficulty;
+    private Enum.CareerInterest category;   // TECHNOLOGY, BUSINESS, ARTS, HEALTH...
+    private Enum.TrainingType type;         // COURSE, DEGREE, MASTER, WORKSHOP
+    private Enum.DifficultyLevel difficulty; // BASIC, INTERMEDIATE, ADVANCED
 
     // ===== REQUISITOS =====
     private Enum.EducationLevel minEducationLevel;
@@ -30,7 +30,7 @@ public class FormationDto {
     // ===== COSTE =====
     private Integer durationHours;
     private Double cost;
-    private Integer effort;
+    private Integer effort; // energía / estrés requerido
 
     // ===== RESULTADO =====
     private Integer academicXpReward;
@@ -38,4 +38,11 @@ public class FormationDto {
 
     private Boolean repeatable;
     private Boolean active;
+
+    // ===== PROGRESO DEL USUARIO =====
+    private Integer xp;            // progreso actual del usuario
+    private Integer level;         // nivel alcanzado
+    private String lastPracticed;  // fecha última práctica
+    private String decayRate;      // tasa de decaimiento (si aplica)
+    private Boolean locked;        // si está bloqueado o no
 }

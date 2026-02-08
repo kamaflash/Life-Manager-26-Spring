@@ -38,7 +38,13 @@ public class CharacterController {
 
     // Obtener personaje por id
     @GetMapping("/{id}")
-    public ResponseEntity<CharacterDto> getCharacterById(@PathVariable Long id) {
+    public ResponseEntity<CharacterDto> getCharacterById(@PathVariable(name = "id") Long id) {
+        CharacterDto character = characterService.getCharacterById(id);
+        return ResponseEntity.ok(character);
+    }
+    // Obtener personaje por id
+    @GetMapping("/id/full/{id}")
+    public ResponseEntity<CharacterDto> getCharacterByIdFull(@PathVariable(name = "id") Long id) {
         CharacterDto character = characterService.getCharacterById(id);
         return ResponseEntity.ok(character);
     }

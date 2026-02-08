@@ -57,7 +57,7 @@ public class CharacterTrainingController {
     public ResponseEntity<?> getAvailableCourses(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "" + DEFAULT_SIZE) int size,
-            @PathVariable("id") Long characterId) {
+            @PathVariable(name = "id") Long characterId) {
         Pageable pageable = PageRequest.of(page, size);
 
         // Llamamos al servicio para obtener los cursos filtrados según las reglas

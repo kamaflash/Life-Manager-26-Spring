@@ -1,8 +1,6 @@
 package com.pet.businessdomain.formationservice.transactions;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
-import com.pet.businessdomain.formationservice.dto.PersonDto;
+import com.pet.businessdomain.formationservice.dto.CharacterDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -28,11 +26,6 @@ public class BusinessTransactions {
 
     @Autowired
     private WebClient.Builder webClientBuilder;
-    /*private final WebClient.Builder webClientBuilder;
-
-    public CustomerRestController(WebClient.Builder webClientBuilder) {
-        this.webClientBuilder = webClientBuilder;
-    }*/
 
     //webClient requires HttpClient library to work propertly
     HttpClient client = HttpClient.create()
@@ -51,16 +44,16 @@ public class BusinessTransactions {
             });
 
 
-    public PersonDto getPerson(Long id) {
+    public CharacterDto getPerson(Long id) {
         try {
             WebClient webClient = webClientBuilder
                     .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/persons")
+                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
                     .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .build();
 
             return webClient.get()
-                    .uri("/id/{id}", id)
+                    .uri("/id/full/{id}", id)
                     .retrieve()
                     .onStatus(
                             status -> status.is4xxClientError() || status.is5xxServerError(),
@@ -69,7 +62,7 @@ public class BusinessTransactions {
                                             "Error from User service: " + response.statusCode() + " - " + body
                                     )))
                     )
-                    .bodyToMono(PersonDto.class)
+                    .bodyToMono(CharacterDto.class)
                     .block(); // devuelve UserDto directamente
 
         } catch (Exception e) {

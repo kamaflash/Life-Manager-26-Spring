@@ -12,7 +12,7 @@ public interface ExpenseService {
 
     ExpenseResponseDto addExpense(Long accountId, CreateExpenseRequestDto dto);
 
-    List<ExpenseResponseDto> getExpenses(Long accountId);
+    List<CreateExpenseRequestDto> getExpenses(Long accountId);
 
     void deactivateExpense(Long expenseId);
     CreateExpenseRequestDto mapperCreateExpense(BigDecimal income, Enum.ExpenseCategory exp, String concep,

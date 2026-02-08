@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -69,10 +70,10 @@ public class IncomeServiceImpl implements IncomeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<IncomeResponseDto> getIncomes(Long accountId) {
+    public List<CreateIncomeRequestDto> getIncomes(Long accountId) {
         return incomeRepository.findByAccount_Id(accountId)
                 .stream()
-                .map(incomeMapper::toDto)
+                .map(incomeMapper::toDtoCreate)
                 .toList();
     }
 
@@ -111,6 +112,8 @@ public class IncomeServiceImpl implements IncomeService {
         return incomeDto;
     }
 
-
-
+    @Override
+    public List<IncomeResponseDto> getIncomesByExternalRefId(Long externalRefId) {
+        return incomeRepository.findByExternalRefId(externalRefId);
+    }
 }

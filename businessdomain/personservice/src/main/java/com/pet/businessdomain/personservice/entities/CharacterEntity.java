@@ -29,6 +29,8 @@ public class CharacterEntity {
     private String gender;
     private String city;
     private String residentialCity;
+    private Integer xpAcademy;
+    private Integer xpJobs;
 
     @Embedded
     private CharacterStats stats;

@@ -28,7 +28,7 @@ public class IncomeController {
     }
 
     @GetMapping("/{accountId}")
-    public List<IncomeResponseDto> getIncomes(@PathVariable(name = "accountId") Long accountId) {
+    public List<CreateIncomeRequestDto> getIncomes(@PathVariable(name = "accountId") Long accountId) {
         return incomeService.getIncomes(accountId);
     }
 

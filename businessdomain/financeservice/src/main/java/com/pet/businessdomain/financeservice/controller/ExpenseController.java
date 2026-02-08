@@ -29,7 +29,7 @@ public class ExpenseController {
     }
 
     @GetMapping("/{accountId}")
-    public List<ExpenseResponseDto> getExpenses(@PathVariable(name = "accountId") Long accountId) {
+    public List<CreateExpenseRequestDto> getExpenses(@PathVariable(name = "accountId") Long accountId) {
         return expenseService.getExpenses(accountId);
     }
 

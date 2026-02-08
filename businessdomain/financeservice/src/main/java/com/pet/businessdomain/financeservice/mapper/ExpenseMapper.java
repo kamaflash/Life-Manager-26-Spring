@@ -14,4 +14,5 @@ public interface ExpenseMapper {
     ExpenseEntity fromCreate(CreateExpenseRequestDto dto);
 
     ExpenseResponseDto toDto(ExpenseEntity entity);
+    CreateExpenseRequestDto toDtoCreate(ExpenseEntity entity);
 }

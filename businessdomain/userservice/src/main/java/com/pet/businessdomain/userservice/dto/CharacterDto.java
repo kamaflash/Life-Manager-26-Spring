@@ -2,6 +2,7 @@ package com.pet.businessdomain.userservice.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +18,13 @@ public class CharacterDto {
     private LocalDateTime birthDate;
     private String gender;
 
+    private BigDecimal newIncome;
+    private BigDecimal newExpense;
     private String city;
     private String residentialCity;
     private StatsDto stats;
-
+    private Integer xpAcademy;
+    private Integer xpJobs;
     private Map<String, SkillStateDto> skills;
 
     private List<EducationExperienceDto> education;

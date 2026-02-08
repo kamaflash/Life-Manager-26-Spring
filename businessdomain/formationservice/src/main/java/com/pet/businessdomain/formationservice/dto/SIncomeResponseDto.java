@@ -1,0 +1,17 @@
+package com.pet.businessdomain.formationservice.dto;
+
+import com.pet.businessdomain.formationservice.entities.enumentities.SEnumAccount;
+import lombok.Data;
+
+import java.math.BigDecimal;
+
+@Data
+public class SIncomeResponseDto {
+    private Long id;
+    private String source;
+    private BigDecimal amount;
+    private SEnumAccount.Frequency frequency;
+    private boolean active;
+    private String externalRefType;
+    private Long externalRefId;
+}

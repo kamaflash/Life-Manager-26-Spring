@@ -1,4 +1,4 @@
-package com.pet.businessdomain.personservice.dto;
+package com.pet.businessdomain.formationservice.dto;
 
 import lombok.Data;
 
@@ -22,9 +22,9 @@ public class CharacterDto {
     private String city;
     private String residentialCity;
     private StatsDto stats;
+
     private Integer xpAcademy;
     private Integer xpJobs;
-
     private Map<String, SkillStateDto> skills;
 
     private List<EducationExperienceDto> education;

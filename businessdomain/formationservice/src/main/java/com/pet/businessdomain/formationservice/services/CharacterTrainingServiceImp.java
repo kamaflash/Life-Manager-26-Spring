@@ -1,7 +1,7 @@
 package com.pet.businessdomain.formationservice.services;
 
+import com.pet.businessdomain.formationservice.dto.CharacterDto;
 import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
-import com.pet.businessdomain.formationservice.dto.PersonDto;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
@@ -98,7 +98,7 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
     @Override
     public List<Formation> getAvailableCoursesForCharacter(Long characterId) {
 
-        PersonDto personDto = businessTransactions.getPerson(characterId);
+        CharacterDto personDto = businessTransactions.getPerson(characterId);
 
         List<Formation> allTrainings = formationRepo.findAllByActiveTrue();
 
@@ -113,14 +113,14 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
                 .filter(training ->
                         !completedFormationIds.contains(training.getId())
                                 && training.getCategory() != null
-                                && personDto.getCareerInterest() != null
+                                && personDto.getInterests() != null
                                 && training.getCategory() ==
-                                Enum.CareerInterest.valueOf(personDto.getCareerInterest().name())
-                                && personDto.getAcademicXp() != null
+                                Enum.CareerInterest.valueOf(personDto.getInterests().getFirst())
+                                && personDto.getXpAcademy() != null
                                 && training.getMinAcademicXp() != null
                                 && training.getMaxAcademicXp() != null
-                                && personDto.getAcademicXp() >= training.getMinAcademicXp()
-                                && personDto.getAcademicXp() < training.getMaxAcademicXp()
+                                && personDto.getXpAcademy() >= training.getMinAcademicXp()
+                                && personDto.getXpAcademy() < training.getMaxAcademicXp()
                 )
                 .toList();
     }
