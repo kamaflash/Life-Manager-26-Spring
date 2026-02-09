@@ -1,6 +1,8 @@
 package com.pet.businessdomain.formationservice.transactions;
 
 import com.pet.businessdomain.formationservice.dto.CharacterDto;
+import com.pet.businessdomain.formationservice.dto.SExpenseResponseDto;
+import com.pet.businessdomain.formationservice.dto.SFinanceAccountResponseDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -14,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -71,6 +74,20 @@ public class BusinessTransactions {
         }
     }
 
+    public SExpenseResponseDto setExpense(SExpenseResponseDto dto, Long accountId) {
 
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/expenses")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/{accountId}", accountId) // llamamos a /api/incomes/{accountId}
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(SExpenseResponseDto.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
+    }
 
 }

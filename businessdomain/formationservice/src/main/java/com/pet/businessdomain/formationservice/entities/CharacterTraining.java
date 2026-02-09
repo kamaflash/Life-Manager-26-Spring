@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 
@@ -42,4 +43,6 @@ public class CharacterTraining {
     // ===== RESULTADO =====
     private Integer academicXpGained;
     private Boolean applied;
+    private BigDecimal cost;
+
 }

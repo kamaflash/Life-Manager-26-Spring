@@ -40,7 +40,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public ExpenseResponseDto addExpense(Long accountId, CreateExpenseRequestDto dto) {
-        FinanceAccountEntity account = accountRepository.findById(accountId)
+        FinanceAccountEntity account = accountRepository.findByOwnerId(accountId)
                 .orElseThrow(() -> new RuntimeException("Finance account not found"));
 
         ExpenseEntity expense = expenseMapper.fromCreate(dto);

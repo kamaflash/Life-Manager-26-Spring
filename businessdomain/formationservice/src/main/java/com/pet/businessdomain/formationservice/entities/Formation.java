@@ -3,6 +3,7 @@ package com.pet.businessdomain.formationservice.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 @Entity
@@ -47,7 +48,7 @@ public class Formation {
 
     // ===== COSTE =====
     private Integer durationHours;    // Duración en horas
-    private Double cost;              // Coste monetario
+    private BigDecimal cost;              // Coste monetario
     private Integer effort;           // Energía / estrés requerido
 
     // ===== RESULTADO / BENEFICIOS =====

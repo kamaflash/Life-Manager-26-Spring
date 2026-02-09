@@ -13,6 +13,9 @@ public interface FinanceAccountRepository extends JpaRepository<FinanceAccountEn
             Enum.OwnerType ownerType,
             Long ownerId
     );
+    Optional<FinanceAccountEntity> findByOwnerId(
+            Long ownerId
+    );
     List<FinanceAccountEntity> findAllByOwnerId(Long ownerId);
 
 

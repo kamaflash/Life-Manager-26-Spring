@@ -1,9 +1,9 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.CharacterDto;
-import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
+import com.pet.businessdomain.formationservice.dto.*;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
+import com.pet.businessdomain.formationservice.entities.enumentities.SEnumAccount;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -94,7 +95,14 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         dto.setTrainingName(formation.getName());
         dto.setTrainingType(formation.getType());
         dto.setTrainingDifficulty(formation.getDifficulty());
-
+        SExpenseResponseDto expenseResponseDto = new SExpenseResponseDto();
+        expenseResponseDto.setCategory(SEnumAccount.ExpenseCategory.EDUCATION);
+        expenseResponseDto.setAmount(formation.getCost());
+        expenseResponseDto.setConcept(formation.getName());
+        expenseResponseDto.setExternalRefId(training.getCharacterId());
+        expenseResponseDto.setStartDate(training.getStartedAt().toLocalDate());
+        expenseResponseDto.setFrequency(SEnumAccount.Frequency.YEARLY);
+        SExpenseResponseDto sExpenseResponseDto = businessTransactions.setExpense(expenseResponseDto,dto.getCharacterId());
         return dto;
     }
 
