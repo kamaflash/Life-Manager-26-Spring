@@ -12,7 +12,6 @@ import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 public class Formation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // ===== IDENTIDAD =====
@@ -66,5 +65,7 @@ public class Formation {
     private Boolean locked = false; // Si la formación está bloqueada
     private String lastPracticed;   // Fecha de última práctica
     private String decayRate;       // Ritmo de decaimiento del conocimiento
+    @Embedded
+    private CharacterStats stats;
 
 }

@@ -97,5 +97,19 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
+    public CharacterTrainingDto setEducation(CharacterTrainingDto dto, Long id) {
 
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/trainer")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/subscribe/{id}", id)
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(CharacterTrainingDto.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
+    }
 }

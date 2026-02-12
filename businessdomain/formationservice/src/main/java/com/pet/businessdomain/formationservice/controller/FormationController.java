@@ -83,18 +83,24 @@ public class FormationController {
     // 🔍 OBTENER POR CODE
     // =========================
     @GetMapping("/code/{code}")
-    public ResponseEntity<FormationDto> getFormationByCode(@PathVariable(name = "code") String code)
-            throws BusinessRuleException {
+    public ResponseEntity<?> getFormationByCode(@PathVariable(name = "code") String code,
+                                                           @RequestParam(name = "page", defaultValue = "0") int page,
+                                                            @RequestParam(name = "size", defaultValue = "" + DEFAULT_SIZE) int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Formation> formationsPage = formationRepository.findByCode(pageable,code);
 
-        Formation formation = formationRepository.findByCode(code)
-                .orElseThrow(() -> new BusinessRuleException(
-                        "1001",                               // código de error
-                        "La formación no existe",
-                        HttpStatus.BAD_REQUEST
-                ));
-
-        return ResponseEntity.ok(formationMapper.toDto(formation));
+        if (formationsPage.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("formations", formationMapper.toDtoList(formationsPage.getContent()));
+        response.put("currentPage", formationsPage.getNumber());
+        response.put("totalItems", formationsPage.getTotalElements());
+        response.put("totalPages", formationsPage.getTotalPages());
+        return ResponseEntity.ok(response);
     }
+
 
     // =========================
     // ➕ CREAR FORMACIÓN
@@ -172,21 +178,37 @@ public class FormationController {
     // 🔓 FORMACIONES DISPONIBLES PARA PERSONAJE
     // =========================
     @GetMapping("/available")
-    public ResponseEntity<List<FormationDto>> getAvailableFormations(
+    public ResponseEntity<?> getAvailableFormations(
             @RequestParam(name = "educationLevel") Enum.EducationLevel educationLevel,
             @RequestParam(name = "academicLevel") Integer academicLevel,
             @RequestParam(name = "academicXp") Integer academicXp,
-            @RequestParam(name = "careerInterest", required = false) Enum.CareerInterest careerInterest
+            @RequestParam(name = "careerInterest", required = false) Enum.CareerInterest careerInterest,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "" + DEFAULT_SIZE) int size
     ) {
-        List<Formation> formations = formationRepository.findAvailableFormations(
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Formation> formationsPage = formationRepository.findAvailableFormations(
                 educationLevel,
                 academicLevel,
                 academicXp,
-                careerInterest
+                careerInterest,
+                pageable
         );
 
-        return ResponseEntity.ok(formationMapper.toDtoList(formations));
+        if (formationsPage.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("formations", formationMapper.toDtoList(formationsPage.getContent()));
+        response.put("currentPage", formationsPage.getNumber());
+        response.put("totalItems", formationsPage.getTotalElements());
+        response.put("totalPages", formationsPage.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
+
 
     // =========================
     // ❌ DESACTIVAR FORMACIÓN
@@ -204,17 +226,4 @@ public class FormationController {
         formationRepository.deleteAll();
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Hecho");
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

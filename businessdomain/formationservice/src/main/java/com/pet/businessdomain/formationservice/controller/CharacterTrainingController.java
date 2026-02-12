@@ -123,14 +123,14 @@ public class CharacterTrainingController {
     public ResponseEntity<CharacterTrainingDto> subscribeToCourse(
             @RequestBody CharacterTrainingDto dto) throws BusinessRuleException {
 
-        CharacterTrainingDto subscribed = characterTrainingService.subscribeToCourse(dto);
+        CharacterTrainingDto subscribed = characterTrainingService.subscribeToCourse(dto,dto.getCharacterId());
         return ResponseEntity.status(HttpStatus.CREATED).body(subscribed);
     }
-    @PostMapping()
+    @PostMapping("/subscribe/{id}")
     public CharacterTrainingDto subscribeToCourseDto(
-            @RequestBody CharacterTrainingDto dto) throws BusinessRuleException {
+            @RequestBody CharacterTrainingDto dto, @PathVariable(name = "id") Long id) throws BusinessRuleException {
 
-        CharacterTrainingDto subscribed = characterTrainingService.subscribeToCourse(dto);
+        CharacterTrainingDto subscribed = characterTrainingService.subscribeToCourse(dto, id);
         return subscribed;
     }
 

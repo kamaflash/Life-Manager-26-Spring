@@ -46,7 +46,8 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         return formationRepo.findAvailableFormations(eduLevel, academicLevel, academicXp, career);
     }
 
-    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto) throws BusinessRuleException {
+    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto,Long id) throws BusinessRuleException {
+        dto.setCharacterId(id);
         // Verificar si ya está inscrito
         boolean exists = trainingRepo.existsByCharacterIdAndTrainingId(dto.getCharacterId(), dto.getTrainingId());
         if (exists) {

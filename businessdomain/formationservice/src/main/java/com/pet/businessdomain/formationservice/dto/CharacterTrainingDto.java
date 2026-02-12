@@ -1,5 +1,6 @@
 package com.pet.businessdomain.formationservice.dto;
 
+import com.pet.businessdomain.formationservice.entities.CharacterStats;
 import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 import lombok.Data;
 
@@ -31,4 +32,6 @@ public class CharacterTrainingDto {
     private Integer academicXpGained;
     private Boolean applied;
     private BigDecimal cost;
+    private CharacterStats stats;
+
 }

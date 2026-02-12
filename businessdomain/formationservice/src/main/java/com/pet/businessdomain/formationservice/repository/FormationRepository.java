@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ public interface FormationRepository extends JpaRepository<Formation, Long> {
     // ===== BÁSICOS =====
 
     Optional<Formation> findByCode(String code);
+    Page<Formation> findByCode(Pageable pageable, String code);
 
     List<Formation> findByActiveTrue();
     boolean existsByCode(String code);
@@ -50,6 +52,26 @@ public interface FormationRepository extends JpaRepository<Formation, Long> {
             Integer academicLevel,
             Integer academicXp,
             Enum.CareerInterest careerInterest
+    );
+    @Query("""
+    SELECT f
+    FROM Formation f
+    WHERE f.active = true
+      AND f.minEducationLevel <= :educationLevel
+      AND (f.minAcademicLevel IS NULL OR f.minAcademicLevel <= :academicLevel)
+      AND (f.minAcademicXp IS NULL OR f.minAcademicXp <= :academicXp)
+      AND (
+            :careerInterest IS NULL
+            OR f.category = :careerInterest
+            OR :careerInterest MEMBER OF f.allowedCareers
+          )
+""")
+    Page<Formation> findAvailableFormations(
+            @Param("educationLevel") Enum.EducationLevel educationLevel,
+            @Param("academicLevel") Integer academicLevel,
+            @Param("academicXp") Integer academicXp,
+            @Param("careerInterest") Enum.CareerInterest careerInterest,
+            Pageable pageable
     );
 
     // ===== BÚSQUEDA TEXTUAL (BONUS UX) =====

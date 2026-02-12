@@ -1,5 +1,6 @@
 package com.pet.businessdomain.formationservice.dto;
 
+import com.pet.businessdomain.formationservice.entities.CharacterStats;
 import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 import lombok.Data;
 
@@ -45,4 +46,6 @@ public class FormationDto {
     private String lastPracticed;  // fecha última práctica
     private String decayRate;      // tasa de decaimiento (si aplica)
     private Boolean locked;        // si está bloqueado o no
+    private CharacterStats stats;
+
 }

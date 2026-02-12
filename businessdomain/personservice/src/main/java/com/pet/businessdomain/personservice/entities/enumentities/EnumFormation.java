@@ -14,7 +14,9 @@ public class EnumFormation {
         DEGREE,
         MASTER,
         CERTIFICATION,
-        WORKSHOP
+        WORKSHOP,
+        VOCATIONAL_TRAINING,
+        HIGH_SCHOOL
     }
 
     public enum DifficultyLevel {

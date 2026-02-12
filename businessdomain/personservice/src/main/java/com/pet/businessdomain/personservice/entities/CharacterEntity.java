@@ -48,9 +48,6 @@ public class CharacterEntity {
     private Map<String, SkillStateEmbeddable> skills;
 
     // ===== EXPERIENCIAS =====
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "character_id")
-    private List<EducationExperienceEntity> education;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "character_id")

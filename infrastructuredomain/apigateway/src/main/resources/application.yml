@@ -73,6 +73,11 @@ spring:
         predicates:
           - Path=/api/transactions/**
 
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/jobs/**
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

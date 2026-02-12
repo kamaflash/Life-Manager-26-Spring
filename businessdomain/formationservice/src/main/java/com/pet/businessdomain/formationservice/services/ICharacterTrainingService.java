@@ -11,6 +11,6 @@ import java.util.List;
 public interface ICharacterTrainingService {
     List<CharacterTraining> getTrainingsForCharacter(Long characterId);
     List<CharacterTraining> getCompletedTrainings(Long characterId);
-    CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto) throws BusinessRuleException;
+    CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto, Long id) throws BusinessRuleException;
     List<Formation> getAvailableCoursesForCharacter(Long characterId);
 }

@@ -44,5 +44,6 @@ public class CharacterTraining {
     private Integer academicXpGained;
     private Boolean applied;
     private BigDecimal cost;
+    private CharacterStats stats;
 
 }
