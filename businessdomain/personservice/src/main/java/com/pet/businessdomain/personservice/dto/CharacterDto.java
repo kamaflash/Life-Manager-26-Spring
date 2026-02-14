@@ -28,7 +28,7 @@ public class CharacterDto {
     private Map<String, SkillStateDto> skills;
 
     private List<CharacterTrainingDto> education;
-    private List<JobExperienceDto> jobs;
+    private List<JobPositionDto> jobs;
     private List<SocialExperienceDto> social;
 
     private List<String> interests;

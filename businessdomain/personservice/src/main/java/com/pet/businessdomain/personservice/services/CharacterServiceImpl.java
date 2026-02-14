@@ -61,6 +61,8 @@ public class CharacterServiceImpl implements CharacterService {
         entity.setAccounts(businessTransactions.getAccount(entity.getId()));
         CharacterDto dto = characterMapper.toDto(entity);
         dto.setEducation(businessTransactions.getEducation(entity.getId()));
+        CharacterApplicationDto aDto = businessTransactions.getJobsApplication(entity.getId());
+        dto.setJobs(businessTransactions.getJobs(aDto.getVacancyId()));
         return dto;
     }
 
@@ -73,12 +75,12 @@ public class CharacterServiceImpl implements CharacterService {
     }
 
     @Override
-    public CharacterDto updateCharacter(Long id, CharacterDto characterDto) {
+    public CharacterDto updateCharacter(Long id, String name) {
         CharacterEntity entity = characterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Character not found with id " + id));
 
         // Mapeamos los campos del DTO a la entidad existente
-        characterDto = characterMapper.toDto(entity);
+        entity.setName(name);
         entity.setUpdatedAt(LocalDateTime.now());
 
         CharacterEntity updated = characterRepository.save(entity);

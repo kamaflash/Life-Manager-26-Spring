@@ -10,19 +10,13 @@ import java.util.List;
 public interface CharacterApplicationMapper {
 
     // ENTITY → DTO
-    @Mapping(target = "vacancyId", source = "vacancy.id")
     CharacterApplicationDto toDto(CharacterApplicationEntity entity);
     List<CharacterApplicationDto> toDtoList(List<CharacterApplicationEntity> entities);
 
     // DTO → ENTITY (CREATE)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "vacancy", source = "vacancyId")
     CharacterApplicationEntity toEntity(CharacterApplicationDto dto);
 
     // DTO → ENTITY (UPDATE)
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "vacancy", source = "vacancyId")
     void updateEntity(CharacterApplicationDto dto, @MappingTarget CharacterApplicationEntity entity);
 
     // MAPPING MANUAL vacancyId → JobVacancyEntity

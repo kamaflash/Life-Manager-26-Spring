@@ -17,12 +17,19 @@ public interface JobPositionRepository extends JpaRepository<JobPositionEntity, 
     List<JobPositionEntity> findByCompanyId(Long companyId);
 
     // Posiciones activas por categoría
-    List<JobPositionEntity> findByCategoryAndActiveTrue(JobCategory category);
     @Query("""
     SELECT p
     FROM JobPositionEntity p
-    JOIN FETCH p.company
-    WHERE p.category = :category
+    WHERE p.active = true
+      AND (p.category = :category OR p.category = 'OTHER')
+""")
+    List<JobPositionEntity> findByCategoryOrOther(@Param("category") JobCategory category);
+
+    @Query("""
+    SELECT p
+    FROM JobPositionEntity p
+    WHERE p.active = true
+      AND (p.category = :category OR p.category = 'OTHER')
 """)
     Page<JobPositionEntity> findByCategoryAndActiveTrue(
             @Param("category") JobCategory category,

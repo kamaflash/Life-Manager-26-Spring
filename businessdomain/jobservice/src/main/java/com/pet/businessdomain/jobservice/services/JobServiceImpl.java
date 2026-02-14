@@ -3,10 +3,12 @@ package com.pet.businessdomain.jobservice.services;
 import com.pet.businessdomain.jobservice.dto.*;
 import com.pet.businessdomain.jobservice.entities.*;
 import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
+import com.pet.businessdomain.jobservice.entities.enumjobs.WorkModality;
 import com.pet.businessdomain.jobservice.mapper.*;
 import com.pet.businessdomain.jobservice.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,8 +52,60 @@ import java.util.stream.Collectors;
         public List<CompanyDto> getCompaniesByCategory(String category) {
             return companyMapper.toDtoList(companyRepository.findByCategory(category));
         }
+    @Override
+    public Page<JobPositionEntity> getFilteredPositions(
+            JobCategory category,
+            String city,
+            List<String> userSkills, // ahora solo para posibles futuros filtros
+            int minMatch,
+            int userXpAcademy,
+            int userXpJobs,
+            Pageable pageable
+    ) {
 
-        @Override
+        Page<JobPositionEntity> page =
+                positionRepository.findByCategoryAndActiveTrue(category, pageable);
+
+        List<JobPositionEntity> filtered = page.getContent().stream()
+                // mapear cada job con su match temporal
+                .map(job -> {
+                    int characterXp = userXpAcademy + userXpJobs;
+
+                    int requiredXp = Math.max(
+                            job.getMinXp() != null ? job.getMinXp() : 0,
+                            job.getExperienceRequired() != null && job.getExperienceRequired().getMinXp() != null
+                                    ? job.getExperienceRequired().getMinXp()
+                                    : 0
+                    );
+
+                    int match = characterXp < requiredXp ? 0 : 100;
+
+                    return new AbstractMap.SimpleEntry<>(job, match);
+                })
+                // filtrar según match y ubicación/remoto
+                .filter(entry -> {
+                    JobPositionEntity job = entry.getKey();
+                    int match = entry.getValue();
+
+                    boolean isRemote = "REMOTE".equalsIgnoreCase(job.getWorkModality());
+
+                    boolean sameCity = job.getLocation() != null &&
+                            job.getLocation().toLowerCase().contains(city.toLowerCase());
+
+                    return match >= minMatch && (isRemote || sameCity);
+                })
+                // ordenar descendente por match
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                // extraer solo los jobs, sin el match
+                .map(Map.Entry::getKey)
+                .toList();
+
+        return new PageImpl<>(filtered, pageable, filtered.size());
+    }
+
+
+
+    @Override
         public CompanyDto createCompany(CompanyDto dto) {
             CompanyEntity entity = companyMapper.toEntity(dto);
             entity.setId(dto.getId());
@@ -93,7 +147,7 @@ import java.util.stream.Collectors;
         @Override
         public List<JobPositionDto> getPositionsByCategory(JobCategory category) {
             return positionMapper.toDtoList(
-                    positionRepository.findByCategoryAndActiveTrue(category)
+                    positionRepository.findByCategoryOrOther(category)
             );
         }
     @Override
@@ -256,38 +310,21 @@ import java.util.stream.Collectors;
 //            );
 //        }
 
-        private JobPositionDto mapToDto(JobPositionEntity entity) {
-            JobPositionDto dto = new JobPositionDto();
-            dto.setId(entity.getId());
-            dto.setTitle(entity.getTitle());
-            dto.setDescription(entity.getDescription());
-            dto.setCategory(entity.getCategory());
-            dto.setRequiredEducationLevel(entity.getRequiredEducationLevel());
-            dto.setMinXp(entity.getMinXp());
-            dto.setActive(entity.getActive());
-            dto.setRequiredSkills(entity.getRequiredSkills());
+    private int calculateMatchPercentage(List<String> userSkills, List<String> jobSkills) {
 
-            if (entity.getCompany() != null) {
-                dto.setCompanyId(entity.getCompany().getId());
-                dto.setCompanyName(entity.getCompany().getName());
-            }
+        if (jobSkills == null || jobSkills.isEmpty()) return 0;
 
-            if (entity.getExperienceRequired() != null) {
-                JobExperienceDto expDto = new JobExperienceDto();
-                expDto.setId(entity.getExperienceRequired().getId());
-                expDto.setCategory(entity.getExperienceRequired().getCategory());
-                expDto.setMinYears(entity.getExperienceRequired().getMinYears());
-                expDto.setMinLevel(entity.getExperienceRequired().getMinLevel());
-                expDto.setMinXp(entity.getExperienceRequired().getMinXp());
-                expDto.setRequiredSkills(entity.getExperienceRequired().getRequiredSkills());
-                expDto.setOptionalSkills(entity.getExperienceRequired().getOptionalSkills());
-                dto.setExperienceRequired(expDto);
-            }
+        Set<String> userSkillSet = userSkills.stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
 
-            // Si quieres traer vacantes también, mapéalas aquí
-            // dto.setVacancies(...);
+        long matches = jobSkills.stream()
+                .map(String::toLowerCase)
+                .filter(userSkillSet::contains)
+                .count();
 
-            return dto;
-        }
+        return (int) ((matches * 100.0) / jobSkills.size());
     }
+
+}
 

@@ -46,6 +46,7 @@ public class Enum {
         social,
         science,
         hospitality,
+        sport,
         other
     }
 }

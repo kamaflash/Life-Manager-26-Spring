@@ -64,9 +64,9 @@ public class CharacterController {
     // Actualizar personaje
     @PutMapping("/{id}")
     public ResponseEntity<CharacterDto> updateCharacter(
-            @PathVariable Long id,
-            @RequestBody CharacterDto characterDto) {
-        CharacterDto updated = characterService.updateCharacter(id, characterDto);
+            @PathVariable(name = "id") Long id,
+            @RequestBody String name) {
+        CharacterDto updated = characterService.updateCharacter(id, name);
         return ResponseEntity.ok(updated);
     }
 

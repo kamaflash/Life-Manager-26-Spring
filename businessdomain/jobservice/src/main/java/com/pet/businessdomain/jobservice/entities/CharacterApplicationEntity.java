@@ -14,13 +14,13 @@ public class CharacterApplicationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "character_id")
-    private CharacterApplicationEntity character;
+    // Solo el ID del personaje
+    @Column(name = "character_id", nullable = false)
+    private Long characterId;
 
-    @ManyToOne
-    @JoinColumn(name = "vacancy_id")
-    private JobVacancyEntity vacancy;
+    // Solo el ID de la vacante
+    @Column(name = "vacancy_id", nullable = false)
+    private Long vacancyId;
 
     private LocalDateTime appliedAt = LocalDateTime.now();
     private String status; // APPLIED, INTERVIEW, HIRED, REJECTED

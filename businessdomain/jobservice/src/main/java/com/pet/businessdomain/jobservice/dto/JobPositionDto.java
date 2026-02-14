@@ -18,6 +18,15 @@ public class JobPositionDto {
     private Integer minXp;
     private Boolean active;
 
+    private String contractType;             // FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE
+    private String workModality;             // ONSITE, REMOTE, HYBRID
+    private Integer salaryMin;               // Salario mínimo estimado
+    private Integer salaryMax;               // Salario máximo estimado
+    private String location;
+    // Otros campos opcionales para realismo
+    private Boolean remoteFriendly;          // Si acepta teletrabajo
+    private Boolean visaSponsorship;         // Si ofrece soporte de visa
+    private String perks;
     private List<String> requiredSkills;
 
     /** Empresa */

@@ -20,6 +20,15 @@ public interface IJobService {
 
     List<CompanyDto> getCompaniesByCategory(String category);
 
+    Page<JobPositionEntity> getFilteredPositions(
+            JobCategory category,
+            String city,
+            List<String> userSkills, // ahora solo para posibles futuros filtros
+            int minMatch,
+            int userXpAcademy,
+            int userXpJobs,
+            Pageable pageable
+    );
     CompanyDto createCompany(CompanyDto dto);
 
     CompanyDto updateCompany(Long id, CompanyDto dto);

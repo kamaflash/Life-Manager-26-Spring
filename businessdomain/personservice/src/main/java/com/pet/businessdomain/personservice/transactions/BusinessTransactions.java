@@ -97,6 +97,37 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
+    public List<JobPositionDto> getJobs(Long id) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/jobs")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/positions/fulldto/{id}")
+                        .build(id))
+                .retrieve()
+                .bodyToFlux(JobPositionDto.class)
+                .collectList()
+                .block();
+    }
+    public CharacterApplicationDto getJobsApplication(Long id) {
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/jobs")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/applications/character/all/{id}")
+                        .build(id))
+                .retrieve()
+                .bodyToMono(CharacterApplicationDto.class)
+                .block(); // importante
+    }
     public CharacterTrainingDto setEducation(CharacterTrainingDto dto, Long id) {
 
         WebClient webClient = webClientBuilder

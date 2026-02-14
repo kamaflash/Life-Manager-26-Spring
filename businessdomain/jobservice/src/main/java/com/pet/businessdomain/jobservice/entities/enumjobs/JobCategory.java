@@ -10,5 +10,7 @@ public enum JobCategory {
     SCIENCE,
     HOSPITALITY,
     ARTS,
+    EDUCATION,
+    SPORTS,
     OTHER
 }

@@ -98,6 +98,11 @@ public class JobController {
     public ResponseEntity<JobPositionDto> getPositionFullById(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(jobService.getPositionById(id));
     }
+    @GetMapping("/positions/fulldto/{id}")
+    public JobPositionDto getPositionFullByIdDto(@PathVariable(name = "id") Long id) {
+        JobVacancyDto vacancy = jobService.getVacancyById(id);
+        return jobService.getPositionById(vacancy.getPositionId());
+    }
 
     @GetMapping("/positions/category/{category}")
     public ResponseEntity<?> getPositionsByCategory(
@@ -123,6 +128,44 @@ public class JobController {
         response.put("currentPage", formationsPage.getNumber());
         response.put("totalItems", formationsPage.getTotalElements());
         response.put("totalPages", formationsPage.getTotalPages());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/positions/category/{category}/{city}/{userXpAcademy}/{userXpJobs}")
+    public ResponseEntity<?> getPositionsByCategory(
+            @PathVariable(name = "category") String category,
+            @PathVariable(name = "city") String city,
+            @PathVariable(name = "userXpAcademy") int userXpAcademy,
+            @PathVariable(name = "userXpJobs") int userXpJobs,
+            @RequestParam(name = "minMatch", defaultValue = "50") int minMatch,
+            @RequestParam(name = "skills") List<String> skills,
+            @RequestParam(name = "page",defaultValue = "0") int page,
+            @RequestParam(name = "size",defaultValue = "" + DEFAULT_SIZE) int size
+    ) {
+
+        JobCategory jobCategory;
+
+        try {
+            jobCategory = JobCategory.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid category");
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<JobPositionEntity> result =
+                jobService.getFilteredPositions(jobCategory, city, skills, minMatch,userXpAcademy,userXpJobs, pageable);
+
+        if (result.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("jobs", jobPositionMapper.toDtoList(result.getContent()));
+        response.put("currentPage", result.getNumber());
+        response.put("totalItems", result.getTotalElements());
+        response.put("totalPages", result.getTotalPages());
 
         return ResponseEntity.ok(response);
     }
@@ -210,6 +253,13 @@ public class JobController {
     ) {
         return ResponseEntity.ok(jobService.getApplicationsByCharacter(characterId));
     }
+    @GetMapping("/applications/character/all/{characterId}")
+    public CharacterApplicationDto getApplicationsByCharacterAll(
+            @PathVariable(name = "characterId") Long characterId
+    ) {
+        List<CharacterApplicationDto> jobs = jobService.getApplicationsByCharacter(characterId);
+        return jobs.getFirst();
+    }
 
     @PostMapping("/applications")
     public ResponseEntity<CharacterApplicationDto> applyToVacancy(
@@ -243,6 +293,14 @@ public class JobController {
     ) {
         return ResponseEntity.ok(
                 jobService.getAvailableVacanciesForCharacter(characterId)
+        );
+    }
+    @GetMapping("/vacancies/subscribe")
+    public ResponseEntity<CharacterApplicationDto> postAvailableVacanciesForCharacter(
+            @RequestBody CharacterApplicationDto dto
+    ) {
+        return ResponseEntity.ok(
+                jobService.applyToVacancy(dto)
         );
     }
 }

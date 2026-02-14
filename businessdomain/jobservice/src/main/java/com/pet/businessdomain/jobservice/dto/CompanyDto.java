@@ -11,7 +11,16 @@ public class CompanyDto {
     private JobCategory category;   // technology, health, construction, business, creative, social, science, hospitality
     private String description;
     private String location;
-    private String website;
+    private String website;            // URL
+    private String logoUrl;            // Imagen de la empresa
+    private String contactEmail;       // Correo de RRHH
+    private String phone;
     private boolean active;
+
+    private Integer employeesCount;    // Tamaño de la empresa
+    private Integer foundedYear;       // Año de fundación
+
+    private Boolean remoteFriendly;    // Si acepta teletrabajo
+    private Boolean internshipAvailable;
     private List<JobPositionDto> positions;  // Opcional, se puede cargar solo si se desea
 }
