@@ -43,6 +43,9 @@ public class CharacterServiceImpl implements CharacterService {
         listAccount.add(sfinanceAccountResponseDto);
         saved.setAccounts(listAccount);
         CharacterTrainingDto trainerDto = businessTransactions.setEducation(characterDto.getEducation().getFirst(),saved.getId());
+        SystemDto systemDto = new SystemDto();
+        systemDto.setUid(saved.getUid());
+        SystemDto systemDtoSave = businessTransactions.setSystem(systemDto);
         return characterMapper.toDto(saved);
     }
 
@@ -62,7 +65,9 @@ public class CharacterServiceImpl implements CharacterService {
         CharacterDto dto = characterMapper.toDto(entity);
         dto.setEducation(businessTransactions.getEducation(entity.getId()));
         CharacterApplicationDto aDto = businessTransactions.getJobsApplication(entity.getId());
-        dto.setJobs(businessTransactions.getJobs(aDto.getVacancyId()));
+        if(aDto.getCharacterId() != null) {
+            dto.setJobs(businessTransactions.getJobs(aDto.getVacancyId()));
+        }
         return dto;
     }
 

@@ -21,6 +21,7 @@ public class CharacterEntity {
     private Long uid;
 
     private String name;
+    private String avatar;
     private Integer age;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

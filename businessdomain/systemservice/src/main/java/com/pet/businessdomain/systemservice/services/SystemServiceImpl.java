@@ -64,7 +64,6 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public SystemDto createSystem(SystemDto systemDto) {
         systemDto.setCreatedAt(LocalDateTime.now());
-        log.info("MAS QUE DENTRO");
         SystemEntity system = systemMapper.toEntity(systemDto);
         system = systemRepository.save(system);
         return systemMapper.toDto(system);

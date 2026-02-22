@@ -113,7 +113,7 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
-    public CharacterApplicationDto getJobsApplication(Long id) {
+    public CharacterApplicationDto getJobsApplication(Long characterId) {
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
                 .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/jobs")
@@ -122,8 +122,8 @@ public class BusinessTransactions {
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/applications/character/all/{id}")
-                        .build(id))
+                        .path("/applications/character/all/{characterId}")
+                        .build(characterId))
                 .retrieve()
                 .bodyToMono(CharacterApplicationDto.class)
                 .block(); // importante
@@ -141,6 +141,21 @@ public class BusinessTransactions {
                 .bodyValue(dto) // enviamos el DTO en el body
                 .retrieve()
                 .bodyToMono(CharacterTrainingDto.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
+    }
+    public SystemDto setSystem(SystemDto dto) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-SYSTEMSERVICE/api/systems")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/post")
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(SystemDto.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
     }
 }

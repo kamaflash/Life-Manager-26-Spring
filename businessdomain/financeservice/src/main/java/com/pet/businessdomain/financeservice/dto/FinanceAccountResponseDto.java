@@ -17,4 +17,5 @@ public class FinanceAccountResponseDto {
     private BigDecimal debt;
     private List<CreateIncomeRequestDto> incomes;
     private List<CreateExpenseRequestDto> expenses;
+    private List<TransactionResponseDto> transactions;
 }

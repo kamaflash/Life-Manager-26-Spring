@@ -11,7 +11,8 @@ public class Enum {
         DAILY,
         WEEKLY,
         MONTHLY,
-        YEARLY
+        YEARLY,
+        OTHER
     }
     public enum TransactionType {
         INCOME,

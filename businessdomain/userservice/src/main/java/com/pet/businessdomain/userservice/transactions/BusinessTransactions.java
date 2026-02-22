@@ -68,7 +68,7 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
-    public CharacterDto getPerson(Long id) {
+    public CharacterDto getPerson(Long uid) {
         try {
             WebClient webClient = webClientBuilder
                     .clientConnector(new ReactorClientHttpConnector(client))
@@ -77,7 +77,7 @@ public class BusinessTransactions {
                     .build();
 
             return webClient.get()
-                    .uri("/uid/full/{id}", id)
+                    .uri("/uid/full/{uid}", uid)
                     .retrieve()
                     .onStatus(
                             status -> status.is4xxClientError() || status.is5xxServerError(),

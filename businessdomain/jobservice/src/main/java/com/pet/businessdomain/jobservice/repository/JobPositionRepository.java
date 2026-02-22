@@ -5,13 +5,16 @@ import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface JobPositionRepository extends JpaRepository<JobPositionEntity, Long> {
+public interface JobPositionRepository extends
+        JpaRepository<JobPositionEntity, Long>,
+        JpaSpecificationExecutor<JobPositionEntity> {
 
     // Buscar posiciones por empresa
     List<JobPositionEntity> findByCompanyId(Long companyId);

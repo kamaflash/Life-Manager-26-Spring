@@ -1,4 +1,4 @@
-package com.pet.businessdomain.personservice.dto;
+package com.pet.businessdomain.jobservice.dto;
 
 import lombok.Data;
 
@@ -14,6 +14,7 @@ public class CharacterDto {
     private Long uid;
 
     private String name;
+
     private String avatar;
     private Integer age;
     private LocalDateTime birthDate;
@@ -42,6 +43,6 @@ public class CharacterDto {
 
     private String createdAt;
     private String updatedAt;
-    private List<SFinanceAccountResponseDto> accounts;
+    private List<FinanceAccountResponseDto> accounts;
 
 }

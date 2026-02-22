@@ -22,11 +22,9 @@ public interface IJobService {
 
     Page<JobPositionEntity> getFilteredPositions(
             JobCategory category,
-            String city,
             List<String> userSkills, // ahora solo para posibles futuros filtros
             int minMatch,
-            int userXpAcademy,
-            int userXpJobs,
+            Long pid,
             Pageable pageable
     );
     CompanyDto createCompany(CompanyDto dto);
@@ -78,7 +76,7 @@ public interface IJobService {
     List<CharacterApplicationDto> getApplicationsByCharacter(Long characterId);
 
     CharacterApplicationDto applyToVacancy(CharacterApplicationDto dto);
-
+    FinanceAccountResponseDto getAccountByCharacterId(Long characterId);
     void cancelApplication(Long applicationId);
     void cancelAll();
 

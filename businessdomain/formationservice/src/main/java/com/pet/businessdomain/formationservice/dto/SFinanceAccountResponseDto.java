@@ -17,4 +17,6 @@ public class SFinanceAccountResponseDto {
     private BigDecimal debt;
     private List<SIncomeResponseDto> incomes;
     private List<SExpenseResponseDto> expenses;
+    private List<TransactionResponseDto> transactions;
+
 }

@@ -11,7 +11,8 @@ public class SEnumAccount {
         DAILY,
         WEEKLY,
         MONTHLY,
-        YEARLY
+        YEARLY,
+        OTHER
     }
     public enum TransactionType {
         INCOME,

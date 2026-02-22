@@ -1,8 +1,6 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.CreateIncomeRequestDto;
-import com.pet.businessdomain.financeservice.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.financeservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.financeservice.dto.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,6 +11,7 @@ public interface IncomeService {
 
     List<CreateIncomeRequestDto> getIncomes(Long accountId);
 
+    List<TransactionResponseDto> getTransaction(Long accountId);
     void deactivateIncome(Long incomeId);
 
     CreateIncomeRequestDto mapperCreateIncomesInit(FinanceAccountResponseDto sfinanceAccountResponseDto, BigDecimal income);

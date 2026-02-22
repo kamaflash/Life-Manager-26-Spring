@@ -18,16 +18,18 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
+    public static final String URLACCOUNT = "/api/systems/**";
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/systems/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/systems/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/systems/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/systems/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, URLACCOUNT).permitAll()
+                        .requestMatchers(HttpMethod.POST, URLACCOUNT).permitAll()
+                        .requestMatchers(HttpMethod.PUT, URLACCOUNT).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, URLACCOUNT).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

@@ -35,6 +35,9 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
     @Autowired
     private final ExpenseService expenseService;
 
+    @Autowired
+    private final TransactionService transactionService;
+
     @Override
     public FinanceAccountResponseDto createAccount(FinanceAccountResponseDto dto) {
         FinanceAccountEntity entity = accountMapper.toEntity(dto);
@@ -102,6 +105,7 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
         FinanceAccountResponseDto accountDto = list.getFirst();
         accountDto.setExpenses(expenseService.getExpenses(accountDto.getId()));
         accountDto.setIncomes(incomeService.getIncomes(accountDto.getId()));
+        accountDto.setTransactions(transactionService.getTransactionsByAccount(accountDto.getId()));
         return list;
     }
 

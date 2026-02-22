@@ -1,6 +1,6 @@
-package com.pet.businessdomain.formationservice.entities.enumentities;
+package com.pet.businessdomain.jobservice.entities.enumjobs;
 
-public class SEnumAccount {
+public class EnumIncome {
 
     public enum OwnerType {
         CHARACTER,

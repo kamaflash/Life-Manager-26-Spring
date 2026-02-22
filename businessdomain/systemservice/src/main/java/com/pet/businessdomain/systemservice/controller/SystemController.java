@@ -22,7 +22,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.pet.businessdomain.systemservice.mapper.SystemMapper;
 import com.pet.businessdomain.systemservice.repository.SystemRepository;
@@ -44,8 +43,6 @@ public class SystemController {
     private SystemRepository systemRepository;
     @Autowired
     private SystemMapper systemMapper;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
     @GetMapping
     public ResponseEntity<?> getAllSystems(
             @RequestParam(name = "page",defaultValue = "0") int page) {
@@ -75,9 +72,9 @@ public class SystemController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/uid/{id}")
-    public SystemDto getSystemByUID(@PathVariable(name="id") Long id) throws BusinessRuleException {
-        Optional<SystemEntity> optSystem = systemService.getSystemByUid(id);
+    @GetMapping("/uid/{uid}")
+    public SystemDto getSystemByUID(@PathVariable(name="uid") Long uid) throws BusinessRuleException {
+        Optional<SystemEntity> optSystem = systemService.getSystemByUid(uid);
         SystemEntity system = systemMapper.fromOptional(optSystem);
         SystemDto systemDto = systemMapper.toDto(system);
         log.info("systemDto: "+systemDto);
@@ -89,10 +86,15 @@ public class SystemController {
     @PostMapping
     public ResponseEntity<?> createSystem(@RequestBody SystemDto systemDto) throws BusinessRuleException, UnknownHostException, MessagingException {
         // Convertir DTO a Entidad
-log.info("EStoy AQUI!!!");
         systemDto = systemService.createSystem(systemDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(systemDto);
+    }
+    @PostMapping("/post")
+    public SystemDto createSystemPost(@RequestBody SystemDto systemDto) throws BusinessRuleException, UnknownHostException, MessagingException {
+        systemDto = systemService.createSystem(systemDto);
+
+        return systemDto;
     }
 
     @PutMapping("/{id}")

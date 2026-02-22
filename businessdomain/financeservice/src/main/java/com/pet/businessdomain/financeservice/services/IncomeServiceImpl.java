@@ -1,15 +1,13 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.CreateIncomeRequestDto;
-import com.pet.businessdomain.financeservice.dto.ExpenseResponseDto;
-import com.pet.businessdomain.financeservice.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.financeservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.financeservice.dto.*;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
 import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
 import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
 import com.pet.businessdomain.financeservice.mapper.FinanceAccountMapper;
 import com.pet.businessdomain.financeservice.mapper.IncomeMapper;
+import com.pet.businessdomain.financeservice.mapper.TransactionMapper;
 import com.pet.businessdomain.financeservice.repository.FinanceAccountRepository;
 import com.pet.businessdomain.financeservice.repository.IncomeRepository;
 import com.pet.businessdomain.financeservice.repository.TransactionRepository;
@@ -40,6 +38,10 @@ public class IncomeServiceImpl implements IncomeService {
 
     @Autowired
     private final IncomeMapper incomeMapper;
+
+
+    @Autowired
+    private final TransactionMapper transactionMapper;
 
 
     @Autowired
@@ -74,6 +76,15 @@ public class IncomeServiceImpl implements IncomeService {
         return incomeRepository.findByAccount_Id(accountId)
                 .stream()
                 .map(incomeMapper::toDtoCreate)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDto> getTransaction(Long accountId) {
+        return transactionRepository.findByAccount_Id(accountId)
+                .stream()
+                .map(transactionMapper::toDto)
                 .toList();
     }
 

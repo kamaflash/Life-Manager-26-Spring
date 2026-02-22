@@ -3,6 +3,7 @@ package com.pet.businessdomain.jobservice.controller;
 import com.pet.businessdomain.jobservice.dto.*;
 import com.pet.businessdomain.jobservice.entities.CompanyEntity;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
+import com.pet.businessdomain.jobservice.entities.enumjobs.EnumIncome;
 import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
 import com.pet.businessdomain.jobservice.mapper.CompanyMapper;
 import com.pet.businessdomain.jobservice.mapper.JobPositionMapper;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,7 +103,11 @@ public class JobController {
     @GetMapping("/positions/fulldto/{id}")
     public JobPositionDto getPositionFullByIdDto(@PathVariable(name = "id") Long id) {
         JobVacancyDto vacancy = jobService.getVacancyById(id);
-        return jobService.getPositionById(vacancy.getPositionId());
+        JobPositionDto pos = jobService.getPositionById(vacancy.getPositionId());
+        if(pos == null) {
+            return new JobPositionDto();
+        }
+        return pos;
     }
 
     @GetMapping("/positions/category/{category}")
@@ -132,12 +138,10 @@ public class JobController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/positions/category/{category}/{city}/{userXpAcademy}/{userXpJobs}")
+    @GetMapping("/positions/category/{category}/{pid}")
     public ResponseEntity<?> getPositionsByCategory(
             @PathVariable(name = "category") String category,
-            @PathVariable(name = "city") String city,
-            @PathVariable(name = "userXpAcademy") int userXpAcademy,
-            @PathVariable(name = "userXpJobs") int userXpJobs,
+            @PathVariable(name = "pid") Long pid,
             @RequestParam(name = "minMatch", defaultValue = "50") int minMatch,
             @RequestParam(name = "skills") List<String> skills,
             @RequestParam(name = "page",defaultValue = "0") int page,
@@ -155,7 +159,7 @@ public class JobController {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<JobPositionEntity> result =
-                jobService.getFilteredPositions(jobCategory, city, skills, minMatch,userXpAcademy,userXpJobs, pageable);
+                jobService.getFilteredPositions(jobCategory, skills, minMatch, pid, pageable);
 
         if (result.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -258,15 +262,23 @@ public class JobController {
             @PathVariable(name = "characterId") Long characterId
     ) {
         List<CharacterApplicationDto> jobs = jobService.getApplicationsByCharacter(characterId);
-        return jobs.getFirst();
+
+        if (jobs != null && !jobs.isEmpty()) {
+            return jobs.get(0);
+        }
+
+        return new CharacterApplicationDto();
     }
 
     @PostMapping("/applications")
     public ResponseEntity<CharacterApplicationDto> applyToVacancy(
             @RequestBody CharacterApplicationDto dto
     ) {
+
+        CharacterApplicationDto appli = jobService.applyToVacancy(dto);
+        FinanceAccountResponseDto accountResponseDto = jobService.getAccountByCharacterId(appli.getCharacterId());
         return new ResponseEntity<>(
-                jobService.applyToVacancy(dto),
+                appli,
                 HttpStatus.CREATED
         );
     }
