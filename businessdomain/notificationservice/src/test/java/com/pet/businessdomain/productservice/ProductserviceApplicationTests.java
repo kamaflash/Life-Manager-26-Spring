@@ -1,4 +1,4 @@
-package com.pet.businessdomain.jobservice;
+package com.pet.businessdomain.productservice;
 
 
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

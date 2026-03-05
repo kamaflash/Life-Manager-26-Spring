@@ -1,11 +1,11 @@
-package com.pet.businessdomain.jobservice.exceptions;
+package com.pet.businessdomain.notificationservice.exceptions;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 
-import com.pet.businessdomain.jobservice.common.StandarizedApiExeptionResponse;
+import com.pet.businessdomain.notificationservice.common.StandarizedApiExeptionResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

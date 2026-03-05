@@ -1,4 +1,4 @@
-package com.pet.businessdomain.jobservice.exceptions;
+package com.pet.businessdomain.notificationservice.exceptions;
 
 
 /*

@@ -17,6 +17,7 @@
         <module name="keycloackadapter" />
         <module name="admin" />
         <module name="configserver" />
+        <module name="notificationservice" />
         <module name="eurekaservice" />
       </profile>
       <profile name="Annotation profile for userservice (1)" enabled="true">
@@ -134,7 +135,6 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="matchservice" target="21" />
-      <module name="notificationservice" target="21" />
       <module name="petservice" target="21" />
       <module name="request" target="21" />
     </bytecodeTargetLevel>

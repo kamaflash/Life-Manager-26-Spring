@@ -1,4 +1,4 @@
-package com.pet.businessdomain.jobservice.common;
+package com.pet.businessdomain.notificationservice.common;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

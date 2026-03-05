@@ -93,6 +93,11 @@ spring:
         predicates:
           - Path=/api/inventory/**
 
+      - id: notification_service
+        uri: lb://businessdomain-notificationservice
+        predicates:
+          - Path=/api/notifications/**
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

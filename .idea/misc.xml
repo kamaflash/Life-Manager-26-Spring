@@ -5,12 +5,12 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/businessdomain/notificationservice/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/businessdomain/matchservice/pom.xml" />
-        <option value="$PROJECT_DIR$/businessdomain/notificationservice/pom.xml" />
         <option value="$PROJECT_DIR$/businessdomain/pets/pom.xml" />
         <option value="$PROJECT_DIR$/businessdomain/request/pom.xml" />
       </set>

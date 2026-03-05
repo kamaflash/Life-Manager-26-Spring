@@ -1,19 +1,12 @@
-package com.pet.businessdomain.jobservice.transactions;
+package com.pet.businessdomain.notificationservice.transactions;
 
-import com.pet.businessdomain.jobservice.dto.CharacterDto;
-import com.pet.businessdomain.jobservice.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.jobservice.dto.IncomeResponseDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
@@ -25,7 +18,6 @@ public class BusinessTransactions {
 
     @Autowired
     private WebClient.Builder webClientBuilder;
-
     //webClient requires HttpClient library to work propertly
     HttpClient client = HttpClient.create()
             //Connection Timeout: is a period within which a connection between a client and a server must be established
@@ -43,108 +35,6 @@ public class BusinessTransactions {
             });
 
 
-    public IncomeResponseDto getIncome(Long id) {
-        try {
-            WebClient webClient = webClientBuilder
-                    .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .build();
-
-            return webClient.get()
-                    .uri("/id/full/{id}", id)
-                    .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            response -> response.bodyToMono(String.class)
-                                    .flatMap(body -> Mono.error(new RuntimeException(
-                                            "Error from User service: " + response.statusCode() + " - " + body
-                                    )))
-                    )
-                    .bodyToMono(IncomeResponseDto.class)
-                    .block(); // devuelve UserDto directamente
-
-        } catch (Exception e) {
-            System.err.println("Error fetching user: " + e.getMessage());
-            return null; // o lanza excepción, según tu diseño
-        }
-    }
-
-    public FinanceAccountResponseDto getAccount(Long ownerId) {
-        try {
-            WebClient webClient = webClientBuilder
-                    .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/accounts")
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .build();
-
-            return webClient.get()
-                    .uri("/owner/{ownerId}", ownerId)
-                    .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            response -> response.bodyToMono(String.class)
-                                    .flatMap(body -> Mono.error(new RuntimeException(
-                                            "Error from User service: " + response.statusCode() + " - " + body
-                                    )))
-                    )
-                    .bodyToMono(FinanceAccountResponseDto.class)
-                    .block(); // devuelve UserDto directamente
-
-        } catch (Exception e) {
-            System.err.println("Error fetching user: " + e.getMessage());
-            return null; // o lanza excepción, según tu diseño
-        }
-    }
-
-    public CharacterDto getCharacter(Long charecterId) {
-        try {
-            WebClient webClient = webClientBuilder
-                    .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .build();
-
-            return webClient.get()
-                    .uri("/id/full/{id}", charecterId)
-                    .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            response -> response.bodyToMono(String.class)
-                                    .flatMap(body -> Mono.error(new RuntimeException(
-                                            "Error from User service: " + response.statusCode() + " - " + body
-                                    )))
-                    )
-                    .bodyToMono(CharacterDto.class)
-                    .block(); // devuelve UserDto directamente
-
-        } catch (Exception e) {
-            System.err.println("Error fetching user: " + e.getMessage());
-            return null; // o lanza excepción, según tu diseño
-        }
-    }
-
-    public IncomeResponseDto setIncome(IncomeResponseDto dto, Long accountId) {
-
-        WebClient webClient = webClientBuilder
-                .clientConnector(new ReactorClientHttpConnector(client))
-                .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/incomes")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
-
-        return webClient.post()
-                .uri("/{accountId}", accountId)
-                .bodyValue(dto)
-                .retrieve()
-                .onStatus(
-                        status -> status.is4xxClientError() || status.is5xxServerError(),
-                        response -> response.bodyToMono(String.class)
-                                .flatMap(body -> Mono.error(new RuntimeException(
-                                        "FinanceService Error: " + response.statusCode() + " - " + body
-                                )))
-                )
-                .bodyToMono(IncomeResponseDto.class)
-                .block();
-    }
+  
 
 }
