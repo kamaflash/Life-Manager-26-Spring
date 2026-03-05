@@ -14,6 +14,7 @@ public interface JobVacancyMapper {
     JobVacancyDto toDto(JobVacancyEntity entity);
     List<JobVacancyDto> toDtoList(List<JobVacancyEntity> entities);
 
+
     // DTO → ENTITY (CREATE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "position", source = "positionId")

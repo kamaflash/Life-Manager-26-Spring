@@ -16,6 +16,8 @@
         <module>formationservice</module>
         <module>financeservice</module>
         <module>jobservice</module>
+        <module>productservice</module>
+        <module>notificationservice</module>
     </modules>
     <properties>
         <spring-cloud-dependencies.version>2023.0.0</spring-cloud-dependencies.version>

@@ -1,6 +1,5 @@
 package com.pet.businessdomain.jobservice.services;
 
-import com.pet.businessdomain.jobservice.common.JobPositionSpecifications;
 import com.pet.businessdomain.jobservice.dto.*;
 import com.pet.businessdomain.jobservice.entities.CharacterApplicationEntity;
 import com.pet.businessdomain.jobservice.entities.CompanyEntity;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,65 +77,73 @@ public class JobServiceImpl implements IJobService {
     @Override
     public Page<JobPositionEntity> getFilteredPositions(
             JobCategory category,
-            List<String> userSkills,
+            List<String> userSkills, // ahora solo para posibles futuros filtros
             int minMatch,
             Long pid,
             Pageable pageable
     ) {
         CharacterDto characterDto = businessTransactions.getCharacter(pid);
-        int characterXp = characterDto.getXpAcademy();
-
+        Page<JobPositionEntity> page =
+                positionRepository.findByCategoryAndActiveTrue(category, pageable);
         Set<Long> takenJobIds = characterDto.getJobs() == null
                 ? Collections.emptySet()
                 : characterDto.getJobs().stream()
-                .map(JobPositionDto::getId)
+                .map(JobPositionDto::getId) // ajusta si no es DTO
                 .collect(Collectors.toSet());
 
-        Set<Long> appliedJobIds =
-                new HashSet<>(applicationRepository.findVacancyIdsByCharacterId(pid));
-
-        // 1️⃣ Filtrado seguro en DB: categoría + OTHER + exclusiones
-        Specification<JobPositionEntity> spec = Specification.where(
-                JobPositionSpecifications.byCategoryOrOther(category)
-        ).and(JobPositionSpecifications.excludeTakenOrApplied(takenJobIds, appliedJobIds));
-
-        Page<JobPositionEntity> page = positionRepository.findAll(spec, pageable);
-
-        // 2️⃣ Filtrado en memoria por XP, skills, ciudad, remoto y isJobs
         List<JobPositionEntity> filtered = page.getContent().stream()
+
                 .map(job -> {
+
+                    List<JobVacancyDto> vacancies =
+                            getVacanciesByPosition(job.getId());
+
+                    int characterXp = characterDto.getXpAcademy() + characterDto.getXpAcademy();
+
                     int requiredXp = Math.max(
                             job.getMinXp() != null ? job.getMinXp() : 0,
-                            job.getExperienceRequired() != null && job.getExperienceRequired().getMinXp() != null
+                            job.getExperienceRequired() != null &&
+                                    job.getExperienceRequired().getMinXp() != null
                                     ? job.getExperienceRequired().getMinXp()
                                     : 0
                     );
 
-                    int xpMatch = characterXp >= requiredXp ? 100 : 0;
+                    int match = characterXp < requiredXp ? 0 : 100;
 
-                    List<String> jobSkills = job.getRequiredSkills() != null ? job.getRequiredSkills() : List.of();
-                    long matchedSkills = jobSkills.stream().filter(userSkills::contains).count();
-                    int skillsMatch = jobSkills.isEmpty() ? 100 : (int) (100.0 * matchedSkills / jobSkills.size());
-
-                    int match = (xpMatch + skillsMatch) / 2;
-
-                    return new AbstractMap.SimpleEntry<>(job, match);
+                    return new Object[] { job, match, vacancies };
                 })
-                .filter(entry -> {
-                    JobPositionEntity job = entry.getKey();
-                    int match = entry.getValue();
 
-                    boolean isRemote = "REMOTE".equalsIgnoreCase(job.getWorkModality()) || Boolean.TRUE.equals(job.getRemoteFriendly());
+                .filter(obj -> {
+
+                    JobPositionEntity job = (JobPositionEntity) obj[0];
+                    int match = (int) obj[1];
+                    List<JobVacancyDto> vacancies = (List<JobVacancyDto>) obj[2];
+
+                    boolean isRemote = "REMOTE".equalsIgnoreCase(job.getWorkModality());
+
                     boolean sameCity = job.getLocation() != null &&
-                            job.getLocation().toLowerCase().contains(characterDto.getCity().toLowerCase());
+                            job.getLocation().toLowerCase()
+                                    .contains(characterDto.getCity().toLowerCase());
 
-                    // 〽️ Excluye trabajos donde isJobs devuelve true
-                    boolean notAlreadyApplied = !isJobs(pid, job.getId());
+                    boolean notAlreadyTaken = !takenJobIds.contains(job.getId());
 
-                    return match >= minMatch && (isRemote || sameCity) && notAlreadyApplied;
+                    boolean notAlreadyApplied = true;
+
+                    if (vacancies != null && !vacancies.isEmpty()) {
+
+                        List<Long> vacancyIds = vacancies.stream()
+                                .map(JobVacancyDto::getId)
+                                .toList();
+
+                        notAlreadyApplied = !isJobs(pid, vacancyIds);
+                    }
+
+                    return match >= minMatch
+                            && (isRemote || sameCity)
+                            && notAlreadyTaken
+                            && notAlreadyApplied;
                 })
-                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
-                .map(Map.Entry::getKey)
+                .map(obj -> (JobPositionEntity) obj[0])
                 .toList();
 
         return new PageImpl<>(filtered, pageable, filtered.size());
@@ -386,16 +392,17 @@ public class JobServiceImpl implements IJobService {
     }
 
 
-    private boolean isJobs(Long pid, Long jid) {
+    private boolean isJobs(Long pid, List<Long> vip) {
 
-        List<CharacterApplicationEntity> list = applicationRepository.findByCharacterIdAndVacancyId(pid,jid);
-        if(list.isEmpty()) {
-            return true;
-
-        } else {
+        if (vip == null || vip.isEmpty()) {
             return false;
-
         }
+
+        Set<Long> vipSet = new HashSet<>(vip);
+
+        return applicationRepository.findVacancyIdsByCharacterId(pid)
+                .stream()
+                .anyMatch(vipSet::contains);
     }
 }
 

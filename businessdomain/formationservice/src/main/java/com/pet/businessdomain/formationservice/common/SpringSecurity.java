@@ -20,16 +20,17 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SpringSecurity {
     public static final String URL = "/api/formations/**";
     public static final String URLTRAINER = "/api/trainer/**";
+    public static final String URLSCHOL = "/api/scholarships/**";
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, URL, URLTRAINER).permitAll()
-                        .requestMatchers(HttpMethod.POST, URL,URLTRAINER).permitAll()
-                        .requestMatchers(HttpMethod.PUT, URL,URLTRAINER).permitAll()
-                        .requestMatchers(HttpMethod.DELETE, URL,URLTRAINER).permitAll()
+                        .requestMatchers(HttpMethod.GET, URL, URLTRAINER, URLSCHOL).permitAll()
+                        .requestMatchers(HttpMethod.POST, URL,URLTRAINER, URLSCHOL).permitAll()
+                        .requestMatchers(HttpMethod.PUT, URL,URLTRAINER, URLSCHOL).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, URL,URLTRAINER, URLSCHOL).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

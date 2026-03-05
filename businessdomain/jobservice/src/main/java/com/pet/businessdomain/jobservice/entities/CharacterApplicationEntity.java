@@ -19,6 +19,9 @@ public class CharacterApplicationEntity {
     private Long characterId;
 
     // Solo el ID de la vacante
+    @Column(name = "position_id", nullable = false)
+    private Long positionId;
+    // Solo el ID de la vacante
     @Column(name = "vacancy_id", nullable = false)
     private Long vacancyId;
 

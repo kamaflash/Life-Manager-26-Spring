@@ -161,6 +161,22 @@ services:
       - postgres_db
     networks:
       - buddy-net
+
+  # =========================
+  # PRODUCTS SERVICE
+  # =========================
+  productservice:
+    container_name: bd-product_service
+    image: productservice:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
   # =========================
   # API GATEWAY
   # =========================

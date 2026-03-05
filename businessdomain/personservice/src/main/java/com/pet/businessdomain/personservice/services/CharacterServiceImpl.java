@@ -54,6 +54,12 @@ public class CharacterServiceImpl implements CharacterService {
         CharacterEntity entity = characterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Character not found with id " + id));
         entity.setAccounts(businessTransactions.getAccount(id));
+        CharacterDto dto = characterMapper.toDto(entity);
+        dto.setEducation(businessTransactions.getEducation(entity.getId()));
+        CharacterApplicationDto aDto = businessTransactions.getJobsApplication(entity.getId());
+        if(aDto.getCharacterId() != null) {
+            dto.setJobs(businessTransactions.getJobs(aDto.getVacancyId()));
+        }
         return characterMapper.toDto(entity);
     }
 

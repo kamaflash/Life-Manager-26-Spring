@@ -8,6 +8,7 @@ import java.util.List;
 public class CharacterApplicationDto {
     private Long id;
     private Long characterId;      // ID del personaje
+    private Long positionId;
     private Long vacancyId;        // ID de la vacante
     private LocalDateTime appliedAt;
     private String status;         // APPLIED, INTERVIEW, HIRED, REJECTED
