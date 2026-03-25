@@ -19,6 +19,8 @@
     <file url="file://$PROJECT_DIR$/businessdomain/productservice/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/businessdomain/request/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/businessdomain/request/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/businessdomain/shared-dto/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/businessdomain/shared-dto/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/businessdomain/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/businessdomain/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/businessdomain/systemservice/src/main/java" charset="UTF-8" />

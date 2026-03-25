@@ -1,9 +1,11 @@
 package com.pet.businessdomain.notificationservice.services;
 
-import com.pet.businessdomain.notificationservice.dto.NotificationDTO;
 import com.pet.businessdomain.notificationservice.entities.Notification;
 import com.pet.businessdomain.notificationservice.mapper.NotificationMapper;
 import com.pet.businessdomain.notificationservice.repository.NotificationRepository;
+import com.pet.businessdomain.shareddto.dto.NotificationDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -41,6 +43,14 @@ public class NotificationServiceImpl implements NotificationService {
 
         return mapper.toDTOList(notifications);
     }
+    @Override
+    public Page<NotificationDTO> getUserNotifications(Long userId, Pageable pageable) {
+
+        Page<Notification> notifications = repository
+                .findByUserIdOrderByCreatedAtDesc(userId,pageable);
+
+        return notifications.map(mapper::toDTO);
+    }
 
     @Override
     public List<NotificationDTO> getUnreadNotifications(Long userId) {
@@ -49,6 +59,14 @@ public class NotificationServiceImpl implements NotificationService {
                 .findByUserIdAndReadFalse(userId);
 
         return mapper.toDTOList(notifications);
+    }
+
+    @Override
+    public Page<NotificationDTO> getUnreadNotifications(Long userId, Pageable pageable) {
+
+        Page<Notification> notifications = repository
+                .findByUserIdAndReadFalse(userId,pageable);
+        return notifications.map(mapper::toDTO);
     }
 
     @Override

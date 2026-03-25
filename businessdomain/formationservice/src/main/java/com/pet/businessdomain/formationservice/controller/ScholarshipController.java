@@ -1,7 +1,7 @@
 package com.pet.businessdomain.formationservice.controller;
 
-import com.pet.businessdomain.formationservice.dto.ScholarshipApplicationDto;
-import com.pet.businessdomain.formationservice.dto.ScholarshipDto;
+import com.pet.businessdomain.shareddto.dto.ScholarshipApplicationDto;
+import com.pet.businessdomain.shareddto.dto.ScholarshipDto;
 import com.pet.businessdomain.formationservice.services.ScholarshipApplicationService;
 import com.pet.businessdomain.formationservice.services.ScholarshipService;
 import lombok.extern.slf4j.Slf4j;

@@ -4,7 +4,7 @@
  */
 package com.pet.businessdomain.formationservice.common;
 
-import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;

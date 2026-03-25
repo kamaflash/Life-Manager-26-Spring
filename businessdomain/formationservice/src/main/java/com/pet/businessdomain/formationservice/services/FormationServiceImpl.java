@@ -4,7 +4,7 @@
  */
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.FormationDto;
+import com.pet.businessdomain.shareddto.dto.FormationDto;
 import com.pet.businessdomain.formationservice.entities.Formation;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 
@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.pet.businessdomain.formationservice.mapper.FormationMapper;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 /**
  *
  * @author Pc
@@ -119,10 +119,10 @@ public class FormationServiceImpl implements FormationService {
     // =========================
     @Override
     public List<FormationDto> getAvailableFormations(
-            Enum.EducationLevel educationLevel,
+            EnumAll.EducationLevel educationLevel,
             Integer academicLevel,
             Integer academicXp,
-            Enum.CareerInterest careerInterest
+            EnumAll.CareerInterest careerInterest
     ) {
 
         List<Formation> formations = formationRepository.findAvailableFormations(

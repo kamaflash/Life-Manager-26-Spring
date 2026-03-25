@@ -1,13 +1,12 @@
 
 package com.pet.businessdomain.formationservice.controller;
 
-import com.pet.businessdomain.formationservice.dto.FormationDto;
 import com.pet.businessdomain.formationservice.entities.Formation;
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import com.pet.businessdomain.formationservice.mapper.FormationMapper;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
 import com.pet.businessdomain.formationservice.services.FormationService;
+import com.pet.businessdomain.shareddto.dto.FormationDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,7 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -179,10 +178,10 @@ public class FormationController {
     // =========================
     @GetMapping("/available")
     public ResponseEntity<?> getAvailableFormations(
-            @RequestParam(name = "educationLevel") Enum.EducationLevel educationLevel,
+            @RequestParam(name = "educationLevel") EnumAll.EducationLevel educationLevel,
             @RequestParam(name = "academicLevel") Integer academicLevel,
             @RequestParam(name = "academicXp") Integer academicXp,
-            @RequestParam(name = "careerInterest", required = false) Enum.CareerInterest careerInterest,
+            @RequestParam(name = "careerInterest", required = false) EnumAll.CareerInterest careerInterest,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "" + DEFAULT_SIZE) int size
     ) {

@@ -1,6 +1,6 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.ScholarshipApplicationDto;
+import com.pet.businessdomain.shareddto.dto.ScholarshipApplicationDto;
 import com.pet.businessdomain.formationservice.entities.ScholarshipApplicationEntity;
 import com.pet.businessdomain.formationservice.entities.ScholarshipEntity;
 import com.pet.businessdomain.formationservice.mapper.ScholarshipApplicationMapper;
@@ -8,13 +8,12 @@ import com.pet.businessdomain.formationservice.mapper.ScholarshipMapper;
 import com.pet.businessdomain.formationservice.repository.ScholarshipApplicationRepository;
 import com.pet.businessdomain.formationservice.repository.ScholarshipRepository;
 import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
+
+import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -43,8 +42,8 @@ public class ScholarshipApplicationServiceImpl implements ScholarshipApplication
         ScholarshipApplicationEntity application = ScholarshipApplicationEntity.builder()
                 .scholarshipId(scholarshipId)
                 .characterId(characterId)
-                .status(ScholarshipApplicationEntity.ApplicationStatus.PENDING)
                 .appliedAt(LocalDate.now())
+                .status(EnumFormation.ApplicationStatus.PENDING)
                 .build();
 
         return mapperA.toDto(applicationRepository.save(application));
@@ -66,7 +65,7 @@ public class ScholarshipApplicationServiceImpl implements ScholarshipApplication
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
         application.setStatus(
-                ScholarshipApplicationEntity.ApplicationStatus.valueOf(status.toUpperCase())
+                EnumFormation.ApplicationStatus.valueOf(status.toUpperCase())
         );
 
         return mapperA.toDto(applicationRepository.save(application));

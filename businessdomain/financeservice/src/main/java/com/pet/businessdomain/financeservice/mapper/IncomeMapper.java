@@ -1,7 +1,7 @@
 package com.pet.businessdomain.financeservice.mapper;
 
-import com.pet.businessdomain.financeservice.dto.CreateIncomeRequestDto;
-import com.pet.businessdomain.financeservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.CreateIncomeRequestDto;
+import com.pet.businessdomain.shareddto.dto.IncomeResponseDto;
 import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

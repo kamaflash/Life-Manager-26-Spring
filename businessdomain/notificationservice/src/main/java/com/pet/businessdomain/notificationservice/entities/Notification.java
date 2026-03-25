@@ -1,11 +1,11 @@
 package com.pet.businessdomain.notificationservice.entities;
 
-import com.pet.businessdomain.notificationservice.entities.enumentities.NotificationType;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "notifications")
 @Data
@@ -22,28 +22,48 @@ public class Notification {
     // Usuario que genera la acción (opcional)
     private Long fromUserId;
 
-    // Tipo de notificación (CHAT, FOLLOW, LIKE, SYSTEM...)
+    // Tipo de notificación
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationType type;
 
-    // Texto que se mostrará
+    // Título y contenido
+    @Column(nullable = false)
+    private String title;
+
     @Column(nullable = false)
     private String message;
 
-    // Para enlazar con un recurso (ej: id del chat, post, comentario)
-    private Long referenceId;
+    private String subTitle;
 
-    // Si fue leída
+    // 🔥 NUEVO: tipo de recurso (COURSE, PRODUCT, POST...)
+    @Enumerated(EnumType.STRING)
+    private EnumAll.NotificationResourceType resourceType;
+
+    // 🔥 NUEVO: id del recurso
+    private Long resourceId;
+
+    // 🔥 NUEVO: URL o ruta frontend
+    private String actionUrl;
+
+    // 🔥 NUEVO: JSON con datos extra (imagen, nombre, etc)
+    @Column(columnDefinition = "TEXT")
+    private String metadata;
+
+    // Estado
     @Column(nullable = false)
     private boolean read = false;
 
-    // Fecha de creación
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    // Fecha
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    private LocalDateTime readAt;
 
     public Notification() {
         this.createdAt = LocalDateTime.now();
     }
-
 }

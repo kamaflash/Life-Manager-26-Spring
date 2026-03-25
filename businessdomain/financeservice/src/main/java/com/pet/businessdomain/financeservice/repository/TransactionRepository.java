@@ -1,6 +1,5 @@
 package com.pet.businessdomain.financeservice.repository;
 
-import com.pet.businessdomain.financeservice.dto.TransactionResponseDto;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

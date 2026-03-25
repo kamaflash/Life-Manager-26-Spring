@@ -1,6 +1,6 @@
 package com.pet.businessdomain.financeservice.entities;
 
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,7 +20,7 @@ public class FinanceAccountEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Enum.OwnerType ownerType; // Tipo de propietario (Character, Empresa, etc.)
+    private EnumAll.OwnerType ownerType; // Tipo de propietario (Character, Empresa, etc.)
 
     @Column(nullable = false)
     private Long ownerId; // ID del propietario (characterUid)

@@ -1,6 +1,6 @@
 package com.pet.businessdomain.systemservice.mapper;
 
-import com.pet.businessdomain.systemservice.dto.SystemDto;
+import com.pet.businessdomain.shareddto.dto.SystemDto;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import org.mapstruct.*;
 

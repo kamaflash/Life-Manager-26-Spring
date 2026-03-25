@@ -1,7 +1,6 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.ScholarshipDto;
-import org.springframework.data.domain.Pageable;
+import com.pet.businessdomain.shareddto.dto.ScholarshipDto;
 
 import java.util.List;
 

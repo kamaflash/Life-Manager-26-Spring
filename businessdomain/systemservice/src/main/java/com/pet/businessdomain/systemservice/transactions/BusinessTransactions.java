@@ -1,6 +1,7 @@
 package com.pet.businessdomain.systemservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
@@ -48,23 +50,31 @@ public class BusinessTransactions {
                 connection.addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS));
             });
 
-    public List<JsonNode> getPet(Long uid) {
+    public CharacterDto getPerson(Long uid) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
 
-        WebClient webClient = webClientBuilder
-                .clientConnector(new ReactorClientHttpConnector(client))
-                .baseUrl("http://BUSINESSDOMAIN-PETSERVICE/api/pet")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
+            return webClient.get()
+                    .uri("/uid/full/{uid}", uid)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterDto.class)
+                    .block(); // devuelve UserDto directamente
 
-        return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/full")
-                        .queryParam("uid", uid)
-                        .build())
-                .retrieve()
-                .bodyToFlux(JsonNode.class)
-                .collectList()
-                .block();
+        } catch (Exception e) {
+            System.err.println("Error fetching user: " + e.getMessage());
+            return null; // o lanza excepción, según tu diseño
+        }
     }
 
 

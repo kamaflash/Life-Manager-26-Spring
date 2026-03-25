@@ -1,6 +1,9 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.*;
+import com.pet.businessdomain.shareddto.dto.CreateIncomeRequestDto;
+import com.pet.businessdomain.shareddto.dto.FinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
 
 import java.math.BigDecimal;
 import java.util.List;

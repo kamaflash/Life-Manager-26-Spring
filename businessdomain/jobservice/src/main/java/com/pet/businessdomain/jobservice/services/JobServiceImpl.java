@@ -1,12 +1,12 @@
 package com.pet.businessdomain.jobservice.services;
 
-import com.pet.businessdomain.jobservice.dto.*;
 import com.pet.businessdomain.jobservice.entities.CharacterApplicationEntity;
 import com.pet.businessdomain.jobservice.entities.CompanyEntity;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
-import com.pet.businessdomain.jobservice.entities.enumjobs.EnumIncome;
-import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
+import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.EnumIncome;
 import com.pet.businessdomain.jobservice.mapper.CharacterApplicationMapper;
 import com.pet.businessdomain.jobservice.mapper.CompanyMapper;
 import com.pet.businessdomain.jobservice.mapper.JobPositionMapper;
@@ -16,6 +16,7 @@ import com.pet.businessdomain.jobservice.repository.CompanyRepository;
 import com.pet.businessdomain.jobservice.repository.JobPositionRepository;
 import com.pet.businessdomain.jobservice.repository.JobVacancyRepository;
 import com.pet.businessdomain.jobservice.transactions.BusinessTransactions;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -323,10 +324,14 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public CharacterApplicationDto applyToVacancy(CharacterApplicationDto dto) {
+        JobPositionEntity position = positionRepository
+                .findPositionByVacancyId(dto.getVacancyId())
+                .orElseThrow(() -> new RuntimeException("Position not found"));
         CharacterApplicationEntity entity = applicationMapper.toEntity(dto);
         entity.setId(null);
         entity.setAppliedAt(LocalDateTime.now());
         entity.setStatus("APPLIED");
+        entity.setPositionId(position.getId());
         entity = applicationRepository.save(entity);
         addIncome(dto,entity);
         return applicationMapper.toDto(entity);
@@ -338,7 +343,7 @@ public class JobServiceImpl implements IJobService {
             IncomeResponseDto incomeResponseDto = new IncomeResponseDto();
             incomeResponseDto.setAmount(BigDecimal.valueOf(100));
             incomeResponseDto.setSource("Enorabuena, premio metalico de Life manager por primer trabajo");
-            incomeResponseDto.setFrequency(EnumIncome.Frequency.OTHER);
+            incomeResponseDto.setFrequency(EnumAll.Frequency.OTHER);
             incomeResponseDto.setExternalRefId(entity.getId());
             incomeResponseDto.setExternalRefType("Permio Life manager");
             incomeResponseDto = businessTransactions.setIncome(incomeResponseDto, characterDto.getAccounts().get(0).getId());

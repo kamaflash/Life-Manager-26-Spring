@@ -1,6 +1,6 @@
 package com.pet.businessdomain.financeservice.repository;
 
-import com.pet.businessdomain.financeservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.IncomeResponseDto;
 import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 

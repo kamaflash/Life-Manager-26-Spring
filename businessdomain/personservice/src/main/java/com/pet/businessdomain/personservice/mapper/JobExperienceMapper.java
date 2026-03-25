@@ -1,6 +1,6 @@
 package com.pet.businessdomain.personservice.mapper;
 
-import com.pet.businessdomain.personservice.dto.JobExperienceDto;
+import com.pet.businessdomain.shareddto.dto.JobExperienceDto;
 import com.pet.businessdomain.personservice.entities.JobExperienceEntity;
 import org.mapstruct.Mapper;
 

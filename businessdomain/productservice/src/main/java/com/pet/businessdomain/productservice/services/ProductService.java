@@ -1,7 +1,7 @@
 package com.pet.businessdomain.productservice.services;
 
-import com.pet.businessdomain.productservice.dto.ProductResponseDTO;
-import com.pet.businessdomain.productservice.entities.enumentities.ProductCategory;
+import com.pet.businessdomain.shareddto.dto.ProductResponseDTO;
+import com.pet.businessdomain.shareddto.enumentities.ProductCategory;
 
 import java.util.List;
 

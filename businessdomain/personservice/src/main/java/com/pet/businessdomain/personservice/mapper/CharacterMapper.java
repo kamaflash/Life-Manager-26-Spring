@@ -1,6 +1,6 @@
 package com.pet.businessdomain.personservice.mapper;
 
-import com.pet.businessdomain.personservice.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import com.pet.businessdomain.personservice.entities.CharacterEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

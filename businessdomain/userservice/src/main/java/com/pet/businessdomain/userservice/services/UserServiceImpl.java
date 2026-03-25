@@ -4,7 +4,7 @@
  */
 package com.pet.businessdomain.userservice.services;
 
-import com.pet.businessdomain.userservice.dto.UserDto;
+import com.pet.businessdomain.shareddto.dto.UserDto;
 import com.pet.businessdomain.userservice.entities.User;
 import com.pet.businessdomain.userservice.exceptions.BusinessRuleException;
 import com.pet.businessdomain.userservice.mapper.UserMapper;

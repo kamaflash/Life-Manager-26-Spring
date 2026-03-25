@@ -1,8 +1,7 @@
 package com.pet.businessdomain.personservice.transactions;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.pet.businessdomain.personservice.dto.*;
 import com.pet.businessdomain.personservice.repository.CharacterRepository;
+import com.pet.businessdomain.shareddto.dto.*;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -113,6 +112,22 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
+    public List<CharacterInventoryResponseDTO> getInventory(Long characterId) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-PRODUCTSERVICE/api/inventory")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/{characterId}")
+                        .build(characterId))
+                .retrieve()
+                .bodyToFlux(CharacterInventoryResponseDTO.class)
+                .collectList()
+                .block();
+    }
     public CharacterApplicationDto getJobsApplication(Long characterId) {
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
@@ -127,6 +142,28 @@ public class BusinessTransactions {
                 .retrieve()
                 .bodyToMono(CharacterApplicationDto.class)
                 .block(); // importante
+    }
+    public List<CharacterInventoryResponseDTO> getInvetory(Long characterId) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-PRODUCTSERVICE/api/inventory")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.get()
+                .uri("/{characterId}", characterId)
+                .retrieve()
+                .onStatus(
+                        status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new RuntimeException(
+                                        "Error from Inventory service: " + response.statusCode() + " - " + body
+                                )))
+                )
+                .bodyToFlux(CharacterInventoryResponseDTO.class)
+                .collectList()
+                .block();
     }
     public CharacterTrainingDto setEducation(CharacterTrainingDto dto, Long id) {
 
@@ -156,6 +193,22 @@ public class BusinessTransactions {
                 .bodyValue(dto) // enviamos el DTO en el body
                 .retrieve()
                 .bodyToMono(SystemDto.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
+    }
+
+    public NotificationDTO setNotifications(NotificationDTO dto) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-NOTIFICATIONSERVICE/api/notifications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/post")
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
     }
 }

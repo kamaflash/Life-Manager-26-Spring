@@ -1,8 +1,9 @@
 package com.pet.businessdomain.jobservice.services;
 
-import com.pet.businessdomain.jobservice.dto.*;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
-import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
+import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,7 +22,7 @@ public interface IJobService {
     List<CompanyDto> getCompaniesByCategory(String category);
 
     Page<JobPositionEntity> getFilteredPositions(
-            JobCategory category,
+            com.pet.businessdomain.shareddto.enumentities.JobCategory category,
             List<String> userSkills, // ahora solo para posibles futuros filtros
             int minMatch,
             Long pid,

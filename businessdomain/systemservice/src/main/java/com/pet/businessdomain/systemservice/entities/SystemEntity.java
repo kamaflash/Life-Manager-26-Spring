@@ -15,6 +15,9 @@ public class SystemEntity {
     private Long id;
     private Long uid;
     private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updateAt = LocalDateTime.now();
     private LocalDateTime actualityAt = LocalDateTime.now();
+    private Integer veces;
+
 
 }

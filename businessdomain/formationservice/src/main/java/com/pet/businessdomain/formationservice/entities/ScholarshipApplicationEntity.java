@@ -1,5 +1,6 @@
 package com.pet.businessdomain.formationservice.entities;
 
+import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,12 +30,8 @@ public class ScholarshipApplicationEntity {
 
     // Estado de la solicitud
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus status = ApplicationStatus.PENDING;
+    private EnumFormation.ApplicationStatus status = EnumFormation.ApplicationStatus.PENDING;
     private LocalDate appliedAt;
 
-    public enum ApplicationStatus {
-        PENDING,
-        APPROVED,
-        REJECTED
-    }
+
 }

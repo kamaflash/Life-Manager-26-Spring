@@ -1,7 +1,7 @@
 package com.pet.businessdomain.personservice.services;
 
 
-import com.pet.businessdomain.personservice.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 
 import java.util.List;
 
@@ -15,7 +15,9 @@ public interface CharacterService {
 
     List<CharacterDto> getAllCharacters();
 
-    CharacterDto updateCharacter(Long id, String name);
+    CharacterDto updateCharacterName(Long id, String name);
+
+    CharacterDto updateCharacter(Long id, CharacterDto characterDto);
 
     void deleteCharacter(Long id);
 }

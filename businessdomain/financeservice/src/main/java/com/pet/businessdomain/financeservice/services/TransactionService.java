@@ -1,8 +1,8 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.TransactionResponseDto;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,5 +13,5 @@ public interface TransactionService {
 
     List<TransactionResponseDto> getTransactionsByAccount(Long accountId);
     Page<TransactionResponseDto> getTransactionsByAccount(Long accountId, Pageable pageable);
-    BigDecimal sum(List<TransactionResponseDto> transactions, Enum.TransactionType type);
+    BigDecimal sum(List<TransactionResponseDto> transactions, EnumAll.TransactionType type);
 }

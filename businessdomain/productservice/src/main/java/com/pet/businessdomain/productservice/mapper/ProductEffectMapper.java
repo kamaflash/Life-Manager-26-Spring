@@ -1,6 +1,6 @@
 package com.pet.businessdomain.productservice.mapper;
 
-import com.pet.businessdomain.productservice.dto.ProductEffectDTO;
+import com.pet.businessdomain.shareddto.dto.ProductEffectDTO;
 import com.pet.businessdomain.productservice.entities.ProductEffect;
 import org.mapstruct.Mapper;
 

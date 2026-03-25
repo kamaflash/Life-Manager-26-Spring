@@ -1,6 +1,6 @@
 package com.pet.businessdomain.jobservice.common;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
-import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import java.util.Set;

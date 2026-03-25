@@ -4,7 +4,7 @@
  */
 package com.pet.businessdomain.userservice.mapper;
 
-import com.pet.businessdomain.userservice.dto.UserDto;
+import com.pet.businessdomain.shareddto.dto.UserDto;
 import com.pet.businessdomain.userservice.entities.User;
 import java.util.List;
 import java.util.Optional;

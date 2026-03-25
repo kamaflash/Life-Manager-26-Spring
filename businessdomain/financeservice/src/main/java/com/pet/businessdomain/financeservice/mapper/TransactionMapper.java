@@ -1,9 +1,7 @@
 package com.pet.businessdomain.financeservice.mapper;
 
-import com.pet.businessdomain.financeservice.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.financeservice.dto.TransactionResponseDto;
-import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
+import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

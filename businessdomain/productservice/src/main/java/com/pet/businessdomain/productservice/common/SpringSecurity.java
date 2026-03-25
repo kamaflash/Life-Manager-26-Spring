@@ -19,6 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SpringSecurity {
     public static final String URLACCOUNT = "/api/products/**";
+    public static final String URLACCOUNT2 = "/api/inventory/**";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -26,10 +27,10 @@ public class SpringSecurity {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, URLACCOUNT).permitAll()
-                        .requestMatchers(HttpMethod.POST, URLACCOUNT).permitAll()
-                        .requestMatchers(HttpMethod.PUT, URLACCOUNT).permitAll()
-                        .requestMatchers(HttpMethod.DELETE, URLACCOUNT).permitAll()
+                        .requestMatchers(HttpMethod.GET, URLACCOUNT, URLACCOUNT2).permitAll()
+                        .requestMatchers(HttpMethod.POST, URLACCOUNT,URLACCOUNT2).permitAll()
+                        .requestMatchers(HttpMethod.PUT, URLACCOUNT,URLACCOUNT2).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, URLACCOUNT, URLACCOUNT2).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

@@ -1,8 +1,8 @@
 package com.pet.businessdomain.jobservice.mapper;
 
-import com.pet.businessdomain.jobservice.dto.JobPositionDto;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
 import com.pet.businessdomain.jobservice.entities.CompanyEntity;
+import com.pet.businessdomain.shareddto.dto.JobPositionDto;
 import org.mapstruct.*;
 
 import java.util.List;

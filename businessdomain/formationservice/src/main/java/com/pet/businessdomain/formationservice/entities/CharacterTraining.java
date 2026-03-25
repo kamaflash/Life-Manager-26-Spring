@@ -1,6 +1,6 @@
 package com.pet.businessdomain.formationservice.entities;
 
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,13 +28,13 @@ public class CharacterTraining {
 
     // ===== PROGRESO =====
     @Enumerated(EnumType.STRING)
-    private Enum.TrainingStatus status;
+    private EnumAll.TrainingStatus status;
     // AVAILABLE, IN_PROGRESS, COMPLETED, FAILED
 
     private Integer progress; // 0-100
     private String trainingName;
-    private Enum.TrainingType trainingType;
-    private Enum.DifficultyLevel trainingDifficulty;
+    private EnumAll.TrainingType trainingType;
+    private EnumAll.DifficultyLevel trainingDifficulty;
 
     private Integer investedHours;
     private LocalDateTime startedAt;

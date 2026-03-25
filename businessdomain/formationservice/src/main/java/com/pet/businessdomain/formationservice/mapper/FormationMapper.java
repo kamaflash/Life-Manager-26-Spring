@@ -4,12 +4,13 @@
  */
 package com.pet.businessdomain.formationservice.mapper;
 
-import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
-import com.pet.businessdomain.formationservice.dto.FormationDto;
+import com.pet.businessdomain.formationservice.entities.CharacterStats;
+import com.pet.businessdomain.shareddto.dto.CharacterStatsDto;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
+import com.pet.businessdomain.shareddto.dto.FormationDto;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
 import java.util.List;
-import java.util.Optional;
 
 import org.mapstruct.*;
 
@@ -22,8 +23,14 @@ public interface FormationMapper {
     FormationDto toDto(Formation formation);
     Formation toEntity(FormationDto formationDto);
     List<FormationDto> toDtoList(List<Formation> formations);
+    List<CharacterTraining> toDtoListT(List<CharacterTraining> formations);
     List<CharacterTrainingDto> toDtoListFull(List<CharacterTraining> formations);
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     void updateEntityFromDto(FormationDto dto, @MappingTarget Formation entity);
+
+    // 🔴 AÑADE ESTO
+    CharacterStatsDto map(CharacterStats stats);
+
+    CharacterStats map(CharacterStatsDto statsDto);
 }

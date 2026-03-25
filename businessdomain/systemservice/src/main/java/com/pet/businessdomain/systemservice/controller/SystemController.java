@@ -4,16 +4,19 @@
  */
 package com.pet.businessdomain.systemservice.controller;
 
-import com.pet.businessdomain.systemservice.dto.SystemDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.SystemDto;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
 import java.net.UnknownHostException;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
 import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,10 @@ public class SystemController {
     private SystemRepository systemRepository;
     @Autowired
     private SystemMapper systemMapper;
+
+    @Autowired
+    private BusinessTransactions businessTransactions;
+
     @GetMapping
     public ResponseEntity<?> getAllSystems(
             @RequestParam(name = "page",defaultValue = "0") int page) {
@@ -90,6 +97,19 @@ public class SystemController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(systemDto);
     }
+    @PostMapping("/firts_advance")
+    public LocalTime firtsAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
+        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+        SystemEntity system = systemMapper.fromOptional(optSystem);
+        SystemDto systemDto = systemMapper.toDto(system);
+
+        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+        LocalTime time = systemService.getEducationEndTime(characterDto);
+        log.info("systemDto: "+systemDto);
+
+        return time;
+    }
+
     @PostMapping("/post")
     public SystemDto createSystemPost(@RequestBody SystemDto systemDto) throws BusinessRuleException, UnknownHostException, MessagingException {
         systemDto = systemService.createSystem(systemDto);

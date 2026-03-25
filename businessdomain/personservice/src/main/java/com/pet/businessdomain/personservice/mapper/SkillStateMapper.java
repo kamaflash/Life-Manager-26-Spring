@@ -1,7 +1,7 @@
 package com.pet.businessdomain.personservice.mapper;
 
-import com.pet.businessdomain.personservice.dto.SkillStateDto;
 import com.pet.businessdomain.personservice.entities.SkillStateEmbeddable;
+import com.pet.businessdomain.shareddto.dto.SkillStateDto;
 import org.mapstruct.Mapper;
 
 import java.util.Map;

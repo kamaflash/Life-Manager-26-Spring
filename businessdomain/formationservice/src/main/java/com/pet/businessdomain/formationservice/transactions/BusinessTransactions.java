@@ -1,8 +1,7 @@
 package com.pet.businessdomain.formationservice.transactions;
 
-import com.pet.businessdomain.formationservice.dto.CharacterDto;
-import com.pet.businessdomain.formationservice.dto.SExpenseResponseDto;
-import com.pet.businessdomain.formationservice.dto.SFinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;

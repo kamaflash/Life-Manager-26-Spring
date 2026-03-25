@@ -1,7 +1,7 @@
 package com.pet.businessdomain.productservice.repository;
 
 import com.pet.businessdomain.productservice.entities.Product;
-import com.pet.businessdomain.productservice.entities.enumentities.ProductCategory;
+import com.pet.businessdomain.shareddto.enumentities.ProductCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

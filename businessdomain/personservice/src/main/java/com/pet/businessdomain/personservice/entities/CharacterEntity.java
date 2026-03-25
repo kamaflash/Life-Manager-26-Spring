@@ -1,7 +1,7 @@
 package com.pet.businessdomain.personservice.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.pet.businessdomain.personservice.dto.SFinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.SFinanceAccountResponseDto;
 import jakarta.persistence.*;
 import lombok.Data;
 

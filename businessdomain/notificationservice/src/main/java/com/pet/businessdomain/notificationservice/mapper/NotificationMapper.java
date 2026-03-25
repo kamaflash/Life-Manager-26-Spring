@@ -1,7 +1,7 @@
 package com.pet.businessdomain.notificationservice.mapper;
 
-import com.pet.businessdomain.notificationservice.dto.NotificationDTO;
 import com.pet.businessdomain.notificationservice.entities.Notification;
+import com.pet.businessdomain.shareddto.dto.NotificationDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

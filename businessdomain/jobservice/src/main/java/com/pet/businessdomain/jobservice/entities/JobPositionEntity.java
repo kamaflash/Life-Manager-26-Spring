@@ -1,6 +1,6 @@
 package com.pet.businessdomain.jobservice.entities;
 
-import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import jakarta.persistence.*;
 import lombok.Data;
 

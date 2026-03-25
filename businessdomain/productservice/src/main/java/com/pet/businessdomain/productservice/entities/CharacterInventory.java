@@ -3,6 +3,8 @@ package com.pet.businessdomain.productservice.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "character_inventory")
 @Data
@@ -19,4 +21,5 @@ public class CharacterInventory {
     private Product product;
 
     private Integer quantity = 1;
+    private LocalDate ExpirationDate;
 }

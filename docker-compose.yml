@@ -193,6 +193,22 @@ services:
       - postgres_db
     networks:
       - buddy-net
+
+  # =========================
+  # SHARED SERVICE
+  # =========================
+  shared-dtoservice:
+    container_name: bd-shared_service
+    image: shared-dto:0.0.1-SNAPSHOT
+    environment:
+      JAVA_OPTS: "-Xms256M -Xmx256M"
+      EUREKA_SERVER: http://registry-discovery:8761/eureka/
+    depends_on:
+      - registry-discovery
+      - configserver
+      - postgres_db
+    networks:
+      - buddy-net
   # =========================
   # API GATEWAY
   # =========================

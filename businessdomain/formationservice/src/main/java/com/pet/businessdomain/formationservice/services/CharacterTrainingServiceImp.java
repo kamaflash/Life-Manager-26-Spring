@@ -1,20 +1,21 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.*;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
-import com.pet.businessdomain.formationservice.entities.enumentities.SEnumAccount;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
 import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
+import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -42,11 +43,11 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
     }
 
     // Cursos disponibles (puede incluir lógicos según XP y nivel)
-    public List<Formation> getAvailableFormations(Long characterId, Enum.EducationLevel eduLevel, int academicXp, int academicLevel, Enum.CareerInterest career) {
+    public List<Formation> getAvailableFormations(Long characterId, EnumAll.EducationLevel eduLevel, int academicXp, int academicLevel, EnumAll.CareerInterest career) {
         return formationRepo.findAvailableFormations(eduLevel, academicLevel, academicXp, career);
     }
 
-    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto,Long id) throws BusinessRuleException {
+    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto, Long id) throws BusinessRuleException {
         dto.setCharacterId(id);
         // Verificar si ya está inscrito
         boolean exists = trainingRepo.existsByCharacterIdAndTrainingId(dto.getCharacterId(), dto.getTrainingId());
@@ -73,7 +74,7 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         training.setTrainingName(dto.getTrainingName());
         training.setTrainingType(dto.getTrainingType());
         training.setTrainingDifficulty(dto.getTrainingDifficulty());
-        training.setStatus(Enum.TrainingStatus.AVAILABLE);
+        training.setStatus(EnumAll.TrainingStatus.AVAILABLE);
         training.setProgress(0);
         training.setInvestedHours(0);
         training.setStartedAt(LocalDateTime.now());
@@ -97,12 +98,12 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         dto.setTrainingType(formation.getType());
         dto.setTrainingDifficulty(formation.getDifficulty());
         SExpenseResponseDto expenseResponseDto = new SExpenseResponseDto();
-        expenseResponseDto.setCategory(SEnumAccount.ExpenseCategory.EDUCATION);
+        expenseResponseDto.setCategory(EnumAll.ExpenseCategory.EDUCATION);
         expenseResponseDto.setAmount(formation.getCost());
         expenseResponseDto.setConcept(formation.getName());
         expenseResponseDto.setExternalRefId(training.getCharacterId());
         expenseResponseDto.setStartDate(training.getStartedAt().toLocalDate());
-        expenseResponseDto.setFrequency(SEnumAccount.Frequency.YEARLY);
+        expenseResponseDto.setFrequency(EnumAll.Frequency.YEARLY);
         SExpenseResponseDto sExpenseResponseDto = businessTransactions.setExpense(expenseResponseDto,dto.getCharacterId());
         return dto;
     }
@@ -127,7 +128,7 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
                                 && training.getCategory() != null
                                 && personDto.getInterests() != null
                                 && training.getCategory() ==
-                                Enum.CareerInterest.valueOf(personDto.getInterests().getFirst())
+                                EnumAll.CareerInterest.valueOf(personDto.getInterests().getFirst())
                                 && personDto.getXpAcademy() != null
                                 && training.getMinAcademicXp() != null
                                 && training.getMaxAcademicXp() != null

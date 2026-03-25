@@ -1,7 +1,7 @@
 package com.pet.businessdomain.formationservice.mapper;
 
-import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
 import org.mapstruct.*;
 
 import java.util.List;

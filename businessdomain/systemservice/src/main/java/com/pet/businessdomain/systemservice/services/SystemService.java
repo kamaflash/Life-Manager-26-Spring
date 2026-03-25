@@ -4,9 +4,12 @@
  */
 package com.pet.businessdomain.systemservice.services;
 
-import com.pet.businessdomain.systemservice.dto.SystemDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.SystemDto;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
+
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,5 +26,7 @@ public interface SystemService {
     SystemDto createSystem(SystemDto system);
     SystemDto updateSystem(Long id, SystemDto systemDto) throws BusinessRuleException;
     void deleteSystem(Long id);
-
+    double getTransportModifier(CharacterDto character);
+    double getEducationHours(CharacterDto character);
+    LocalTime getEducationEndTime(CharacterDto character);
 }

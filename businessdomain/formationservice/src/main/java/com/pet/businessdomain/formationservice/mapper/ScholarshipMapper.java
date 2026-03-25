@@ -1,7 +1,7 @@
 package com.pet.businessdomain.formationservice.mapper;
 
-import com.pet.businessdomain.formationservice.dto.ScholarshipDto;
 import com.pet.businessdomain.formationservice.entities.ScholarshipEntity;
+import com.pet.businessdomain.shareddto.dto.ScholarshipDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;

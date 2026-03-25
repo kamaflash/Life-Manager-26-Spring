@@ -1,15 +1,13 @@
 package com.pet.businessdomain.formationservice.controller;
 
-import com.pet.businessdomain.formationservice.dto.CharacterTrainingDto;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import com.pet.businessdomain.formationservice.mapper.FormationMapper;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
 import com.pet.businessdomain.formationservice.services.ICharacterTrainingService;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +49,33 @@ public class CharacterTrainingController {
     public ResponseEntity<?> getCharacterTrainings(@PathVariable(name = "id")  Long id) {
         List<CharacterTraining> trainings = characterTrainingService.getTrainingsForCharacter(id);
         return ResponseEntity.ok(trainings);
+    }
+    @GetMapping("/character/{id}/full/trainings")
+    public ResponseEntity<?> getCharacterTrainings(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "" + DEFAULT_SIZE) int size,
+            @PathVariable(name = "id") Long characterId) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Llamamos al servicio para obtener los cursos filtrados según las reglas
+        List<CharacterTraining> availableTrainings = characterTrainingService.getTrainingsForCharacter(characterId);
+        // Calculamos los índices para paginar
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), availableTrainings.size());
+
+        // Creamos la página con PageImpl
+        Page<CharacterTraining> formationsPage = new PageImpl<>(
+                availableTrainings.subList(start, end),
+                pageable,
+                availableTrainings.size()
+        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("formations", formationMapper.toDtoListT(formationsPage.getContent()));
+        response.put("currentPage", formationsPage.getNumber());
+        response.put("totalItems", formationsPage.getTotalElements());
+        response.put("totalPages", formationsPage.getTotalPages());
+        response.put("Lista", availableTrainings);
+        return ResponseEntity.ok(response);
     }
     /**
      * 🔹 Obtener los cursos disponibles para suscribirse según el perfil del personaje.

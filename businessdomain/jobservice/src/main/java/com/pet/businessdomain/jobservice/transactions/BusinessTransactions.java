@@ -1,8 +1,8 @@
 package com.pet.businessdomain.jobservice.transactions;
 
-import com.pet.businessdomain.jobservice.dto.CharacterDto;
-import com.pet.businessdomain.jobservice.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.jobservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.FinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.IncomeResponseDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;

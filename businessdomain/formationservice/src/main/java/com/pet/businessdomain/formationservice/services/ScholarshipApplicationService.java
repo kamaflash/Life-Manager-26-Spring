@@ -1,6 +1,6 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.ScholarshipApplicationDto;
+import com.pet.businessdomain.shareddto.dto.ScholarshipApplicationDto;
 
 import java.util.List;
 

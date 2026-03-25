@@ -1,7 +1,7 @@
 package com.pet.businessdomain.personservice.controller;
 
 
-import com.pet.businessdomain.personservice.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import com.pet.businessdomain.personservice.repository.CharacterRepository;
 import com.pet.businessdomain.personservice.services.CharacterService;
 import lombok.RequiredArgsConstructor;
@@ -63,11 +63,18 @@ public class CharacterController {
 
     // Actualizar personaje
     @PutMapping("/{id}")
-    public ResponseEntity<CharacterDto> updateCharacter(
+    public ResponseEntity<CharacterDto> updateCharacterName(
             @PathVariable(name = "id") Long id,
             @RequestBody String name) {
-        CharacterDto updated = characterService.updateCharacter(id, name);
+        CharacterDto updated = characterService.updateCharacterName(id, name);
         return ResponseEntity.ok(updated);
+    }
+    @PutMapping("/stast/{id}")
+    public CharacterDto updateCharacterStast(
+            @PathVariable(name = "id") Long id,
+            @RequestBody CharacterDto characterDto) {
+        CharacterDto updated = characterService.updateCharacter(id, characterDto);
+        return updated;
     }
 
     // Borrar personaje (opcional)

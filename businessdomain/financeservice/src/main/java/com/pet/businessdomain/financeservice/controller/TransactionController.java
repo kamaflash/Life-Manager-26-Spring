@@ -1,12 +1,12 @@
 package com.pet.businessdomain.financeservice.controller;
 
-import com.pet.businessdomain.financeservice.dto.TransactionResponseDto;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.TransactionMapper;
 import com.pet.businessdomain.financeservice.repository.TransactionRepository;
 import com.pet.businessdomain.financeservice.services.TransactionService;
+import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -58,9 +58,9 @@ public class TransactionController {
         Map<String, Object> response = new HashMap<>();
         response.put("trasactions", trasactionPage.getContent());
         response.put("list", trasactionsList);
-        response.put("incomes", transactionService.sum(trasactionsList, Enum.TransactionType.INCOME));
-        response.put("expenses", transactionService.sum(trasactionsList, Enum.TransactionType.EXPENSE));
-        response.put("balance", transactionService.sum(trasactionsList, Enum.TransactionType.INCOME).subtract(transactionService.sum(trasactionsList, Enum.TransactionType.EXPENSE)));
+        response.put("incomes", transactionService.sum(trasactionsList, EnumAll.TransactionType.INCOME));
+        response.put("expenses", transactionService.sum(trasactionsList, EnumAll.TransactionType.EXPENSE));
+        response.put("balance", transactionService.sum(trasactionsList, EnumAll.TransactionType.INCOME).subtract(transactionService.sum(trasactionsList, EnumAll.TransactionType.EXPENSE)));
         response.put("currentPage", trasactionPage.getNumber());
         response.put("totalItems", trasactionPage.getTotalElements());
         response.put("totalPages", trasactionPage.getTotalPages());

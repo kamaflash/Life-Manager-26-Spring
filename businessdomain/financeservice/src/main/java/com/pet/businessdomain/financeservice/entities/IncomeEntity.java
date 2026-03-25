@@ -1,6 +1,6 @@
 package com.pet.businessdomain.financeservice.entities;
 
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,11 +26,12 @@ public class IncomeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Enum.Frequency frequency; // DAILY, WEEKLY, MONTHLY, YEARLY
+    private EnumAll.Frequency frequency; // DAILY, WEEKLY, MONTHLY, YEARLY
 
     @Column(nullable = false)
     private boolean active = true;
-
+    @Enumerated(EnumType.STRING)
+    private EnumAll.ExpenseCategory category;
     // Enlace opcional a servicios externos
     private String externalRefType; // JOB, EDUCATION, etc.
     private Long externalRefId;

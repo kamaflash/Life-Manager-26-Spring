@@ -4,12 +4,11 @@
  */
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.FormationDto;
-import com.pet.businessdomain.formationservice.entities.Formation;
+import com.pet.businessdomain.shareddto.dto.FormationDto;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import java.util.List;
-import java.util.Optional;
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
+
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 
 /**
  *
@@ -26,10 +25,10 @@ public interface FormationService {
     FormationDto getFormationByCode(String code) throws BusinessRuleException;
 
     List<FormationDto> getAvailableFormations(
-            Enum.EducationLevel educationLevel,
+            EnumAll.EducationLevel educationLevel,
             Integer academicLevel,
             Integer academicXp,
-            Enum.CareerInterest careerInterest
+            EnumAll.CareerInterest careerInterest
     );
 
     void deactivateFormation(Long id) throws BusinessRuleException;

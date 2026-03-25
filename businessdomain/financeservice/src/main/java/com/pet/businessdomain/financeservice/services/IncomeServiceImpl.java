@@ -1,24 +1,25 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.*;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
 import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.FinanceAccountMapper;
 import com.pet.businessdomain.financeservice.mapper.IncomeMapper;
 import com.pet.businessdomain.financeservice.mapper.TransactionMapper;
 import com.pet.businessdomain.financeservice.repository.FinanceAccountRepository;
 import com.pet.businessdomain.financeservice.repository.IncomeRepository;
 import com.pet.businessdomain.financeservice.repository.TransactionRepository;
+import com.pet.businessdomain.shareddto.dto.CreateIncomeRequestDto;
+import com.pet.businessdomain.shareddto.dto.FinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -58,10 +59,11 @@ public class IncomeServiceImpl implements IncomeService {
 
         TransactionEntity tx = new TransactionEntity();
         tx.setAccount(account);
-        tx.setType(Enum.TransactionType.INCOME);
+        tx.setType(EnumAll.TransactionType.INCOME);
         tx.setAmount(income.getAmount());
         tx.setDescription(income.getSource());
         tx.setExecutedAt(LocalDateTime.now());
+        tx.setCategory(income.getCategory());
         transactionRepository.save(tx);
 
         account.setBalance(account.getBalance().add(income.getAmount()));
@@ -109,11 +111,11 @@ public class IncomeServiceImpl implements IncomeService {
 
         CreateIncomeRequestDto incomeDto = new CreateIncomeRequestDto();
         incomeDto.setAmount(income);
-        incomeDto.setFrequency(Enum.Frequency.MONTHLY);
+        incomeDto.setFrequency(EnumAll.Frequency.MONTHLY);
         incomeDto.setSource("Ayuda familiar");
         incomeDto.setExternalRefId(accountDto.getId());
         incomeDto.setExternalRefType("");
-
+        incomeDto.setCategory( EnumAll.ExpenseCategory.OTHER);
         IncomeEntity entity = incomeMapper.fromCreate(incomeDto);
         entity.setAccount(account);      // 🔥 AQUÍ
         entity.setActive(true);
@@ -121,10 +123,11 @@ public class IncomeServiceImpl implements IncomeService {
         incomeRepository.save(entity);
         TransactionEntity tx = new TransactionEntity();
         tx.setAccount(account);
-        tx.setType(Enum.TransactionType.INCOME);
+        tx.setType(EnumAll.TransactionType.INCOME);
         tx.setAmount(incomeDto.getAmount());
         tx.setDescription(incomeDto.getSource());
         tx.setExecutedAt(LocalDateTime.now());
+        tx.setCategory(entity.getCategory());
         transactionRepository.save(tx);
 
         return incomeDto;

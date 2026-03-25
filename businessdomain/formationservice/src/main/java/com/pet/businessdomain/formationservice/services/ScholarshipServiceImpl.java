@@ -1,13 +1,11 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.dto.ScholarshipDto;
+import com.pet.businessdomain.shareddto.dto.ScholarshipDto;
 import com.pet.businessdomain.formationservice.entities.ScholarshipEntity;
 import com.pet.businessdomain.formationservice.mapper.ScholarshipMapper;
 import com.pet.businessdomain.formationservice.repository.ScholarshipRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

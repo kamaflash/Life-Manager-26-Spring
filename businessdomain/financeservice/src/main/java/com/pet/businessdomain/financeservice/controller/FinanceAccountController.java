@@ -1,8 +1,7 @@
 package com.pet.businessdomain.financeservice.controller;
 
-import com.pet.businessdomain.financeservice.dto.*;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.FinanceAccountMapper;
 import com.pet.businessdomain.financeservice.repository.ExpenseRepository;
 import com.pet.businessdomain.financeservice.repository.FinanceAccountRepository;
@@ -11,6 +10,9 @@ import com.pet.businessdomain.financeservice.repository.TransactionRepository;
 import com.pet.businessdomain.financeservice.services.ExpenseService;
 import com.pet.businessdomain.financeservice.services.FinanceAccountService;
 import com.pet.businessdomain.financeservice.services.IncomeService;
+import com.pet.businessdomain.shareddto.dto.CreateExpenseRequestDto;
+import com.pet.businessdomain.shareddto.dto.CreateIncomeRequestDto;
+import com.pet.businessdomain.shareddto.dto.FinanceAccountResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -65,15 +67,22 @@ public class FinanceAccountController {
     public FinanceAccountResponseDto createAccount(@RequestBody FinanceAccountResponseDto dto,@PathVariable(name = "income") BigDecimal income,@PathVariable(name = "expense") BigDecimal expense) {
         FinanceAccountResponseDto resp = accountService.createAccount(dto);
         CreateIncomeRequestDto dtoIncome = accountService.setIncome(resp, income);
-        CreateExpenseRequestDto dtoExpense = accountService.setExpense(Enum.ExpenseCategory.HOUSING, expense,resp ,"Habitación");
-        CreateExpenseRequestDto dtoExpense2 = accountService.setExpense(Enum.ExpenseCategory.FOOD, BigDecimal.valueOf(200),resp ,"Alimentación");
+        CreateExpenseRequestDto dtoExpense = new CreateExpenseRequestDto();
+        if (expense.compareTo(BigDecimal.ZERO) != 0) {
+            dtoExpense = accountService.setExpense(EnumAll.ExpenseCategory.HOUSING, expense,resp ,"Habitación");
+        }
+        CreateExpenseRequestDto dtoExpense2 = accountService.setExpense(EnumAll.ExpenseCategory.FOOD, BigDecimal.valueOf(200),resp ,"Alimentación");
+        CreateExpenseRequestDto dtoExpense3 = accountService.setExpense(EnumAll.ExpenseCategory.TRANSPORT, BigDecimal.valueOf(50),resp ,"Transporte");
 
         List<CreateIncomeRequestDto> listIncomes = new ArrayList();
         listIncomes.add(dtoIncome);
         resp.setIncomes(listIncomes);
         List<CreateExpenseRequestDto> listExpenses = new ArrayList();
-        listExpenses.add(dtoExpense);
+        if (expense.compareTo(BigDecimal.ZERO) != 0) {
+            listExpenses.add(dtoExpense);
+        }
         listExpenses.add(dtoExpense2);
+        listExpenses.add(dtoExpense3);
         resp.setExpenses(listExpenses);
         return resp;
     }
@@ -120,7 +129,7 @@ public class FinanceAccountController {
 
     @GetMapping("/{ownerType}/{ownerId}")
     public FinanceAccountResponseDto getAccount(
-            @PathVariable(name = "ownerType")  Enum.OwnerType ownerType,
+            @PathVariable(name = "ownerType")  EnumAll.OwnerType ownerType,
             @PathVariable(name = "ownerId")  Long ownerId
     ) {
         return accountService.getAccountByOwner(ownerType, ownerId);

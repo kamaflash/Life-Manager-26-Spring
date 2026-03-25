@@ -1,7 +1,7 @@
 package com.pet.businessdomain.userservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.pet.businessdomain.userservice.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import com.pet.businessdomain.userservice.repository.UserRepository;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
@@ -9,7 +9,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;

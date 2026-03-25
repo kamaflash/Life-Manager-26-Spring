@@ -13,5 +13,6 @@ public class ProductEffect {
     private Long id;
 
     private String category;
+    @Column(name = "effect_value")
     private Integer value;
 }

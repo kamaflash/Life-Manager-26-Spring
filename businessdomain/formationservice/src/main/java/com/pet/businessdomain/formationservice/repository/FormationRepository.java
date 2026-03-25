@@ -4,9 +4,8 @@
  */
 package com.pet.businessdomain.formationservice.repository;
 
-import com.pet.businessdomain.formationservice.entities.CharacterTraining;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.formationservice.entities.Formation;
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,11 +28,11 @@ public interface FormationRepository extends JpaRepository<Formation, Long> {
 
     // ===== FILTROS SIMPLES =====
 
-    List<Formation> findByCategoryAndActiveTrue(Enum.CareerInterest category);
+    List<Formation> findByCategoryAndActiveTrue(EnumAll.CareerInterest category);
 
-    List<Formation> findByDifficultyAndActiveTrue(Enum.DifficultyLevel difficulty);
+    List<Formation> findByDifficultyAndActiveTrue(EnumAll.DifficultyLevel difficulty);
 
-    List<Formation> findByTypeAndActiveTrue(Enum.TrainingType type);
+    List<Formation> findByTypeAndActiveTrue(EnumAll.TrainingType type);
     // ===== FILTROS COMBINADOS =====
 
     @Query("""
@@ -48,10 +47,10 @@ public interface FormationRepository extends JpaRepository<Formation, Long> {
                OR :careerInterest MEMBER OF f.allowedCareers)
     """)
     List<Formation> findAvailableFormations(
-            Enum.EducationLevel educationLevel,
+            EnumAll.EducationLevel educationLevel,
             Integer academicLevel,
             Integer academicXp,
-            Enum.CareerInterest careerInterest
+            EnumAll.CareerInterest careerInterest
     );
     @Query("""
     SELECT f
@@ -67,10 +66,10 @@ public interface FormationRepository extends JpaRepository<Formation, Long> {
           )
 """)
     Page<Formation> findAvailableFormations(
-            @Param("educationLevel") Enum.EducationLevel educationLevel,
+            @Param("educationLevel") EnumAll.EducationLevel educationLevel,
             @Param("academicLevel") Integer academicLevel,
             @Param("academicXp") Integer academicXp,
-            @Param("careerInterest") Enum.CareerInterest careerInterest,
+            @Param("careerInterest") EnumAll.CareerInterest careerInterest,
             Pageable pageable
     );
 

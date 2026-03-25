@@ -1,9 +1,8 @@
 package com.pet.businessdomain.financeservice.controller;
 
-import com.pet.businessdomain.financeservice.dto.CreateExpenseRequestDto;
-import com.pet.businessdomain.financeservice.dto.ExpenseResponseDto;
+import com.pet.businessdomain.shareddto.dto.CreateExpenseRequestDto;
+import com.pet.businessdomain.shareddto.dto.ExpenseResponseDto;
 import com.pet.businessdomain.financeservice.entities.ExpenseEntity;
-import com.pet.businessdomain.financeservice.entities.IncomeEntity;
 import com.pet.businessdomain.financeservice.repository.ExpenseRepository;
 import com.pet.businessdomain.financeservice.services.ExpenseService;
 import lombok.RequiredArgsConstructor;

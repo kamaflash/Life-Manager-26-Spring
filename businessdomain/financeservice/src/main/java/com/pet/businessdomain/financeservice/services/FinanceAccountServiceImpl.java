@@ -1,11 +1,8 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.CreateExpenseRequestDto;
-import com.pet.businessdomain.financeservice.dto.CreateIncomeRequestDto;
-import com.pet.businessdomain.financeservice.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.financeservice.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.FinanceAccountMapper;
 import com.pet.businessdomain.financeservice.repository.FinanceAccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,7 +54,7 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
     }
 
     @Override
-    public FinanceAccountResponseDto getAccountByOwner(Enum.OwnerType ownerType, Long ownerId) {
+    public FinanceAccountResponseDto getAccountByOwner(EnumAll.OwnerType ownerType, Long ownerId) {
         FinanceAccountEntity entity = accountRepository.findByOwnerTypeAndOwnerId(ownerType,ownerId)
                 .orElseThrow(() -> new RuntimeException("Finance account not found with id " + ownerId));
         return accountMapper.toDto(entity);
@@ -77,7 +75,7 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
                 .orElseThrow(() -> new RuntimeException("Finance account not found with id " + id));
 
         // Actualizamos los campos permitidos
-        entity.setBalance(dto.getBalance());
+        entity.setBalance(calculateMonthlyBalance(dto));
         entity.setDebt(dto.getDebt());
         entity.setSavings(dto.getSavings());
         entity.setUpdatedAt(LocalDateTime.now());
@@ -106,6 +104,7 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
         accountDto.setExpenses(expenseService.getExpenses(accountDto.getId()));
         accountDto.setIncomes(incomeService.getIncomes(accountDto.getId()));
         accountDto.setTransactions(transactionService.getTransactionsByAccount(accountDto.getId()));
+        accountDto.setBalance(calculateMonthlyBalance(accountDto));
         return list;
     }
 
@@ -116,8 +115,30 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
     }
 
     @Override
-    public CreateExpenseRequestDto setExpense(Enum.ExpenseCategory category, BigDecimal expense,FinanceAccountResponseDto account, String type) {
+    public CreateExpenseRequestDto setExpense(EnumAll.ExpenseCategory category, BigDecimal expense,FinanceAccountResponseDto account, String type) {
         CreateExpenseRequestDto dtoExpense = expenseService.mapperCreateExpense(expense, category,type,account);
         return dtoExpense;
+    }
+
+    private BigDecimal calculateMonthlyBalance(
+            FinanceAccountResponseDto dto
+    ) {
+        List<TransactionResponseDto> incomess = dto.getTransactions().stream()
+                .filter(t -> t.getType() == EnumAll.TransactionType.INCOME)
+                .toList();
+        List<TransactionResponseDto> expensess = dto.getTransactions().stream()
+                .filter(t -> t.getType() == EnumAll.TransactionType.EXPENSE)
+                .toList();
+// Suma de ingresos
+        BigDecimal totalIncome = incomess.stream()
+                .map(TransactionResponseDto::getAmount)  // obtenemos amount
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+// Suma de gastos
+        BigDecimal totalExpense = expensess.stream()
+                .map(TransactionResponseDto::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return totalIncome.subtract(totalExpense);
     }
 }

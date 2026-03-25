@@ -1,10 +1,14 @@
 package com.pet.businessdomain.jobservice.entities;
 
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "job_vacancies")
@@ -15,24 +19,36 @@ public class JobVacancyEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Salario
-    private BigDecimal salary;         // Salario base
-    private Integer payNumber;         // Número de pagos al año (12 mensual, 1 anual, etc.)
+    // 💰 Salario
+    private BigDecimal salary;
+    private Integer payNumber;
 
-    // Estado de la vacante
-    private Boolean active = true;     // Si la vacante sigue abierta
-    private LocalDate openingDate;     // Fecha de apertura
-    private LocalDate closingDate;     // Fecha de cierre
-    private Integer availableSlots;    // Número de posiciones disponibles
+    // 📅 Estado de la vacante
+    private Boolean active = true;
+    private LocalDate openingDate;
+    private LocalDate closingDate;
+    private Integer availableSlots;
 
-    // Otros detalles de la oferta
-    private String location;           // Ciudad o remoto
-    private String contractType;       // FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE
-    private String perks;              // Beneficios adicionales (bonos, seguro, tickets comida)
-    private Boolean remoteFriendly;    // Si la vacante permite teletrabajo
-    private Boolean visaSponsorship;   // Si ofrece soporte de visa
+    // 📍 Detalles
+    private String location;
+    private String contractType;
+    private String perks;
+    private Boolean remoteFriendly;
+    private Boolean visaSponsorship;
 
-    // Relación con el puesto
+    // ⏰ Horario
+    private Integer weeklyHours; // máximo 40
+
+    private LocalTime startTime;
+    private LocalTime endTime;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "job_working_days", joinColumns = @JoinColumn(name = "job_id"))
+    @Column(name = "day")
+    @Enumerated(EnumType.STRING)
+    private List<EnumAll.WorkingDay> workingDays = new ArrayList<>();
+
+    // 🔗 Relación
     @ManyToOne
     @JoinColumn(name = "position_id")
     private JobPositionEntity position;

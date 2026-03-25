@@ -1,13 +1,11 @@
 package com.pet.businessdomain.jobservice.controller;
 
-import com.pet.businessdomain.jobservice.dto.*;
-import com.pet.businessdomain.jobservice.entities.CompanyEntity;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
-import com.pet.businessdomain.jobservice.entities.enumjobs.EnumIncome;
-import com.pet.businessdomain.jobservice.entities.enumjobs.JobCategory;
 import com.pet.businessdomain.jobservice.mapper.CompanyMapper;
 import com.pet.businessdomain.jobservice.mapper.JobPositionMapper;
 import com.pet.businessdomain.jobservice.services.IJobService;
+import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

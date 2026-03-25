@@ -1,12 +1,12 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.CreateExpenseRequestDto;
-import com.pet.businessdomain.financeservice.dto.ExpenseResponseDto;
-import com.pet.businessdomain.financeservice.dto.FinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.CreateExpenseRequestDto;
+import com.pet.businessdomain.shareddto.dto.ExpenseResponseDto;
+import com.pet.businessdomain.shareddto.dto.FinanceAccountResponseDto;
 import com.pet.businessdomain.financeservice.entities.ExpenseEntity;
 import com.pet.businessdomain.financeservice.entities.FinanceAccountEntity;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.ExpenseMapper;
 import com.pet.businessdomain.financeservice.repository.ExpenseRepository;
 import com.pet.businessdomain.financeservice.repository.FinanceAccountRepository;
@@ -49,10 +49,11 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         TransactionEntity tx = new TransactionEntity();
         tx.setAccount(account);
-        tx.setType(Enum.TransactionType.EXPENSE);
+        tx.setType(EnumAll.TransactionType.EXPENSE);
         tx.setAmount(expense.getAmount());
         tx.setDescription(expense.getConcept());
         tx.setExecutedAt(LocalDateTime.now());
+        tx.setCategory(expense.getCategory());
         transactionRepository.save(tx);
 
         account.setBalance(account.getBalance().subtract(expense.getAmount()));
@@ -82,7 +83,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Transactional
     public CreateExpenseRequestDto mapperCreateExpense(
             BigDecimal amount,
-            Enum.ExpenseCategory category,
+            EnumAll.ExpenseCategory category,
             String concept,
             FinanceAccountResponseDto accountDto
     ) {
@@ -92,7 +93,7 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         CreateExpenseRequestDto expenseDto = new CreateExpenseRequestDto();
         expenseDto.setAmount(amount);
-        expenseDto.setFrequency(Enum.Frequency.MONTHLY);
+        expenseDto.setFrequency(EnumAll.Frequency.MONTHLY);
         expenseDto.setCategory(category);
         expenseDto.setConcept(concept);
         expenseDto.setStartDate(LocalDate.now());
@@ -106,7 +107,8 @@ public class ExpenseServiceImpl implements ExpenseService {
         expenseEntity.setAccount(account); // 🔥 CLAVE
         TransactionEntity tx = new TransactionEntity();
         tx.setAccount(account);
-        tx.setType(Enum.TransactionType.EXPENSE);
+        tx.setType(EnumAll.TransactionType.EXPENSE);
+        tx.setCategory(expenseDto.getCategory());
         tx.setAmount(expenseDto.getAmount());
         tx.setDescription(expenseDto.getConcept());
         tx.setExecutedAt(LocalDateTime.now());

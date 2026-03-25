@@ -4,11 +4,10 @@
  */
 package com.pet.businessdomain.userservice.entities;
 
-import com.pet.businessdomain.userservice.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import lombok.Data;
 

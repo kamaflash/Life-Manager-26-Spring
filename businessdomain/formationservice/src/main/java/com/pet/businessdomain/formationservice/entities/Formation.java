@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
-import com.pet.businessdomain.formationservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 @Entity
 @Data
 @Table(name = "formations")
@@ -23,27 +24,27 @@ public class Formation {
 
     // ===== CLASIFICACIÓN =====
     @Enumerated(EnumType.STRING)
-    private Enum.CareerInterest category;
+    private EnumAll.CareerInterest category;
     // Tecnología, Negocios, Artes, Salud, etc.
 
     @Enumerated(EnumType.STRING)
-    private Enum.TrainingType type;
+    private EnumAll.TrainingType type;
     // COURSE, DEGREE, MASTER, WORKSHOP
 
     @Enumerated(EnumType.STRING)
-    private Enum.DifficultyLevel difficulty;
+    private EnumAll.DifficultyLevel difficulty;
     // BASIC, INTERMEDIATE, ADVANCED
 
     // ===== REQUISITOS EDUCATIVOS =====
     @Enumerated(EnumType.STRING)
-    private Enum.EducationLevel minEducationLevel;  // Nivel educativo mínimo requerido
+    private EnumAll.EducationLevel minEducationLevel;  // Nivel educativo mínimo requerido
 
     private Integer minAcademicLevel; // Nivel mínimo de conocimiento previo
     private Integer minAcademicXp;    // Experiencia mínima requerida
     private Integer maxAcademicXp;    // Experiencia máxima permitida
 
     @ElementCollection
-    private List<Enum.CareerInterest> allowedCareers; // Carreras permitidas
+    private List<EnumAll.CareerInterest> allowedCareers; // Carreras permitidas
 
     // ===== COSTE =====
     private Integer durationHours;    // Duración en horas
@@ -68,4 +69,12 @@ public class Formation {
     @Embedded
     private CharacterStats stats;
 
+    private LocalTime startTime;
+    private LocalTime endTime;
+
+    @ElementCollection
+    @CollectionTable(name = "course_working_days", joinColumns = @JoinColumn(name = "job_id"))
+    @Column(name = "day")
+    @Enumerated(EnumType.STRING)
+    private List<EnumAll.WorkingDay> workingDays;
 }

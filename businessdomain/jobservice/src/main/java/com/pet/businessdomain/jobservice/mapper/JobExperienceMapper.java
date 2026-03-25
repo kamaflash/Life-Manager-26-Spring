@@ -1,7 +1,7 @@
 package com.pet.businessdomain.jobservice.mapper;
 
-import com.pet.businessdomain.jobservice.dto.JobExperienceDto;
 import com.pet.businessdomain.jobservice.entities.JobExperienceEntity;
+import com.pet.businessdomain.shareddto.dto.JobExperienceDto;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

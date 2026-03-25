@@ -4,12 +4,14 @@
  */
 package com.pet.businessdomain.systemservice.services;
 
-import com.pet.businessdomain.systemservice.dto.SystemDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
@@ -84,6 +86,9 @@ public class SystemServiceImpl implements SystemService {
 
         // ===== DATOS PERSONALES =====
         system.setActualityAt(systemDto.getActualityAt());
+        system.setVeces(system.getVeces() + 1);
+        CharacterDto characterDto = businessTransactions.getPerson(system.getUid());
+
 
 
         try {
@@ -104,5 +109,62 @@ public class SystemServiceImpl implements SystemService {
     public void deleteSystem(Long id) {
         // Implementation here
     }
+    @Override
+    public double getTransportModifier(CharacterDto character) {
+        if (character.getInventory() == null || character.getInventory().isEmpty()) {
+            return 1.0;
+        }
 
+        Map<Long, Double> modifiers = Map.of(
+                6L, 0.40,
+                7L, 0.50,
+                8L, 0.20,
+                9L, 0.15,
+                10L, 0.05
+        );
+
+        for (CharacterInventoryResponseDTO item : character.getInventory()) {
+            Long productId = item.getProductId();
+
+            if (modifiers.containsKey(productId)) {
+                return modifiers.get(productId);
+            }
+        }
+
+        return 1.0;
+    }
+    @Override
+    public double getEducationHours(CharacterDto character) {
+        if (character.getEducation() == null || character.getEducation().isEmpty()) {
+            return 0.0;
+        }
+
+        Map<Long, Double> educationBaseHours = Map.of(
+                104L, 8.0
+                // aquí puedes añadir más formaciones
+        );
+
+        double transportModifier = getTransportModifier(character);
+
+        for (CharacterTrainingDto edu : character.getEducation()) {
+            Long trainingId = edu.getTrainingId();
+
+            if (educationBaseHours.containsKey(trainingId)) {
+                return educationBaseHours.get(trainingId) - transportModifier;
+            }
+        }
+
+        return 0.0;
+    }
+
+    public LocalTime getEducationEndTime(CharacterDto character) {
+        double hours = getEducationHours(character);
+
+        if (hours <= 0) {
+            return null;
+        }
+
+        LocalTime startTime = LocalTime.of(8, 0); // 08:00
+        return startTime.plusMinutes((long) (hours * 60));
+    }
 }

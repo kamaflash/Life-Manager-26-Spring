@@ -1,6 +1,6 @@
 package com.pet.businessdomain.financeservice.entities;
 
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,12 +30,11 @@ public class ExpenseEntity {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Enum.ExpenseCategory category;
+    private EnumAll.ExpenseCategory category;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Enum.Frequency frequency; // DAILY, WEEKLY, MONTHLY, YEARLY
+    private EnumAll.Frequency frequency; // DAILY, WEEKLY, MONTHLY, YEARLY
 
     @Column(nullable = false)
     private boolean essential; // Esencial o no

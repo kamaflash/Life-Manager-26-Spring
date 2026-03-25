@@ -1,8 +1,8 @@
 package com.pet.businessdomain.jobservice.mapper;
 
-import com.pet.businessdomain.jobservice.dto.CharacterApplicationDto;
 import com.pet.businessdomain.jobservice.entities.CharacterApplicationEntity;
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
+import com.pet.businessdomain.shareddto.dto.CharacterApplicationDto;
 import org.mapstruct.*;
 import java.util.List;
 
@@ -19,13 +19,6 @@ public interface CharacterApplicationMapper {
     // DTO → ENTITY (UPDATE)
     void updateEntity(CharacterApplicationDto dto, @MappingTarget CharacterApplicationEntity entity);
 
-    // MAPPING MANUAL vacancyId → JobVacancyEntity
-    default JobVacancyEntity map(Long vacancyId) {
-        if (vacancyId == null) return null;
-        JobVacancyEntity vacancy = new JobVacancyEntity();
-        vacancy.setId(vacancyId);
-        return vacancy;
-    }
 
     default List<CharacterApplicationEntity> toEntityList(List<CharacterApplicationDto> dtos) {
         if (dtos == null) return null;

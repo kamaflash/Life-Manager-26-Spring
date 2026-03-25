@@ -1,10 +1,10 @@
 package com.pet.businessdomain.financeservice.services;
 
-import com.pet.businessdomain.financeservice.dto.TransactionResponseDto;
 import com.pet.businessdomain.financeservice.entities.TransactionEntity;
-import com.pet.businessdomain.financeservice.entities.enumentities.Enum;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.TransactionMapper;
 import com.pet.businessdomain.financeservice.repository.TransactionRepository;
+import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -43,9 +43,9 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public BigDecimal sum(List<TransactionResponseDto> transactions, Enum.TransactionType type) {
+    public BigDecimal sum(List<TransactionResponseDto> transactions, EnumAll.TransactionType type) {
         return transactions.stream()
-                .filter(t -> type.equals(t.getType()))
+                .filter(t -> t.getType() == type)
                 .map(TransactionResponseDto::getAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
