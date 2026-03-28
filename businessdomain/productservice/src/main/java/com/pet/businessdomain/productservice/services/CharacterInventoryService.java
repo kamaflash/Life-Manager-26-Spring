@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface CharacterInventoryService {
 
-    CharacterDto buyProduct(Long characterId, Long productId, Integer quantity);
+    CharacterDto buyProduct(Long characterId, Long productId, Integer pa, Integer quantity);
 
     List<CharacterInventoryResponseDTO> getInventory(Long characterId);
 }

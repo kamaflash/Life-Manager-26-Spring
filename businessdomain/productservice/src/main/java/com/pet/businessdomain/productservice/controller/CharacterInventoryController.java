@@ -15,13 +15,14 @@ public class CharacterInventoryController {
 
     private final CharacterInventoryService inventoryService;
 
-    @PostMapping("/buy/{characterId}/{productId}")
+    @PostMapping("/buy/{characterId}/{productId}/{pa}")
     public CharacterDto buyProduct(
             @PathVariable(name="characterId") Long characterId,
             @PathVariable(name="productId") Long productId,
+            @PathVariable(name="pa") Integer pa,
             @RequestParam(name="quantity", defaultValue = "1") Integer quantity
     ) {
-        return inventoryService.buyProduct(characterId, productId, quantity);
+        return inventoryService.buyProduct(characterId, productId, pa, quantity);
     }
 
     @GetMapping("/{characterId}")

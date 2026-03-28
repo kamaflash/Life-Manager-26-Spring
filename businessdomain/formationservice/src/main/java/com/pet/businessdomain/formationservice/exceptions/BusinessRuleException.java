@@ -22,8 +22,8 @@ public class BusinessRuleException extends Exception {
     private String code;
     private HttpStatus httpStatus;
 
-    public BusinessRuleException(long id, String code, String message, HttpStatus httpStatus) {
-        super(message);
+    public BusinessRuleException(String code) {
+        super();
         this.id = id;
         this.code = code;
         this.httpStatus = httpStatus;

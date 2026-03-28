@@ -1,9 +1,6 @@
 package com.pet.businessdomain.productservice.transactions;
 
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.NotificationDTO;
-import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
-import com.pet.businessdomain.shareddto.dto.SFinanceAccountResponseDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -19,6 +16,7 @@ import reactor.netty.http.client.HttpClient;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -127,5 +125,58 @@ public class BusinessTransactions {
                 .retrieve()
                 .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
+    }
+    public SystemDto getSystem(Long uid) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-SYSTEMSERVICE/api/systems")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/uid/{uid}", uid)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(SystemDto.class)
+                    .block(); // devuelve UserDto directamente
+
+        } catch (Exception e) {
+            System.err.println("Error fetching user: " + e.getMessage());
+            return null; // o lanza excepción, según tu diseño
+        }
+    }
+    public SystemDto updateSystem(Long uid, LocalDateTime time, Integer pa) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-SYSTEMSERVICE/api/systems")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.put()
+                    .uri("/{uid}/{pa}", uid,pa)
+                    .bodyValue(time) // 👈 enviamos el body
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from System service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(SystemDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating system: " + e.getMessage());
+            return null;
+        }
     }
 }

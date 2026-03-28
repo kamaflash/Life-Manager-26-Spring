@@ -1,8 +1,6 @@
 package com.pet.businessdomain.jobservice.transactions;
 
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.FinanceAccountResponseDto;
-import com.pet.businessdomain.shareddto.dto.IncomeResponseDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -17,6 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -96,7 +95,59 @@ public class BusinessTransactions {
             return null; // o lanza excepción, según tu diseño
         }
     }
+    public SystemDto getSystem(Long uid) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-SYSTEMSERVICE/api/systems")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
 
+            return webClient.get()
+                    .uri("/uid/{uid}", uid)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(SystemDto.class)
+                    .block(); // devuelve UserDto directamente
+
+        } catch (Exception e) {
+            System.err.println("Error fetching user: " + e.getMessage());
+            return null; // o lanza excepción, según tu diseño
+        }
+    }
+    public SystemDto updateSystem(Long uid, LocalDateTime time) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-SYSTEMSERVICE/api/systems")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.put()
+                    .uri("/{uid}", uid)
+                    .bodyValue(time) // 👈 enviamos el body
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from System service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(SystemDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating system: " + e.getMessage());
+            return null;
+        }
+    }
     public CharacterDto getCharacter(Long charecterId) {
         try {
             WebClient webClient = webClientBuilder
@@ -145,6 +196,22 @@ public class BusinessTransactions {
                 )
                 .bodyToMono(IncomeResponseDto.class)
                 .block();
+    }
+
+    public NotificationDTO setNotifications(NotificationDTO dto) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-NOTIFICATIONSERVICE/api/notifications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/post")
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
     }
 
 }

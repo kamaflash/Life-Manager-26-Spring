@@ -8,6 +8,7 @@ import com.pet.businessdomain.personservice.repository.CharacterRepository;
 import com.pet.businessdomain.personservice.transactions.BusinessTransactions;
 import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,7 @@ public class CharacterServiceImpl implements CharacterService {
         systemDto.setUid(saved.getUid());
         systemDto.setVeces(0);
         SystemDto systemDtoSave = businessTransactions.setSystem(systemDto);
+        dto.setId(saved.getId());
         setNotification(dto);
         return characterMapper.toDto(saved);
     }
@@ -227,7 +229,7 @@ public class CharacterServiceImpl implements CharacterService {
         notificationDTO.setMessage("Visita tu perfil para obtener tus datos.");
 
         // 🔥 Nuevo sistema
-        notificationDTO.setResourceType(EnumAll.NotificationResourceType.CHARACTER);
+        notificationDTO.setResourceType(NotificationResourceType.USER);
         notificationDTO.setResourceId(dto.getId());
 
         // 🔥 Navegación directa frontend

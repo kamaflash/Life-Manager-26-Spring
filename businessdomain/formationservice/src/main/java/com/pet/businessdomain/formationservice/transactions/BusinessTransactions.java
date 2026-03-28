@@ -1,6 +1,7 @@
 package com.pet.businessdomain.formationservice.transactions;
 
 import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.NotificationDTO;
 import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
@@ -86,6 +87,21 @@ public class BusinessTransactions {
                 .bodyValue(dto) // enviamos el DTO en el body
                 .retrieve()
                 .bodyToMono(SExpenseResponseDto.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
+    }
+    public NotificationDTO setNotifications(NotificationDTO dto) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-NOTIFICATIONSERVICE/api/notifications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/post")
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
     }
 

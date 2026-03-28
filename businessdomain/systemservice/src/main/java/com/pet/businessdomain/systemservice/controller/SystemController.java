@@ -10,6 +10,7 @@ import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
 import java.net.UnknownHostException;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +82,7 @@ public class SystemController {
 
     @GetMapping("/uid/{uid}")
     public SystemDto getSystemByUID(@PathVariable(name="uid") Long uid) throws BusinessRuleException {
-        Optional<SystemEntity> optSystem = systemService.getSystemByUid(uid);
+        Optional<SystemEntity> optSystem = systemService.getSystemByUidOP(uid);
         SystemEntity system = systemMapper.fromOptional(optSystem);
         SystemDto systemDto = systemMapper.toDto(system);
         log.info("systemDto: "+systemDto);
@@ -97,6 +98,18 @@ public class SystemController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(systemDto);
     }
+    @PostMapping("/cero_advance")
+    public LocalTime ceroAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
+        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+        SystemEntity system = systemMapper.fromOptional(optSystem);
+        SystemDto systemDto = systemMapper.toDto(system);
+
+        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+        LocalTime time = systemService.getEducationEndTime(characterDto,false);
+        LocalTime newTime = time.minusMinutes(30);
+        return newTime;
+    }
+
     @PostMapping("/firts_advance")
     public LocalTime firtsAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
         Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
@@ -104,10 +117,39 @@ public class SystemController {
         SystemDto systemDto = systemMapper.toDto(system);
 
         CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
-        LocalTime time = systemService.getEducationEndTime(characterDto);
+        LocalTime time = systemService.getEducationEndTime(characterDto,false);
         log.info("systemDto: "+systemDto);
 
         return time;
+    }
+    @PostMapping("/seconds_advance")
+    public LocalTime secondsAdvance(@RequestParam(name = "characterId") Long characterId, @RequestParam(name = "slim") LocalDateTime slim) throws BusinessRuleException, UnknownHostException, MessagingException {
+        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+        SystemEntity system = systemMapper.fromOptional(optSystem);
+        SystemDto systemDto = systemMapper.toDto(system);
+
+        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+        LocalTime time = systemService.getEducationEndTime(characterDto,true);
+        characterDto = systemService.setTimeSlim(characterDto, slim);
+        systemService.updateCharacter(characterDto);
+        system = systemService.plusSystems(characterDto,time);
+        system.setPa(5);
+        systemRepository.save(system);
+        return time;
+    }
+
+    @PostMapping("/weeckend")
+    public void weeckendAdvance(@RequestParam(name = "characterId") Long characterId, @RequestParam(name = "slim") LocalDateTime slim) throws BusinessRuleException, UnknownHostException, MessagingException {
+        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+        SystemEntity system = systemMapper.fromOptional(optSystem);
+        SystemDto systemDto = systemMapper.toDto(system);
+
+        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+        LocalDateTime actuality = system.getActualityAt();
+        LocalTime at8 = LocalTime.from(LocalDateTime.of(actuality.toLocalDate(), LocalTime.of(9, 0)));
+        system = systemService.plusSystems(characterDto,at8);
+        system.setPa(5);
+        systemRepository.save(system);
     }
 
     @PostMapping("/post")
@@ -117,17 +159,16 @@ public class SystemController {
         return systemDto;
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateSystem(@PathVariable(name="id") Long id, @RequestBody SystemDto systemDto) throws BusinessRuleException {
-        if (systemDto != null) {
-            SystemDto dto = systemService.updateSystem(id, systemDto);
+
+    @PutMapping("/{id}/{pa}")
+    public ResponseEntity<?> updateSystem(@PathVariable(name="id") Long id, @PathVariable(name="pa") Integer pa, @RequestBody LocalDateTime actualityAt) throws BusinessRuleException {
+        if (actualityAt != null) {
+            SystemDto dto = systemService.updateSystem(id, actualityAt, pa);
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(dto);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("No es aceptable");
         }
     }
-
-
 
     @DeleteMapping("/all")
     public ResponseEntity<?> deleteAll() {
@@ -146,5 +187,7 @@ public class SystemController {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("No es aceptable");
         }
     }
+
+
 
 }

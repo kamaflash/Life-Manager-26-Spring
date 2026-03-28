@@ -14,4 +14,5 @@ public interface ICharacterTrainingRepository  extends JpaRepository<CharacterTr
     // Solo los cursos completados
     List<CharacterTraining> findByCharacterIdAndStatus(Long characterId, EnumAll.TrainingStatus status);
     boolean existsByCharacterIdAndTrainingId(Long characterId, Long trainingId);
+    CharacterTraining getByCharacterIdAndTrainingId(Long id, Long trainingId);
 }

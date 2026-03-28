@@ -1,7 +1,9 @@
 package com.pet.businessdomain.shareddto.dto;
 
-import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
+import com.pet.businessdomain.shareddto.enumentities.NotificationPriority;
+import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,32 +13,51 @@ public class NotificationDTO {
 
     private Long id;
 
+    // Destinatario
     private Long userId;
 
+    // Usuario que genera la acción (opcional)
     private Long fromUserId;
 
+    // Tipo de notificación (determina plantilla frontend)
     private NotificationType type;
 
+    // Prioridad (HIGH, MEDIUM, LOW)
+    private NotificationPriority priority;
+
+    // Título y contenido
     private String title;
     private String subTitle;
     private String message;
 
-    // 🔥 Nuevo: tipo de recurso
-    private EnumAll.NotificationResourceType resourceType;
+    // Tipo de recurso asociado (COURSE, POST, etc.)
+    private NotificationResourceType resourceType;
 
-    // 🔥 Nuevo: id del recurso
+    // ID del recurso asociado
     private Long resourceId;
 
-    // 🔥 Nuevo: navegación directa en frontend
+    // URL de acción (ruta frontend)
     private String actionUrl;
 
-    // 🔥 Nuevo: metadata (JSON en string)
+    // Metadatos en JSON (datos específicos del tipo)
     private String metadata;
 
+    // Estado de lectura
     private boolean read;
 
+    // Fecha de lectura (si aplica)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime readAt;
+
+    // Fecha de expiración (para notificaciones temporales)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime expiresAt;
+
+    // Fecha de creación
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
-    // 🔥 Opcional pero muy útil
-    private LocalDateTime readAt;
+    // Fecha de última modificación (opcional, útil para tracking)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime updatedAt;
 }

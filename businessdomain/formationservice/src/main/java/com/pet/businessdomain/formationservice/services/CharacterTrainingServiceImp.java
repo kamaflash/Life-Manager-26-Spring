@@ -2,22 +2,21 @@ package com.pet.businessdomain.formationservice.services;
 
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
-import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
+import com.pet.businessdomain.formationservice.mapper.ICharacterTrainingMapper;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
 import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
-import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
+import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +28,11 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
 
     @Autowired
     private FormationRepository formationRepo;
+
+    @Autowired
+    private ICharacterTrainingMapper iCharacterTrainingMapper;
+
+
 
     @Autowired
     private BusinessTransactions businessTransactions;
@@ -47,25 +51,14 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         return formationRepo.findAvailableFormations(eduLevel, academicLevel, academicXp, career);
     }
 
-    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto, Long id) throws BusinessRuleException {
+    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto, Long id) {
         dto.setCharacterId(id);
         // Verificar si ya está inscrito
         boolean exists = trainingRepo.existsByCharacterIdAndTrainingId(dto.getCharacterId(), dto.getTrainingId());
-        if (exists) {
-            throw new BusinessRuleException(
-                    "1001",                               // código de error
-                    "Ya estas matriculado",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
+
 
         // Buscar la formación
-        Formation formation = formationRepo.findById(dto.getTrainingId())
-                .orElseThrow(() -> new BusinessRuleException(
-                        "1001",                               // código de error
-                        "El código de la formación es obligatorio",
-                        HttpStatus.BAD_REQUEST
-                ));
+        Optional<Formation> formation = formationRepo.findById(dto.getTrainingId());
 
         // Crear la entidad CharacterTraining
         CharacterTraining training = new CharacterTraining();
@@ -94,13 +87,13 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
         dto.setAcademicXpGained(training.getAcademicXpGained());
         dto.setApplied(training.getApplied());
 
-        dto.setTrainingName(formation.getName());
-        dto.setTrainingType(formation.getType());
-        dto.setTrainingDifficulty(formation.getDifficulty());
+        dto.setTrainingName(formation.get().getName());
+        dto.setTrainingType(formation.get().getType());
+        dto.setTrainingDifficulty(formation.get().getDifficulty());
         SExpenseResponseDto expenseResponseDto = new SExpenseResponseDto();
         expenseResponseDto.setCategory(EnumAll.ExpenseCategory.EDUCATION);
-        expenseResponseDto.setAmount(formation.getCost());
-        expenseResponseDto.setConcept(formation.getName());
+        expenseResponseDto.setAmount(formation.get().getCost());
+        expenseResponseDto.setConcept(formation.get().getName());
         expenseResponseDto.setExternalRefId(training.getCharacterId());
         expenseResponseDto.setStartDate(training.getStartedAt().toLocalDate());
         expenseResponseDto.setFrequency(EnumAll.Frequency.YEARLY);
@@ -136,5 +129,60 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService{
                                 && personDto.getXpAcademy() < training.getMaxAcademicXp()
                 )
                 .toList();
+    }
+    @Override
+    public CharacterTrainingDto updateTraining(Long id, CharacterTrainingDto dto) {
+        Optional<CharacterTraining> entity = trainingRepo.findById(id);
+
+        // Actualiza campos permitidos, por ejemplo:
+        entity.get().setProgress(dto.getProgress());
+        entity.get().setStatus(dto.getStatus());
+        entity.get().setInvestedHours(dto.getInvestedHours());
+        entity.get().setAcademicXpGained(dto.getAcademicXpGained());
+
+        // Guardamos cambios
+        CharacterTraining save = trainingRepo.save(iCharacterTrainingMapper.fromOptional(entity));
+
+        return iCharacterTrainingMapper.toDto(entity.orElse(null));
+    }
+    @Override
+    public CharacterTraining getById(Long id) {
+        return iCharacterTrainingMapper.fromOptional(trainingRepo.findById(id));
+    }
+
+    @Override
+    public CharacterTraining getByCharacterIdAndTrainingId(Long id, Long trainingId) {
+        return trainingRepo.getByCharacterIdAndTrainingId(id,trainingId);
+    }
+
+    private void setNotification(CharacterApplicationDto dto) {
+
+        NotificationDTO notificationDTO = new NotificationDTO();
+
+        notificationDTO.setUserId(dto.getId());
+        notificationDTO.setFromUserId(dto.getCharacterId());
+        notificationDTO.setType(NotificationType.SYSTEM);
+
+        notificationDTO.setTitle("Nuevo curso");
+        notificationDTO.setSubTitle("Te has subscrito a un nuevo curso");
+        notificationDTO.setMessage("Te has matriculado en un nuevo curso.");
+
+        // 🔥 Nuevo sistema
+        notificationDTO.setResourceType(NotificationResourceType.COURSE);
+        notificationDTO.setResourceId(dto.getId());
+
+        // 🔥 Navegación directa frontend
+        notificationDTO.setActionUrl("/profile" );
+
+        // 🔥 Metadata (opcional pero muy recomendable)
+        notificationDTO.setMetadata("""
+        {
+            "characterId": %d
+        }
+    """.formatted(dto.getId()));
+
+        notificationDTO.setRead(false);
+
+        NotificationDTO resp = businessTransactions.setNotifications(notificationDTO);
     }
 }

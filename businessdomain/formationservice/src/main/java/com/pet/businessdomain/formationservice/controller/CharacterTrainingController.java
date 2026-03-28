@@ -4,6 +4,7 @@ import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import com.pet.businessdomain.formationservice.mapper.FormationMapper;
+import com.pet.businessdomain.formationservice.mapper.ICharacterTrainingMapper;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
 import com.pet.businessdomain.formationservice.services.ICharacterTrainingService;
 import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
@@ -28,6 +29,8 @@ public class CharacterTrainingController {
 
     @Autowired
     private FormationMapper formationMapper;
+    @Autowired
+    private ICharacterTrainingMapper iCharacterTrainingMapper;
 
 @Autowired
     private ICharacterTrainingService characterTrainingService;
@@ -136,6 +139,12 @@ public class CharacterTrainingController {
         List<CharacterTrainingDto> trainingDtos = formationMapper.toDtoListFull(trainings);
         return ResponseEntity.ok(trainingDtos);
     }
+
+    @GetMapping("/dto/{id}/{trainingId}")
+    public CharacterTrainingDto getTrainingsById(@PathVariable(name = "id") Long id, @PathVariable(name = "trainingId") Long trainingId) {
+        CharacterTraining trainings = characterTrainingService.getByCharacterIdAndTrainingId(id,trainingId);
+        return iCharacterTrainingMapper.toDto(trainings);
+    }
     /**
      * 🔹 Suscribir a un personaje a un curso de entrenamiento.
      *
@@ -157,7 +166,26 @@ public class CharacterTrainingController {
         CharacterTrainingDto subscribed = characterTrainingService.subscribeToCourse(dto, id);
         return subscribed;
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<CharacterTrainingDto> updateTraining(
+            @PathVariable(name = "id") Long id,
+            @RequestBody CharacterTrainingDto dto) throws BusinessRuleException {
 
+        // Llamamos al servicio para actualizar el entrenamiento
+        CharacterTrainingDto updated = characterTrainingService.updateTraining(id, dto);
+
+        return ResponseEntity.ok(updated);
+    }
+    @PutMapping("/dto/{id}")
+    public CharacterTrainingDto updateDtoTraining(
+            @PathVariable(name = "id") Long id,
+            @RequestBody CharacterTrainingDto dto) throws BusinessRuleException {
+
+        // Llamamos al servicio para actualizar el entrenamiento
+        CharacterTrainingDto updated = characterTrainingService.updateTraining(id, dto);
+
+        return updated;
+    }
     // =========================
     // ❌ DESACTIVAR FORMACIÓN
     // =========================

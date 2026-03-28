@@ -11,5 +11,6 @@ public class SystemDto {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updateAt = LocalDateTime.now();
     private LocalDateTime actualityAt = LocalDateTime.now();
-    private Integer veces;
+    private Integer veces = 0;
+    private Integer pa;
 }

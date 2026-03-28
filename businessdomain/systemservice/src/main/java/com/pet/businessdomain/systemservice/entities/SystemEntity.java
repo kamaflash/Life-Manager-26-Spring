@@ -18,6 +18,7 @@ public class SystemEntity {
     private LocalDateTime updateAt = LocalDateTime.now();
     private LocalDateTime actualityAt = LocalDateTime.now();
     private Integer veces;
+    private Integer pa = 5;
 
 
 }

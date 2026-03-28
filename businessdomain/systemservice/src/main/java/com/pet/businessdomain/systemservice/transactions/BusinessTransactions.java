@@ -2,6 +2,7 @@ package com.pet.businessdomain.systemservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -76,8 +77,88 @@ public class BusinessTransactions {
             return null; // o lanza excepción, según tu diseño
         }
     }
+    public CharacterDto updatePerson(CharacterDto character) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
 
+            return webClient.put()
+                    .uri("/stast/{id}", character.getId()) // ajusta endpoint si es distinto
+                    .bodyValue(character)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterDto.class)
+                    .block();
 
+        } catch (Exception e) {
+            System.err.println("Error updating user: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public CharacterTrainingDto getTrainning(Long id, Long trainingId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/trainer")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/dto/{id}/{trainingId}", id, trainingId)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterTrainingDto.class)
+                    .block(); // devuelve UserDto directamente
+
+        } catch (Exception e) {
+            System.err.println("Error fetching user: " + e.getMessage());
+            return null; // o lanza excepción, según tu diseño
+        }
+    }
+
+    public CharacterTrainingDto updateAppTrainning(CharacterTrainingDto character) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/trainer")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.put()
+                    .uri("/dto/{id}", character.getId()) // ajusta endpoint si es distinto
+                    .bodyValue(character)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterTrainingDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating user: " + e.getMessage());
+            return null;
+        }
+    }
 
 
 }

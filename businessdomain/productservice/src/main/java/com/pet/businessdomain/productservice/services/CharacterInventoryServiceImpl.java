@@ -3,23 +3,19 @@ package com.pet.businessdomain.productservice.services;
 import com.pet.businessdomain.productservice.entities.ProductEffect;
 import com.pet.businessdomain.productservice.mapper.ProductMapper;
 import com.pet.businessdomain.productservice.transactions.BusinessTransactions;
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.CharacterInventoryResponseDTO;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.productservice.entities.CharacterInventory;
 import com.pet.businessdomain.productservice.entities.Product;
 import com.pet.businessdomain.productservice.repository.CharacterInventoryRepository;
 import com.pet.businessdomain.productservice.repository.ProductRepository;
-import com.pet.businessdomain.shareddto.dto.NotificationDTO;
-import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
-import com.pet.businessdomain.shareddto.enumentities.EnumAll;
-import com.pet.businessdomain.shareddto.enumentities.NotificationType;
-import com.pet.businessdomain.shareddto.enumentities.ProductCategory;
+import com.pet.businessdomain.shareddto.enumentities.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -36,7 +32,7 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
     @Autowired
     private final BusinessTransactions businessTransactions;
     @Override
-    public CharacterDto buyProduct(Long characterId, Long productId, Integer quantity) {
+    public CharacterDto buyProduct(Long characterId, Long productId, Integer pa, Integer quantity) {
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -58,6 +54,15 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
 
         // 🔥 2. Actualizar stats
         personDto = businessTransactions.updateCharacterStats(characterId, personDto);
+
+        SystemDto systemDto = businessTransactions.getSystem(personDto.getUid());
+        systemDto.setPa(systemDto.getPa() - pa);
+        LocalDateTime current = systemDto.getActualityAt();
+
+        // Sumamos 1 día y ajustamos la hora y minuto según LocalTime
+        LocalDateTime newActuality = current.plusHours(pa);
+        systemDto.setActualityAt(newActuality);
+        systemDto = businessTransactions.updateSystem(systemDto.getUid(),newActuality,pa);
 
         // 🔥 3. Registrar gasto
         createExpense(personDto, product);
@@ -171,31 +176,47 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
 
         notificationDTO.setUserId(dto.getId());
         notificationDTO.setFromUserId(dto.getUid());
-        notificationDTO.setType(NotificationType.SYSTEM);
+
+        // 🔥 Tipo más específico: podrías usar 'NEW_CONTENT' o 'SYSTEM' según tu enum.
+        // Si has añadido un tipo PRODUCT_PURCHASE, úsalo aquí.
+        notificationDTO.setType(NotificationType.NEW_CONTENT); // o SYSTEM si prefieres
+
+        // 🔥 Prioridad: MEDIUM por defecto para notificaciones normales
+        notificationDTO.setPriority(NotificationPriority.MEDIUM);
 
         notificationDTO.setTitle("Has adquirido un producto");
         notificationDTO.setSubTitle(product.getName());
         notificationDTO.setMessage(product.getDescription());
 
-        // 🔥 Nuevo sistema
-        notificationDTO.setResourceType(EnumAll.NotificationResourceType.PRODUCT);
+        // 🔥 Recurso asociado
+        notificationDTO.setResourceType(NotificationResourceType.PRODUCT);
         notificationDTO.setResourceId(product.getId());
 
         // 🔥 Navegación directa
         notificationDTO.setActionUrl("/products/" + product.getId());
 
-        // 🔥 Metadata enriquecida
+        // 🔥 Metadata enriquecida (puedes incluir cualquier dato adicional)
         notificationDTO.setMetadata("""
         {
             "productId": %d,
-            "productName": "%s"
+            "productName": "%s",
+            "price": %f,
+            "purchaseDate": "%s"
         }
     """.formatted(
                 product.getId(),
-                product.getName().replace("\"", "\\\"") // evitar romper JSON
+                product.getName().replace("\"", "\\\""), // escapar comillas
+                product.getPrice(),
+                LocalDateTime.now().toString()
         ));
 
+        // 🔥 Estados iniciales
         notificationDTO.setRead(false);
+        notificationDTO.setReadAt(null);
+        notificationDTO.setExpiresAt(null); // No caduca por defecto, o puedes poner una fecha futura
+
+        // 🔥 createdAt se asignará automáticamente en el servicio,
+        // no es necesario setearlo aquí.
 
         businessTransactions.setNotifications(notificationDTO);
     }

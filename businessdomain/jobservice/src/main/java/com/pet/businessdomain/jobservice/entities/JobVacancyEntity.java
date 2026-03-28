@@ -44,7 +44,7 @@ public class JobVacancyEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "job_working_days", joinColumns = @JoinColumn(name = "job_id"))
-    @Column(name = "day")
+    @Column(name = "day_of_week")
     @Enumerated(EnumType.STRING)
     private List<EnumAll.WorkingDay> workingDays = new ArrayList<>();
 

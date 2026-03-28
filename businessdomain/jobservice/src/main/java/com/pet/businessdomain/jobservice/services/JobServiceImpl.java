@@ -5,8 +5,7 @@ import com.pet.businessdomain.jobservice.entities.CompanyEntity;
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
 import com.pet.businessdomain.shareddto.dto.*;
-import com.pet.businessdomain.shareddto.enumentities.EnumAll;
-import com.pet.businessdomain.shareddto.enumentities.EnumIncome;
+import com.pet.businessdomain.shareddto.enumentities.*;
 import com.pet.businessdomain.jobservice.mapper.CharacterApplicationMapper;
 import com.pet.businessdomain.jobservice.mapper.CompanyMapper;
 import com.pet.businessdomain.jobservice.mapper.JobPositionMapper;
@@ -16,7 +15,6 @@ import com.pet.businessdomain.jobservice.repository.CompanyRepository;
 import com.pet.businessdomain.jobservice.repository.JobPositionRepository;
 import com.pet.businessdomain.jobservice.repository.JobVacancyRepository;
 import com.pet.businessdomain.jobservice.transactions.BusinessTransactions;
-import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -333,8 +331,19 @@ public class JobServiceImpl implements IJobService {
         entity.setStatus("APPLIED");
         entity.setPositionId(position.getId());
         entity = applicationRepository.save(entity);
+        updateSystem(entity);
         addIncome(dto,entity);
+        dto.setId(entity.getCharacterId());
+        setNotification(dto);
         return applicationMapper.toDto(entity);
+    }
+    private void  updateSystem(CharacterApplicationEntity entity) {
+        CharacterDto characterDto = businessTransactions.getCharacter(entity.getCharacterId());
+        SystemDto systemDto = businessTransactions.getSystem(characterDto.getUid());
+        LocalDateTime current = systemDto.getActualityAt();
+        LocalDateTime newActuality = current.plusHours(2);
+        systemDto.setActualityAt(newActuality);
+        systemDto = businessTransactions.updateSystem(systemDto.getUid(),newActuality);
     }
     private void addIncome(CharacterApplicationDto dto, CharacterApplicationEntity entity) {
         CharacterDto characterDto = businessTransactions.getCharacter(dto.getCharacterId());
@@ -408,6 +417,37 @@ public class JobServiceImpl implements IJobService {
         return applicationRepository.findVacancyIdsByCharacterId(pid)
                 .stream()
                 .anyMatch(vipSet::contains);
+    }
+
+    private void setNotification(CharacterApplicationDto dto) {
+
+        NotificationDTO notificationDTO = new NotificationDTO();
+
+        notificationDTO.setUserId(dto.getId());
+        notificationDTO.setFromUserId(dto.getCharacterId());
+        notificationDTO.setType(NotificationType.SYSTEM);
+
+        notificationDTO.setTitle("Nuevo trabajo");
+        notificationDTO.setSubTitle("Has aplicado a un nuevo puesto de trabajo");
+        notificationDTO.setMessage("Has aplicado a un nuevo puesto de trabajo.");
+
+        // 🔥 Nuevo sistema
+        notificationDTO.setResourceType(NotificationResourceType.JOBS);
+        notificationDTO.setResourceId(dto.getVacancyId());
+
+        // 🔥 Navegación directa frontend
+        notificationDTO.setActionUrl("/profile" );
+
+        // 🔥 Metadata (opcional pero muy recomendable)
+        notificationDTO.setMetadata("""
+        {
+            "characterId": %d
+        }
+    """.formatted(dto.getId()));
+
+        notificationDTO.setRead(false);
+
+        NotificationDTO resp = businessTransactions.setNotifications(notificationDTO);
     }
 }
 

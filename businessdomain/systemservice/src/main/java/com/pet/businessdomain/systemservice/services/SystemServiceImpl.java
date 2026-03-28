@@ -57,22 +57,28 @@ public class SystemServiceImpl implements SystemService {
     }
 
     @Override
-    public Optional<SystemEntity> getSystemByUid(Long uid) {
+    public SystemEntity getSystemByUid(Long uid) {
+        Optional<SystemEntity> opt = systemRepository.findByUid(uid);
+        return systemMapper.fromOptional(opt);
+
+    }
+    @Override
+    public Optional<SystemEntity> getSystemByUidOP(Long uid) {
         Optional<SystemEntity> opt = systemRepository.findByUid(uid);
         return opt;
 
     }
-
     @Override
     public SystemDto createSystem(SystemDto systemDto) {
         systemDto.setCreatedAt(LocalDateTime.now());
+        systemDto.setPa(5);
         SystemEntity system = systemMapper.toEntity(systemDto);
         system = systemRepository.save(system);
         return systemMapper.toDto(system);
     }
 
     @Override
-    public SystemDto updateSystem(Long id, SystemDto systemDto) throws BusinessRuleException {
+    public SystemDto updateSystem(Long id, LocalDateTime localDateTime, Integer pa) throws BusinessRuleException {
 
         log.info("Buscando System con ID: {}", id);
 
@@ -85,8 +91,10 @@ public class SystemServiceImpl implements SystemService {
 
 
         // ===== DATOS PERSONALES =====
-        system.setActualityAt(systemDto.getActualityAt());
+        system.setActualityAt(localDateTime);
+        system.setUpdateAt(LocalDateTime.now());
         system.setVeces(system.getVeces() + 1);
+        system.setPa(pa != null ? system.getPa() - pa : system.getPa());
         CharacterDto characterDto = businessTransactions.getPerson(system.getUid());
 
 
@@ -134,7 +142,7 @@ public class SystemServiceImpl implements SystemService {
         return 1.0;
     }
     @Override
-    public double getEducationHours(CharacterDto character) {
+    public double getEducationHours(CharacterDto character, boolean exit) {
         if (character.getEducation() == null || character.getEducation().isEmpty()) {
             return 0.0;
         }
@@ -144,6 +152,12 @@ public class SystemServiceImpl implements SystemService {
                 // aquí puedes añadir más formaciones
         );
 
+        if(exit) {
+            educationBaseHours = Map.of(
+                    104L, 15.0
+                    // aquí puedes añadir más formaciones
+            );
+        }
         double transportModifier = getTransportModifier(character);
 
         for (CharacterTrainingDto edu : character.getEducation()) {
@@ -156,15 +170,102 @@ public class SystemServiceImpl implements SystemService {
 
         return 0.0;
     }
-
-    public LocalTime getEducationEndTime(CharacterDto character) {
-        double hours = getEducationHours(character);
+    @Override
+    public LocalTime getEducationEndTime(CharacterDto character, boolean exit) {
+        double hours = getEducationHours(character,exit);
 
         if (hours <= 0) {
             return null;
         }
 
-        LocalTime startTime = LocalTime.of(8, 0); // 08:00
-        return startTime.plusMinutes((long) (hours * 60));
+        int hourPart = (int) hours; // Parte entera de las horas
+        int minutePart = (int) ((hours - hourPart) * 60); // Convertimos la fracción a minutos
+
+
+
+
+        return LocalTime.of(hourPart, minutePart);
+    }
+
+    @Override
+    public void updateCharacter(CharacterDto character) {
+
+        // EDUCATION
+        if (character.getEducation() != null && !character.getEducation().isEmpty()) {
+
+            var edu = character.getEducation().get(0);
+
+            int hours = edu.getInvestedHours() != null ? edu.getInvestedHours() : 0;
+            int progress = edu.getProgress() != null ? edu.getProgress() : 0;
+            CharacterTrainingDto dto = businessTransactions.getTrainning(edu.getCharacterId(),edu.getTrainingId());
+            dto.setInvestedHours(hours + 6);
+            dto.setProgress(progress + 1);
+            dto = businessTransactions.updateAppTrainning(dto);
+
+        }
+
+        // STATS
+        if (character.getStats() != null) {
+
+            var stats = character.getStats();
+
+            int stress =  stats.getStress();
+            int happiness = stats.getHappiness();
+            int energy = stats.getEnergy();
+
+            stats.setStress(Math.min(100, stress + 5));
+            stats.setHappiness(Math.max(0, happiness - 5));
+            stats.setEnergy(Math.max(0, energy - 30));
+        }
+
+        character = businessTransactions.updatePerson(character);
+    }
+    @Override
+    public SystemEntity plusSystems(CharacterDto character, LocalTime hours) {
+        // Obtenemos el SystemEntity y el DTO
+        SystemEntity system = getSystemByUid(character.getUid());
+        // Fecha/hora actual
+        LocalDateTime current = system.getActualityAt();
+
+        // Sumamos 1 día y ajustamos la hora y minuto según LocalTime
+        LocalDateTime newActuality = current.plusDays(1)  // suma 1 día
+                .withHour(hours.getHour())   // ajusta la hora
+                .withMinute(hours.getMinute()) // ajusta los minutos
+                .withSecond(0)
+                .withNano(0);
+
+        system.setActualityAt(newActuality);
+
+        return system;
+    }
+
+    @Override
+    public CharacterDto setTimeSlim(CharacterDto character, LocalDateTime slim) {
+
+        // Hora objetivo (08:00)
+        LocalDateTime nextWorkTime = slim.withHour(8).withMinute(0).withSecond(0).withNano(0);
+
+        // Si ya pasó de las 08:00 → ir al siguiente día
+        if (!slim.isBefore(nextWorkTime)) {
+            nextWorkTime = nextWorkTime.plusDays(1);
+        }
+
+        // Calcular horas entre slim y siguiente 08:00
+        long hours = java.time.Duration.between(slim, nextWorkTime).toHours();
+
+        // Energía ganada (10 por hora)
+        int energyGain = (int) hours * 10;
+        // Estres Perdida (2 por hora)
+
+        int stressGain = (int) hours * 2;
+        // Sumar energía (controlando máximo si quieres)
+        int currentEnergy = character.getStats().getEnergy();
+        int newEnergy = Math.min(currentEnergy + energyGain, 100);
+        character.getStats().setEnergy(newEnergy);
+
+        int currentStress = character.getStats().getStress();
+        int newStress = Math.min(currentStress - stressGain, 100);
+        character.getStats().setEnergy(newEnergy);
+        return character;
     }
 }
