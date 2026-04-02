@@ -26,6 +26,11 @@ public class CharacterExamServiceImpl implements CharacterExamService {
     }
 
     @Override
+    public List<CharacterExam> getByCharacterTrainingId(Long trainingId) {
+        return examRepository.findByCharacterTrainingId(trainingId);
+    }
+
+    @Override
     public Optional<CharacterExam> getLastAttempt(Long characterTrainingId) {
         return examRepository.findTopByCharacterTrainingIdOrderByAttemptNumberDesc(characterTrainingId);
     }

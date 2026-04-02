@@ -11,6 +11,8 @@ public interface CharacterExamService {
 
     List<CharacterExam> getByCharacterId(Long characterId);
 
+    List<CharacterExam> getByCharacterTrainingId(Long trainingId);
+
     Optional<CharacterExam> getLastAttempt(Long characterTrainingId);
 
     CharacterExam save(CharacterExam exam);
