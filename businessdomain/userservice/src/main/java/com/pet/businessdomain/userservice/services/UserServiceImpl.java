@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  *
@@ -32,139 +31,101 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private UserMapper userMapper;
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
-
-    @Autowired
     private BusinessTransactions businessTransactions;
-    // Add any required dependencies here (e.g., repositories, mappers)
 
     @Override
     public List<UserDto> getAllUsers() {
-        List<UserDto> listUserDto = userMapper.toDtoList(userRepository.findAll());
-
-        return listUserDto;
+        return userMapper.toDtoList(userRepository.findAll());
     }
 
     @Override
     public Optional<User> getUserById(Long id) {
-        Optional<User> opt = userRepository.findById(id);
-        return opt;
+        return userRepository.findById(id);
     }
 
     @Override
     public Optional<User> getUserByUsername(String username) {
-        Optional<User> opt = userRepository.findByUsername(username);
-        return opt;
+        return userRepository.findByUsername(username);
     }
 
     @Override
     public Optional<User> getUserByEmail(String username) {
-        Optional<User> opt = userRepository.findByEmail(username);
-        return opt;
+        return userRepository.findByEmail(username);
     }
 
     @Override
     public Optional<User> getUserByUsernameOrEmail(String username) {
-        Optional<User> opt = userRepository.findUserByUsernameOrEmail(username, username);
-        return opt;
+        return userRepository.findUserByUsernameOrEmail(username, username);
     }
 
+    @Override
+    public UserDto getFull(Long id) throws BusinessRuleException {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessRuleException("0002", "Usuario no localizado.", HttpStatus.PRECONDITION_FAILED));
+
+        UserDto dto = userMapper.toDto(user);
+        dto.setPersons(businessTransactions.getPerson(user.getId()));
+        return dto;
+    }
 
     @Override
-    public UserDto getFull(Long id) throws BusinessRuleException  {
-        // Implementation
-        Optional<User> optUser = userRepository.findById(id);
-        User user = userMapper.toOptional(optUser);
+    public List<UserDto> getFullList(Long id) throws BusinessRuleException {
+        UserDto userFull = getFull(id);
+        return List.of(userFull);
+    }
 
-        if (user != null) {
-            UserDto dto = userMapper.toDto(user);
-
-            dto.setPersons(businessTransactions.getPerson(dto.getId()));
-            return dto;
-        } else {
-            BusinessRuleException businessRuleException = new BusinessRuleException("0002", "Error validación. Transacion no localizada. ", HttpStatus.PRECONDITION_FAILED);
-            throw businessRuleException;
+    @Override
+    public UserDto createUser(User user) throws BusinessRuleException {
+        if (user == null) {
+            throw new BusinessRuleException("0001", "El usuario no puede ser nulo.", HttpStatus.BAD_REQUEST);
         }
-    }
-    @Override
-    public List<UserDto> getFullList(Long id) throws BusinessRuleException  {
-        // Implementation
-        Optional<User> optUser = userRepository.findById(id);
-        User user = userMapper.toOptional(optUser);
-        List<User> listUser = new ArrayList<>();
-        listUser.add(user);
 
-        if (user != null) {
-            List<UserDto> dtoList = userMapper.toDtoList(listUser);
-            return dtoList;
-        } else {
-            BusinessRuleException businessRuleException = new BusinessRuleException("0002", "Error validación. Transacion no localizada. ", HttpStatus.PRECONDITION_FAILED);
-            throw businessRuleException;
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new BusinessRuleException("0004", "El nombre de usuario ya existe.", HttpStatus.CONFLICT);
         }
-    }
 
-    @Override
-    public UserDto createUser(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new BusinessRuleException("0005", "El correo electrónico ya existe.", HttpStatus.CONFLICT);
+        }
+
         user.setCreatedAt(LocalDateTime.now());
-        user = userRepository.save(user);
-        return userMapper.toDto(user);
+        User savedUser = userRepository.save(user);
+        return userMapper.toDto(savedUser);
     }
 
     @Override
     public UserDto updateUser(Long id, UserDto userDto) throws BusinessRuleException {
-        Optional<User> opt = userRepository.findById(id);
-        log.info("Buscando usuario con ID: {}", id);
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessRuleException("0002", "Usuario no encontrado.", HttpStatus.PRECONDITION_FAILED));
 
-        if (opt.isEmpty()) {
-            BusinessRuleException businessRuleException = new BusinessRuleException(
-                    "0002",
-                    "Error validación. Usuario no encontrado.",
-                    HttpStatus.PRECONDITION_FAILED
-            );
-            throw businessRuleException;
+        if (userDto.getUsername() != null && !userDto.getUsername().isBlank()) {
+            existingUser.setUsername(userDto.getUsername().trim());
         }
-
-        User resUser = opt.get();
-        log.info("Usuario encontrado: {}", resUser.getUsername());
-
-        // Actualizar campos básicos
-        resUser.setId(id);
-        resUser.setUsername(userDto.getUsername());
-        resUser.setEmail(userDto.getEmail());
-        resUser.setStatus(true);
-
-        // IMPORTANTE: Solo actualizar password si se proporciona uno nuevo
+        if (userDto.getEmail() != null && !userDto.getEmail().isBlank()) {
+            existingUser.setEmail(userDto.getEmail().trim());
+        }
         if (userDto.getPassword() != null && !userDto.getPassword().trim().isEmpty()) {
-            // Considera encriptar la contraseña aquí si es necesario
-            resUser.setPassword(userDto.getPassword());
+            existingUser.setPassword(userDto.getPassword());
         }
+        existingUser.setStatus(true);
 
-        log.info("Guardando cambios del usuario: {}", resUser.getUsername());
-
-        try {
-            User savedUser = userRepository.save(resUser);
-            UserDto savedDto = userMapper.toDto(savedUser);
-            log.info("Usuario actualizado exitosamente: {}", savedDto.getUsername());
-            return savedDto;
-        } catch (Exception e) {
-            log.error("Error al guardar usuario: {}", e.getMessage(), e);
-            BusinessRuleException businessRuleException = new BusinessRuleException(
-                    "0003",
-                    "Error al guardar los cambios del usuario: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR
-            );
-            throw businessRuleException;
-        }
+        User savedUser = userRepository.save(existingUser);
+        return userMapper.toDto(savedUser);
     }
 
     @Override
-    public void deleteUser(Long id) {
-        // Implementation here
+    public void deleteUser(Long id) throws BusinessRuleException {
+        if (!userRepository.existsById(id)) {
+            throw new BusinessRuleException("0002", "Usuario no encontrado.", HttpStatus.NOT_FOUND);
+        }
+        userRepository.deleteById(id);
     }
+
     @Override
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);

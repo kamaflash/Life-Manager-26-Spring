@@ -52,21 +52,18 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public Optional<SystemEntity> getSystemById(Long id) {
-        Optional<SystemEntity> opt = systemRepository.findById(id);
-        return opt;
+        return systemRepository.findById(id);
     }
 
     @Override
     public SystemEntity getSystemByUid(Long uid) {
-        Optional<SystemEntity> opt = systemRepository.findByUid(uid);
-        return systemMapper.fromOptional(opt);
-
+        return systemRepository.findByUid(uid)
+                .orElseThrow(() -> new RuntimeException("System not found for uid: " + uid));
     }
+
     @Override
     public Optional<SystemEntity> getSystemByUidOP(Long uid) {
-        Optional<SystemEntity> opt = systemRepository.findByUid(uid);
-        return opt;
-
+        return systemRepository.findByUid(uid);
     }
     @Override
     public SystemDto createSystem(SystemDto systemDto) {
@@ -115,8 +112,12 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public void deleteSystem(Long id) {
-        // Implementation here
+        if (!systemRepository.existsById(id)) {
+            throw new RuntimeException("System not found with id: " + id);
+        }
+        systemRepository.deleteById(id);
     }
+
     @Override
     public double getTransportModifier(CharacterDto character) {
         if (character.getInventory() == null || character.getInventory().isEmpty()) {

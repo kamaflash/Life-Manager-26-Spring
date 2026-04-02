@@ -10,7 +10,6 @@ import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,17 +22,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class CharacterServiceImpl implements CharacterService {
 
     @Autowired
-    private final CharacterRepository characterRepository;
-    @Autowired
-    private final CharacterMapper characterMapper;
+    private CharacterRepository characterRepository;
 
     @Autowired
-    private final BusinessTransactions businessTransactions;
+    private CharacterMapper characterMapper;
+
+    @Autowired
+    private BusinessTransactions businessTransactions;
 
     @Override
     public CharacterDto createCharacter(CharacterDto characterDto) {

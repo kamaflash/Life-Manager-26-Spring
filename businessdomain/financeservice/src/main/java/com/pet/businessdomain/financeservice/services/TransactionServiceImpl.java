@@ -5,7 +5,6 @@ import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.financeservice.mapper.TransactionMapper;
 import com.pet.businessdomain.financeservice.repository.TransactionRepository;
 import com.pet.businessdomain.shareddto.dto.TransactionResponseDto;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,18 +16,20 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TransactionServiceImpl implements TransactionService {
 
     @Autowired
-    private final TransactionRepository transactionRepository;
+    private TransactionRepository transactionRepository;
 
     @Autowired
-    private final TransactionMapper transactionMapper;
+    private TransactionMapper transactionMapper;
 
     @Override
     public List<TransactionResponseDto> getTransactionsByAccount(Long accountId) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
         return transactionRepository.findByAccount_Id(accountId)
                 .stream()
                 .map(transactionMapper::toDto)
@@ -37,6 +38,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Page<TransactionResponseDto> getTransactionsByAccount(Long accountId, Pageable pageable) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
         return transactionRepository
                 .findByAccount_Id(accountId, pageable)
                 .map(transactionMapper::toDto);

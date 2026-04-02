@@ -29,9 +29,16 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public NotificationDTO createNotification(NotificationDTO notificationDTO) {
+        if (notificationDTO == null) {
+            throw new IllegalArgumentException("Notification data required");
+        }
+
+        if (notificationDTO.getUserId() == null) {
+            throw new IllegalArgumentException("Notification userId is required");
+        }
+
         Notification notification = mapper.toEntity(notificationDTO);
 
-        // Set default values for new fields if not provided
         if (notification.getPriority() == null) {
             notification.setPriority(NotificationPriority.MEDIUM);
         }
@@ -41,7 +48,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (notification.getReadAt() == null && notification.isRead()) {
             notification.setReadAt(LocalDateTime.now());
         }
-        // updatedAt will be set by @UpdateTimestamp in entity, but we can leave it null initially
+
         notification.setRead(false);
         notification.setDeleted(false);
 
@@ -58,9 +65,12 @@ public class NotificationServiceImpl implements NotificationService {
                                                       NotificationType type,
                                                       NotificationPriority priority,
                                                       Boolean read) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id is required");
+        }
+
         Page<Notification> notifications;
 
-        // Build query dynamically based on filters
         if (type != null && priority != null && read != null) {
             notifications = repository.findByUserIdAndTypeAndPriorityAndRead(userId, type, priority, read, pageable);
         } else if (type != null && priority != null) {
@@ -101,6 +111,10 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void markAsRead(Long notificationId) {
+        if (notificationId == null) {
+            throw new IllegalArgumentException("Notification id is required");
+        }
+
         Notification notification = repository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
 
@@ -114,7 +128,12 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void markAllAsRead(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id is required");
+        }
+
         List<Notification> unreadNotifications = repository.findByUserIdAndReadFalse(userId);
+
         if (!unreadNotifications.isEmpty()) {
             unreadNotifications.forEach(n -> {
                 n.setRead(true);

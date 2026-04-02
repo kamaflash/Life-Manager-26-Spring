@@ -45,19 +45,13 @@ public class FormationController {
     // 🔍 OBTENER FORMACIÓN POR ID
     // =========================
     @GetMapping("/{id}")
-    public ResponseEntity<FormationDto> getFormationById(@PathVariable Long id)
-            throws BusinessRuleException {
-
-        Formation formation = formationService.getById(id);
-        if (formation == null) {
-            throw new BusinessRuleException(
-                    "1001",
-                    "La formación no existe",
-                    HttpStatus.BAD_REQUEST
-            );
+    public ResponseEntity<FormationDto> getFormationById(@PathVariable Long id) {
+        try {
+            Formation formation = formationService.getById(id);
+            return ResponseEntity.ok(formationMapper.toDto(formation));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
-        return ResponseEntity.ok(formationMapper.toDto(formation));
     }
 
     // =========================
@@ -77,12 +71,12 @@ public class FormationController {
     // =========================
     @PostMapping
     public ResponseEntity<FormationDto> createFormation(@RequestBody FormationDto formationDto) {
-        Formation formation = formationMapper.toEntity(formationDto);
-        formation.setActive(true); // asegurar que esté activa
-        Formation saved = formationService.save(formation);
-        FormationDto savedDto = formationMapper.toDto(saved);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
+        try {
+            FormationDto savedDto = formationService.createFormation(formationDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedDto);
+        } catch (BusinessRuleException e) {
+            return ResponseEntity.status(e.getHttpStatus()).body(null);
+        }
     }
 
     @SneakyThrows
@@ -109,20 +103,13 @@ public class FormationController {
     public ResponseEntity<FormationDto> updateFormation(
             @PathVariable Long id,
             @RequestBody FormationDto formationDto
-    ) throws BusinessRuleException {
-
-        Formation existing = formationService.getById(id);
-        if (existing == null) {
-            throw new BusinessRuleException(
-                    "1001",
-                    "La formación no existe",
-                    HttpStatus.BAD_REQUEST
-            );
+    ) {
+        try {
+            FormationDto updated = formationService.updateFormation(id, formationDto);
+            return ResponseEntity.ok(updated);
+        } catch (BusinessRuleException ex) {
+            return ResponseEntity.status(ex.getHttpStatus()).body(null);
         }
-
-        formationMapper.updateEntityFromDto(formationDto, existing);
-        Formation updated = formationService.save(existing);
-        return ResponseEntity.ok(formationMapper.toDto(updated));
     }
 
     // =========================
@@ -130,7 +117,11 @@ public class FormationController {
     // =========================
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFormation(@PathVariable Long id) {
-        formationService.delete(id);
-        return ResponseEntity.noContent().build();
+        try {
+            formationService.deactivateFormation(id);
+            return ResponseEntity.noContent().build();
+        } catch (BusinessRuleException ex) {
+            return ResponseEntity.status(ex.getHttpStatus()).build();
+        }
     }
 }

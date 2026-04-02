@@ -1,6 +1,7 @@
 package com.pet.businessdomain.jobservice.repository;
 
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
+import com.pet.businessdomain.shareddto.dto.JobVacancyDto;
 import com.pet.businessdomain.shareddto.dto.VacancyFullDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -32,5 +33,6 @@ JOIN p.company c
 LEFT JOIN p.experienceRequired e
 """)
     List<VacancyFullDto> findAllFullVacancies();
+    List<JobVacancyDto> findByActiveTrue();
 
 }

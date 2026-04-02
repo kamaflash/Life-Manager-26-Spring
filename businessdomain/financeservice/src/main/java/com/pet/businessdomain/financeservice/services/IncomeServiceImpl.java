@@ -24,34 +24,38 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class IncomeServiceImpl implements IncomeService {
 
     @Autowired
-    private final IncomeRepository incomeRepository;
+    private IncomeRepository incomeRepository;
 
     @Autowired
-    private final FinanceAccountRepository accountRepository;
+    private FinanceAccountRepository accountRepository;
 
     @Autowired
-    private final TransactionRepository transactionRepository;
+    private TransactionRepository transactionRepository;
 
     @Autowired
-    private final IncomeMapper incomeMapper;
-
-
-    @Autowired
-    private final TransactionMapper transactionMapper;
-
+    private IncomeMapper incomeMapper;
 
     @Autowired
-    private final FinanceAccountMapper financeAccountMapper;
+    private TransactionMapper transactionMapper;
+
+    @Autowired
+    private FinanceAccountMapper financeAccountMapper;
 
     @Override
     public IncomeResponseDto addIncome(Long accountId, CreateIncomeRequestDto dto) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
+        if (dto == null || dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Income amount must be positive");
+        }
+
         FinanceAccountEntity account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Finance account not found"));
+                .orElseThrow(() -> new RuntimeException("Finance account not found with id: " + accountId));
 
         IncomeEntity income = incomeMapper.fromCreate(dto);
         income.setAccount(account);
@@ -75,6 +79,9 @@ public class IncomeServiceImpl implements IncomeService {
     @Override
     @Transactional(readOnly = true)
     public List<CreateIncomeRequestDto> getIncomes(Long accountId) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
         return incomeRepository.findByAccount_Id(accountId)
                 .stream()
                 .map(incomeMapper::toDtoCreate)
@@ -84,6 +91,9 @@ public class IncomeServiceImpl implements IncomeService {
     @Override
     @Transactional(readOnly = true)
     public List<TransactionResponseDto> getTransaction(Long accountId) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
         return transactionRepository.findByAccount_Id(accountId)
                 .stream()
                 .map(transactionMapper::toDto)
@@ -92,8 +102,16 @@ public class IncomeServiceImpl implements IncomeService {
 
     @Override
     public void deactivateIncome(Long incomeId) {
+        if (incomeId == null) {
+            throw new IllegalArgumentException("Income id is required");
+        }
+
         IncomeEntity income = incomeRepository.findById(incomeId)
-                .orElseThrow(() -> new RuntimeException("Income not found"));
+                .orElseThrow(() -> new RuntimeException("Income not found with id: " + incomeId));
+
+        if (!income.isActive()) {
+            throw new RuntimeException("Income already deactivated");
+        }
 
         income.setActive(false);
         incomeRepository.save(income);

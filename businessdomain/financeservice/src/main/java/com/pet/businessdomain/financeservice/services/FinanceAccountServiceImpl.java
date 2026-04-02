@@ -17,27 +17,30 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class FinanceAccountServiceImpl implements FinanceAccountService {
 
     @Autowired
-    private final FinanceAccountRepository accountRepository;
+    private FinanceAccountRepository accountRepository;
 
     @Autowired
-    private final FinanceAccountMapper accountMapper;
-
-
-    @Autowired
-    private final IncomeService incomeService;
-    @Autowired
-    private final ExpenseService expenseService;
+    private FinanceAccountMapper accountMapper;
 
     @Autowired
-    private final TransactionService transactionService;
+    private IncomeService incomeService;
+
+    @Autowired
+    private ExpenseService expenseService;
+
+    @Autowired
+    private TransactionService transactionService;
 
     @Override
     public FinanceAccountResponseDto createAccount(FinanceAccountResponseDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Account data is required");
+        }
+
         FinanceAccountEntity entity = accountMapper.toEntity(dto);
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
@@ -48,6 +51,9 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
     @Override
     @Transactional(readOnly = true)
     public FinanceAccountResponseDto getAccountById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
         FinanceAccountEntity entity = accountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Finance account not found with id " + id));
         return accountMapper.toDto(entity);
@@ -55,8 +61,11 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
 
     @Override
     public FinanceAccountResponseDto getAccountByOwner(EnumAll.OwnerType ownerType, Long ownerId) {
-        FinanceAccountEntity entity = accountRepository.findByOwnerTypeAndOwnerId(ownerType,ownerId)
-                .orElseThrow(() -> new RuntimeException("Finance account not found with id " + ownerId));
+        if (ownerType == null || ownerId == null) {
+            throw new IllegalArgumentException("Owner type and owner id are required");
+        }
+        FinanceAccountEntity entity = accountRepository.findByOwnerTypeAndOwnerId(ownerType, ownerId)
+                .orElseThrow(() -> new RuntimeException("Finance account not found with owner id " + ownerId));
         return accountMapper.toDto(entity);
     }
 
@@ -93,6 +102,9 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
 
     @Override
     public List<FinanceAccountResponseDto> getAccountsByOwnerId(Long ownerId) {
+        if (ownerId == null) {
+            throw new IllegalArgumentException("Owner id is required");
+        }
 
         List<FinanceAccountResponseDto> list = accountRepository
                 .findAllByOwnerId(ownerId)
@@ -100,7 +112,11 @@ public class FinanceAccountServiceImpl implements FinanceAccountService {
                 .map(accountMapper::toDto)
                 .toList();
 
-        FinanceAccountResponseDto accountDto = list.getFirst();
+        if (list.isEmpty()) {
+            return List.of();
+        }
+
+        FinanceAccountResponseDto accountDto = list.get(0);
         accountDto.setExpenses(expenseService.getExpenses(accountDto.getId()));
         accountDto.setIncomes(incomeService.getIncomes(accountDto.getId()));
         accountDto.setTransactions(transactionService.getTransactionsByAccount(accountDto.getId()));

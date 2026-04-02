@@ -19,9 +19,9 @@ import java.util.Optional;
 public interface UserService {
     List<UserDto> getAllUsers();
     Optional<User> getUserById(Long id);
-    UserDto createUser(User user);
+    UserDto createUser(User user) throws BusinessRuleException;
     UserDto updateUser(Long id, UserDto userDto) throws BusinessRuleException;
-    void deleteUser(Long id);
+    void deleteUser(Long id) throws BusinessRuleException;
     UserDto getFull(Long uid) throws BusinessRuleException;
     List<UserDto> getFullList(Long id) throws BusinessRuleException;
     Optional<User> getUserByUsername(String username);

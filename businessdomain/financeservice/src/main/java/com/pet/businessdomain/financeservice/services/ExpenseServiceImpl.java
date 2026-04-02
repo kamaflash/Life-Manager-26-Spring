@@ -22,26 +22,32 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ExpenseServiceImpl implements ExpenseService {
 
     @Autowired
-    private final ExpenseRepository expenseRepository;
+    private ExpenseRepository expenseRepository;
 
     @Autowired
-    private final FinanceAccountRepository accountRepository;
+    private FinanceAccountRepository accountRepository;
 
     @Autowired
-    private final TransactionRepository transactionRepository;
+    private TransactionRepository transactionRepository;
 
     @Autowired
-    private final ExpenseMapper expenseMapper;
+    private ExpenseMapper expenseMapper;
 
     @Override
     public ExpenseResponseDto addExpense(Long accountId, CreateExpenseRequestDto dto) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
+        if (dto == null || dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Expense amount must be positive");
+        }
+
         FinanceAccountEntity account = accountRepository.findByOwnerId(accountId)
-                .orElseThrow(() -> new RuntimeException("Finance account not found"));
+                .orElseThrow(() -> new RuntimeException("Finance account not found with account id: " + accountId));
 
         ExpenseEntity expense = expenseMapper.fromCreate(dto);
         expense.setAccount(account);
@@ -65,6 +71,9 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     @Transactional(readOnly = true)
     public List<CreateExpenseRequestDto> getExpenses(Long accountId) {
+        if (accountId == null) {
+            throw new IllegalArgumentException("Account id is required");
+        }
         return expenseRepository.findByAccount_Id(accountId)
                 .stream()
                 .map(expenseMapper::toDtoCreate)
@@ -73,8 +82,12 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public void deactivateExpense(Long expenseId) {
+        if (expenseId == null) {
+            throw new IllegalArgumentException("Expense id is required");
+        }
+
         ExpenseEntity expense = expenseRepository.findById(expenseId)
-                .orElseThrow(() -> new RuntimeException("Expense not found"));
+                .orElseThrow(() -> new RuntimeException("Expense not found with id: " + expenseId));
 
         expense.setActive(false);
         expenseRepository.save(expense);

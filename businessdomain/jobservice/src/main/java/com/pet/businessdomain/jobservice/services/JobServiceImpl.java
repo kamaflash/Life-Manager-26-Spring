@@ -65,12 +65,15 @@ public class JobServiceImpl implements IJobService {
     public CompanyDto getCompanyById(Long companyId) {
         return companyMapper.toDto(
                 companyRepository.findById(companyId)
-                        .orElseThrow(() -> new RuntimeException("Company not found"))
+                        .orElseThrow(() -> new RuntimeException("Company not found with id: " + companyId))
         );
     }
 
     @Override
     public List<CompanyDto> getCompaniesByCategory(String category) {
+        if (category == null || category.isBlank()) {
+            throw new IllegalArgumentException("Category is required");
+        }
         return companyMapper.toDtoList(companyRepository.findByCategory(category));
     }
 
@@ -271,6 +274,9 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public void deletePosition(Long id) {
+        if (!positionRepository.existsById(id)) {
+            throw new RuntimeException("Position not found with id: " + id);
+        }
         positionRepository.deleteById(id);
     }
 
@@ -279,6 +285,9 @@ public class JobServiceImpl implements IJobService {
     // =======================
     @Override
     public List<JobVacancyDto> getVacanciesByPosition(Long positionId) {
+        if (positionId == null) {
+            throw new IllegalArgumentException("Position id is required");
+        }
         return vacancyMapper.toDtoList(
                 vacancyRepository.findByPositionId(positionId)
         );
@@ -286,9 +295,12 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public JobVacancyDto getVacancyById(Long vacancyId) {
+        if (vacancyId == null) {
+            throw new IllegalArgumentException("Vacancy id is required");
+        }
         return vacancyMapper.toDto(
                 vacancyRepository.findById(vacancyId)
-                        .orElseThrow(() -> new RuntimeException("Vacancy not found"))
+                        .orElseThrow(() -> new RuntimeException("Vacancy not found with id: " + vacancyId))
         );
     }
 
@@ -313,13 +325,16 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public JobVacancyDto createVacancy(JobVacancyDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Vacancy data is required");
+        }
 
         JobVacancyEntity entity = vacancyMapper.toEntity(dto);
-        entity.setId(dto.getId());
         JobPositionEntity position = positionRepository.findById(dto.getPositionId())
-                .orElseThrow(() -> new RuntimeException("Position not found"));
+                .orElseThrow(() -> new RuntimeException("Position not found with id: " + dto.getPositionId()));
 
         entity.setPosition(position);
+        entity.setActive(true);
 
         return vacancyMapper.toDto(vacancyRepository.save(entity));
     }
@@ -327,7 +342,7 @@ public class JobServiceImpl implements IJobService {
     @Override
     public JobVacancyDto updateVacancy(Long id, JobVacancyDto dto) {
         JobVacancyEntity entity = vacancyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vacancy not found"));
+                .orElseThrow(() -> new RuntimeException("Vacancy not found with id: " + id));
 
         vacancyMapper.updateEntity(dto, entity);
 
@@ -336,6 +351,9 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public void deleteVacancy(Long id) {
+        if (!vacancyRepository.existsById(id)) {
+            throw new RuntimeException("Vacancy not found with id: " + id);
+        }
         vacancyRepository.deleteById(id);
     }
 
@@ -351,19 +369,36 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public CharacterApplicationDto applyToVacancy(CharacterApplicationDto dto) {
+        if (dto == null || dto.getCharacterId() == null || dto.getVacancyId() == null) {
+            throw new IllegalArgumentException("Character ID and Vacancy ID are required");
+        }
+
+        boolean alreadyApplied = applicationRepository
+                .findByCharacterId(dto.getCharacterId())
+                .stream()
+                .anyMatch(app -> app.getVacancyId().equals(dto.getVacancyId()));
+
+        if (alreadyApplied) {
+            throw new RuntimeException("Character already applied to vacancy: " + dto.getVacancyId());
+        }
+
         JobPositionEntity position = positionRepository
                 .findPositionByVacancyId(dto.getVacancyId())
-                .orElseThrow(() -> new RuntimeException("Position not found"));
+                .orElseThrow(() -> new RuntimeException("Position not found for vacancy id: " + dto.getVacancyId()));
+
         CharacterApplicationEntity entity = applicationMapper.toEntity(dto);
         entity.setId(null);
         entity.setAppliedAt(LocalDateTime.now());
         entity.setStatus("APPLIED");
         entity.setPositionId(position.getId());
+
         entity = applicationRepository.save(entity);
+
         updateSystem(entity);
-        addIncome(dto,entity);
+        addIncome(dto, entity);
         dto.setId(entity.getCharacterId());
         setNotification(dto);
+
         return applicationMapper.toDto(entity);
     }
     private void  updateSystem(CharacterApplicationEntity entity) {
@@ -389,21 +424,41 @@ public class JobServiceImpl implements IJobService {
     }
     @Override
     public FinanceAccountResponseDto getAccountByCharacterId(Long characterId) {
+        if (characterId == null) {
+            throw new IllegalArgumentException("Character id is required");
+        }
         return businessTransactions.getAccount(characterId);
     }
 
     @Override
     public void cancelApplication(Long applicationId) {
+        if (!applicationRepository.existsById(applicationId)) {
+            throw new RuntimeException("Application not found with id: " + applicationId);
+        }
         applicationRepository.deleteById(applicationId);
     }
 
     @Override
     public List<JobVacancyDto> getAvailableVacanciesForCharacter(Long characterId) {
-        return List.of();
+        if (characterId == null) {
+            throw new IllegalArgumentException("Character id is required");
+        }
+
+        List<Long> appliedVacancyIds = applicationRepository
+                .findByCharacterId(characterId)
+                .stream()
+                .map(CharacterApplicationEntity::getVacancyId)
+                .toList();
+
+        return vacancyRepository.findByActiveTrue()
+                .stream()
+                .filter(v -> !appliedVacancyIds.contains(v.getId()))
+                .toList();
     }
 
     @Override
     public void cancelAll() {
+        applicationRepository.deleteAll();
         vacancyRepository.deleteAll();
         positionRepository.deleteAll();
         companyRepository.deleteAll();

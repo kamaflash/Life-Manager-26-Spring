@@ -5,22 +5,38 @@ import com.pet.businessdomain.productservice.entities.Product;
 import com.pet.businessdomain.productservice.mapper.ProductMapper;
 import com.pet.businessdomain.productservice.repository.ProductRepository;
 import com.pet.businessdomain.shareddto.enumentities.ProductCategory;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private final ProductRepository productRepository;
-    private final ProductMapper productMapper;
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private ProductMapper productMapper;
 
     @Override
     public ProductResponseDTO create(ProductResponseDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Product data is required");
+        }
+
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new IllegalArgumentException("Product name is required");
+        }
+
+        if (productRepository.existsByName(dto.getName())) {
+            throw new RuntimeException("Product already exists with name: " + dto.getName());
+        }
+
         Product product = productMapper.toEntity(dto);
-        return productMapper.toDTO(productRepository.save(product));
+        product.setActive(true);
+        Product saved = productRepository.save(product);
+        return productMapper.toDTO(saved);
     }
 
     @Override
@@ -33,6 +49,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductResponseDTO> getByCategory(ProductCategory category) {
+        if (category == null) {
+            throw new IllegalArgumentException("Product category is required");
+        }
         return productRepository.findByCategoryAndActiveTrue(category)
                 .stream()
                 .map(productMapper::toDTO)

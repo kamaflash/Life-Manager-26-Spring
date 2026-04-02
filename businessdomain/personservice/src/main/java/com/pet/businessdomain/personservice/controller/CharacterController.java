@@ -13,18 +13,20 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/characters")
-@RequiredArgsConstructor
 public class CharacterController {
 
     @Autowired
-    private final CharacterService characterService;
+    private CharacterService characterService;
 
     @Autowired
-    private final CharacterRepository characterRepository;
+    private CharacterRepository characterRepository;
 
     // Crear un nuevo personaje
     @PostMapping
     public ResponseEntity<CharacterDto> createCharacter(@RequestBody CharacterDto characterDto) {
+        if (characterDto == null) {
+            return ResponseEntity.badRequest().build();
+        }
         CharacterDto created = characterService.createCharacter(characterDto);
         return ResponseEntity.ok(created);
     }
@@ -33,14 +35,21 @@ public class CharacterController {
     @GetMapping
     public ResponseEntity<List<CharacterDto>> getAllCharacters() {
         List<CharacterDto> characters = characterService.getAllCharacters();
+        if (characters.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(characters);
     }
 
     // Obtener personaje por id
     @GetMapping("/{id}")
     public ResponseEntity<CharacterDto> getCharacterById(@PathVariable(name = "id") Long id) {
-        CharacterDto character = characterService.getCharacterById(id);
-        return ResponseEntity.ok(character);
+        try {
+            CharacterDto character = characterService.getCharacterById(id);
+            return ResponseEntity.ok(character);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
     // Obtener personaje por id
     @GetMapping("/id/full/{id}")
@@ -66,15 +75,24 @@ public class CharacterController {
     public ResponseEntity<CharacterDto> updateCharacterName(
             @PathVariable(name = "id") Long id,
             @RequestBody String name) {
-        CharacterDto updated = characterService.updateCharacterName(id, name);
-        return ResponseEntity.ok(updated);
+        try {
+            CharacterDto updated = characterService.updateCharacterName(id, name);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
-    @PutMapping("/stast/{id}")
-    public CharacterDto updateCharacterStast(
+
+    @PutMapping("/stats/{id}")
+    public ResponseEntity<CharacterDto> updateCharacterStats(
             @PathVariable(name = "id") Long id,
             @RequestBody CharacterDto characterDto) {
-        CharacterDto updated = characterService.updateCharacter(id, characterDto);
-        return updated;
+        try {
+            CharacterDto updated = characterService.updateCharacter(id, characterDto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // Borrar personaje (opcional)
