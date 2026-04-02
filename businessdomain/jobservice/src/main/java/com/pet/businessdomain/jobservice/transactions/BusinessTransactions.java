@@ -121,7 +121,7 @@ public class BusinessTransactions {
             return null; // o lanza excepción, según tu diseño
         }
     }
-    public SystemDto updateSystem(Long uid, LocalDateTime time) {
+    public SystemDto updateSystem(Long uid, LocalDateTime time, Integer pa) {
         try {
             WebClient webClient = webClientBuilder
                     .clientConnector(new ReactorClientHttpConnector(client))
@@ -130,7 +130,7 @@ public class BusinessTransactions {
                     .build();
 
             return webClient.put()
-                    .uri("/{uid}", uid)
+                    .uri("/{uid}/{pa}", uid,pa)
                     .bodyValue(time) // 👈 enviamos el body
                     .retrieve()
                     .onStatus(

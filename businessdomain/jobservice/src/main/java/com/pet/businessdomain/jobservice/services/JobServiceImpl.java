@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,78 +77,106 @@ public class JobServiceImpl implements IJobService {
     @Override
     public Page<JobPositionEntity> getFilteredPositions(
             JobCategory category,
-            List<String> userSkills, // ahora solo para posibles futuros filtros
+            List<String> userSkills,
             int minMatch,
             Long pid,
             Pageable pageable
     ) {
+
         CharacterDto characterDto = businessTransactions.getCharacter(pid);
+
+        boolean isStudent = characterDto.getEducation() != null &&
+                characterDto.getEducation().stream()
+                        .map(CharacterTrainingDto::getTrainingId)
+                        .anyMatch(id -> id == 104 || id == 105);
+
         Page<JobPositionEntity> page =
                 positionRepository.findByCategoryAndActiveTrue(category, pageable);
+
         Set<Long> takenJobIds = characterDto.getJobs() == null
                 ? Collections.emptySet()
                 : characterDto.getJobs().stream()
-                .map(JobPositionDto::getId) // ajusta si no es DTO
+                .map(JobPositionDto::getId)
                 .collect(Collectors.toSet());
 
         List<JobPositionEntity> filtered = page.getContent().stream()
-
-                .map(job -> {
-
-                    List<JobVacancyDto> vacancies =
-                            getVacanciesByPosition(job.getId());
-
-                    int characterXp = characterDto.getXpAcademy() + characterDto.getXpAcademy();
-
-                    int requiredXp = Math.max(
-                            job.getMinXp() != null ? job.getMinXp() : 0,
-                            job.getExperienceRequired() != null &&
-                                    job.getExperienceRequired().getMinXp() != null
-                                    ? job.getExperienceRequired().getMinXp()
-                                    : 0
-                    );
-
-                    int match = characterXp < requiredXp ? 0 : 100;
-
-                    return new Object[] { job, match, vacancies };
-                })
-
-                .filter(obj -> {
-
-                    JobPositionEntity job = (JobPositionEntity) obj[0];
-                    int match = (int) obj[1];
-                    List<JobVacancyDto> vacancies = (List<JobVacancyDto>) obj[2];
-
-                    boolean isRemote = "REMOTE".equalsIgnoreCase(job.getWorkModality());
-
-                    boolean sameCity = job.getLocation() != null &&
-                            job.getLocation().toLowerCase()
-                                    .contains(characterDto.getCity().toLowerCase());
-
-                    boolean notAlreadyTaken = !takenJobIds.contains(job.getId());
-
-                    boolean notAlreadyApplied = true;
-
-                    if (vacancies != null && !vacancies.isEmpty()) {
-
-                        List<Long> vacancyIds = vacancies.stream()
-                                .map(JobVacancyDto::getId)
-                                .toList();
-
-                        notAlreadyApplied = !isJobs(pid, vacancyIds);
-                    }
-
-                    return match >= minMatch
-                            && (isRemote || sameCity)
-                            && notAlreadyTaken
-                            && notAlreadyApplied;
-                })
-                .map(obj -> (JobPositionEntity) obj[0])
+                .filter(job -> isValidJob(job, characterDto, takenJobIds, minMatch, pid, isStudent))
                 .toList();
 
         return new PageImpl<>(filtered, pageable, filtered.size());
     }
+    private boolean isSchoolSchedule(JobVacancyDto vacancy) {
 
+        if (vacancy.getStartTime() == null || vacancy.getEndTime() == null) {
+            return false;
+        }
+
+        LocalTime start = vacancy.getStartTime();
+        LocalTime end = vacancy.getEndTime();
+
+        LocalTime schoolStart = LocalTime.of(8, 0);
+        LocalTime schoolEnd = LocalTime.of(15, 0);
+
+        boolean overlapsTime = start.isBefore(schoolEnd) && end.isAfter(schoolStart);
+
+        boolean isWeekday = vacancy.getWorkingDays() != null &&
+                vacancy.getWorkingDays().stream().anyMatch(day ->
+                        day.equals("MONDAY") ||
+                                day.equals("TUESDAY") ||
+                                day.equals("WEDNESDAY") ||
+                                day.equals("THURSDAY") ||
+                                day.equals("FRIDAY")
+                );
+
+        return overlapsTime && isWeekday;
+    }
+    private boolean isValidJob(
+            JobPositionEntity job,
+            CharacterDto characterDto,
+            Set<Long> takenJobIds,
+            int minMatch,
+            Long pid,
+            boolean isStudent
+    ) {
+
+        List<JobVacancyDto> vacancies = getVacanciesByPosition(job.getId());
+
+        int characterXp = characterDto.getXpAcademy() + characterDto.getXpJobs();
+
+        int requiredXp = Math.max(
+                job.getMinXp() != null ? job.getMinXp() : 0,
+                job.getExperienceRequired() != null &&
+                        job.getExperienceRequired().getMinXp() != null
+                        ? job.getExperienceRequired().getMinXp()
+                        : 0
+        );
+
+        int match = characterXp < requiredXp ? 0 : 100;
+
+        if (match < minMatch) return false;
+
+        if (takenJobIds.contains(job.getId())) return false;
+
+        if (vacancies != null && !vacancies.isEmpty()) {
+
+            List<Long> vacancyIds = vacancies.stream()
+                    .map(JobVacancyDto::getId)
+                    .toList();
+
+            if (isJobs(pid, vacancyIds)) return false;
+        }
+
+        // 🔴 AQUÍ TU LÓGICA NUEVA BIEN HECHA
+        if (isStudent && vacancies != null && !vacancies.isEmpty()) {
+
+            boolean hasValidVacancy = vacancies.stream()
+                    .anyMatch(v -> !isSchoolSchedule(v));
+
+            if (!hasValidVacancy) return false;
+        }
+
+        return true;
+    }
 
     @Override
     public CompanyDto createCompany(CompanyDto dto) {
@@ -343,7 +372,7 @@ public class JobServiceImpl implements IJobService {
         LocalDateTime current = systemDto.getActualityAt();
         LocalDateTime newActuality = current.plusHours(2);
         systemDto.setActualityAt(newActuality);
-        systemDto = businessTransactions.updateSystem(systemDto.getUid(),newActuality);
+        systemDto = businessTransactions.updateSystem(systemDto.getUid(),newActuality, 2);
     }
     private void addIncome(CharacterApplicationDto dto, CharacterApplicationEntity entity) {
         CharacterDto characterDto = businessTransactions.getCharacter(dto.getCharacterId());

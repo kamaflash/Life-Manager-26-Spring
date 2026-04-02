@@ -4,6 +4,7 @@
  */
 package com.pet.businessdomain.formationservice.services;
 
+import com.pet.businessdomain.formationservice.entities.Formation;
 import com.pet.businessdomain.shareddto.dto.FormationDto;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 import java.util.List;
@@ -16,21 +17,16 @@ import com.pet.businessdomain.shareddto.enumentities.EnumAll;
  */
 
 public interface FormationService {
-    FormationDto createFormation(FormationDto formationDto) throws BusinessRuleException;
+    Formation getById(Long id);
 
-    FormationDto updateFormation(Long id, FormationDto formationDto) throws BusinessRuleException;
+    List<Formation> getAllActive();
 
-    FormationDto getFormationById(Long id) throws BusinessRuleException;
+    List<Formation> getByCategory(String category);
 
-    FormationDto getFormationByCode(String code) throws BusinessRuleException;
+    Formation save(Formation formation);
 
-    List<FormationDto> getAvailableFormations(
-            EnumAll.EducationLevel educationLevel,
-            Integer academicLevel,
-            Integer academicXp,
-            EnumAll.CareerInterest careerInterest
-    );
-
+    void delete(Long id);
+    FormationDto createFormation(FormationDto dto) throws BusinessRuleException;
+    FormationDto updateFormation(Long id, FormationDto dto) throws BusinessRuleException;
     void deactivateFormation(Long id) throws BusinessRuleException;
-
 }

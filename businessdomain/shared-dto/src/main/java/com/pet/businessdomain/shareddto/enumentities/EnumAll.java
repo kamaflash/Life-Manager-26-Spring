@@ -15,7 +15,9 @@ public class EnumAll {
         working_family,
         difficult_situation
     }
-
+    public enum ExamStatus {
+        PENDING, PASSED, FAILED
+    }
     public enum EducationLevel {
         none,
         basic,
@@ -34,18 +36,18 @@ public class EnumAll {
     }
 
     public enum CareerInterest {
-        technology,
-        health,
-        arts,
-        business,
-        education,
-        sports,
-        construction,
-        creative,
-        social,
-        science,
-        hospitality,
-        other
+        TECHNOLOGY,
+        HEALTH,
+        CONSTRUCTION,
+        BUSINESS,
+        CREATIVE,
+        SOCIAL,
+        SCIENCE,
+        HOSPITALITY,
+        ARTS,
+        EDUCATION,
+        SPORTS,
+        OTHER
     }
 
     public enum Aspiration {

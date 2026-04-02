@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @NoArgsConstructor
@@ -31,12 +32,12 @@ public class CharacterTraining {
     private EnumAll.TrainingStatus status;
     // AVAILABLE, IN_PROGRESS, COMPLETED, FAILED
 
-    private Integer progress; // 0-100
+    private Integer progress = 0; // 0-100
     private String trainingName;
     private EnumAll.TrainingType trainingType;
     private EnumAll.DifficultyLevel trainingDifficulty;
 
-    private Integer investedHours;
+    private Integer investedHours = 0;
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
 
@@ -45,5 +46,8 @@ public class CharacterTraining {
     private Boolean applied;
     private BigDecimal cost;
     private CharacterStats stats;
+
+    @OneToMany(mappedBy = "characterTraining")
+    private List<CharacterExam> exams;
 
 }

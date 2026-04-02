@@ -73,8 +73,10 @@ public class Formation {
     private LocalTime endTime;
 
     @ElementCollection
-    @CollectionTable(name = "course_working_days", joinColumns = @JoinColumn(name = "job_id"))
+    @CollectionTable(name = "course_working_days", joinColumns = @JoinColumn(name = "formation_id"))
     @Column(name = "day_of_week")
     @Enumerated(EnumType.STRING)
     private List<EnumAll.WorkingDay> workingDays;
+    @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL)
+    private List<FormationExam> exams;
 }

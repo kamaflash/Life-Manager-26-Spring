@@ -1,5 +1,6 @@
 package com.pet.businessdomain.formationservice.services;
 
+import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import com.pet.businessdomain.shareddto.dto.ScholarshipDto;
 import com.pet.businessdomain.formationservice.entities.ScholarshipEntity;
 import com.pet.businessdomain.formationservice.mapper.ScholarshipMapper;
@@ -33,7 +34,6 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         entity.setTitle(dto.getTitle());
         entity.setDescription(dto.getDescription());
         entity.setAmount(dto.getAmount());
-        entity.setCountry(dto.getCountry());
         entity.setActive(dto.getActive());
         entity.setMinXpRequired(dto.getMinXpRequired());
         entity.setStartDate(dto.getStartDate());
@@ -55,6 +55,12 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         List<ScholarshipEntity> entities = repository.findByActiveTrue();
         return mapper.toDtoList(entities);
     }
+
+    @Override
+    public List<ScholarshipDto> getAllForCharacter(CharacterDto characterDto) {
+        return List.of();
+    }
+
 
     @Override
     public void delete(Long id) {

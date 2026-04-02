@@ -4,6 +4,7 @@ import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.EnumTrainer;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,20 +15,20 @@ public class CharacterTrainingDto {
     private Long characterId;
     private Long trainingId;
 
-    // Info opcional para el frontend
+    private EnumAll.TrainingStatus status;
+
+    private Integer progress = 0;
     private String trainingName;
     private EnumAll.TrainingType trainingType;
     private EnumAll.DifficultyLevel trainingDifficulty;
 
-    // ===== PROGRESO =====
-    private EnumAll.TrainingStatus status;
-    private Integer progress;
+    private Integer investedHours = 0;
 
-    private Integer investedHours;
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
 
-    // ===== RESULTADO =====
     private Integer academicXpGained;
+
     private Boolean applied;
+    private BigDecimal cost;
 }

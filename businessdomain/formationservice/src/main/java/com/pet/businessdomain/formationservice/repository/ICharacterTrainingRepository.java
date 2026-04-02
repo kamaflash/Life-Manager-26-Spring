@@ -5,14 +5,17 @@ import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ICharacterTrainingRepository  extends JpaRepository<CharacterTraining, Long> {
 
-    // Todos los cursos de un personaje
     List<CharacterTraining> findByCharacterId(Long characterId);
 
-    // Solo los cursos completados
+    Optional<CharacterTraining> findByCharacterIdAndTrainingId(Long characterId, Long trainingId);
+
     List<CharacterTraining> findByCharacterIdAndStatus(Long characterId, EnumAll.TrainingStatus status);
-    boolean existsByCharacterIdAndTrainingId(Long characterId, Long trainingId);
+
+    List<CharacterTraining> findByStatus(EnumAll.TrainingStatus status);
     CharacterTraining getByCharacterIdAndTrainingId(Long id, Long trainingId);
+
 }

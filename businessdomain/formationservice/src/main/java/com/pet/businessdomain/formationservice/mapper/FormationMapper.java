@@ -20,17 +20,20 @@ import org.mapstruct.*;
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface FormationMapper {
+
     FormationDto toDto(Formation formation);
+
     Formation toEntity(FormationDto formationDto);
+
     List<FormationDto> toDtoList(List<Formation> formations);
-    List<CharacterTraining> toDtoListT(List<CharacterTraining> formations);
-    List<CharacterTrainingDto> toDtoListFull(List<CharacterTraining> formations);
+
+    List<Formation> toEntityList(List<FormationDto> dtos);
+
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     void updateEntityFromDto(FormationDto dto, @MappingTarget Formation entity);
 
-    // 🔴 AÑADE ESTO
+    // Stats mapping
     CharacterStatsDto map(CharacterStats stats);
-
     CharacterStats map(CharacterStatsDto statsDto);
 }

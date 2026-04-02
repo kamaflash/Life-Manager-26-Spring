@@ -198,7 +198,7 @@ public class SystemServiceImpl implements SystemService {
             int hours = edu.getInvestedHours() != null ? edu.getInvestedHours() : 0;
             int progress = edu.getProgress() != null ? edu.getProgress() : 0;
             CharacterTrainingDto dto = businessTransactions.getTrainning(edu.getCharacterId(),edu.getTrainingId());
-            dto.setInvestedHours(hours + 6);
+            dto.setProgress(getProgress(2000, dto.getInvestedHours()));
             dto.setProgress(progress + 1);
             dto = businessTransactions.updateAppTrainning(dto);
 
@@ -267,5 +267,15 @@ public class SystemServiceImpl implements SystemService {
         int newStress = Math.min(currentStress - stressGain, 100);
         character.getStats().setEnergy(newEnergy);
         return character;
+    }
+
+    private Integer getProgress(Integer durationHours, Integer investedHours) {
+        if (durationHours == null || durationHours == 0) {
+            return 0;
+        }
+
+        double invested = (investedHours != null) ? investedHours : 0;
+
+        return (int) Math.round((invested / durationHours) * 100);
     }
 }

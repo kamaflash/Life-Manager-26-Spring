@@ -34,18 +34,18 @@ public class EnumPerson {
     }
 
     public enum CareerInterest {
-        technology,
-        health,
-        arts,
-        business,
-        education,
-        sports,
-        construction,
-        creative,
-        social,
-        science,
-        hospitality,
-        other
+        TECHNOLOGY,
+        HEALTH,
+        CONSTRUCTION,
+        BUSINESS,
+        CREATIVE,
+        SOCIAL,
+        SCIENCE,
+        HOSPITALITY,
+        ARTS,
+        EDUCATION,
+        SPORTS,
+        OTHER
     }
 
     public enum Aspiration {

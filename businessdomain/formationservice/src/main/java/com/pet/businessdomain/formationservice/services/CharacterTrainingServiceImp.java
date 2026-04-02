@@ -1,188 +1,169 @@
 package com.pet.businessdomain.formationservice.services;
 
-import com.pet.businessdomain.formationservice.entities.CharacterTraining;
-import com.pet.businessdomain.formationservice.entities.Formation;
+import com.pet.businessdomain.formationservice.entities.*;
 import com.pet.businessdomain.formationservice.mapper.ICharacterTrainingMapper;
-import com.pet.businessdomain.formationservice.repository.FormationRepository;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
-import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
-import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.formationservice.repository.FormationExamRepository;
+import com.pet.businessdomain.formationservice.repository.FormationRepository;
+import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
-import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
-import com.pet.businessdomain.shareddto.enumentities.NotificationType;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
-public class CharacterTrainingServiceImp implements ICharacterTrainingService{
-    @Autowired
-    private ICharacterTrainingRepository trainingRepo;
+@RequiredArgsConstructor
+public class CharacterTrainingServiceImp implements ICharacterTrainingService {
 
-    @Autowired
-    private FormationRepository formationRepo;
+    private final ICharacterTrainingRepository characterTrainingRepository;
+    private final FormationRepository formationRepository;
+    private final FormationExamRepository formationExamRepository;
+    private final ICharacterTrainingMapper characterTrainingMapper;
 
-    @Autowired
-    private ICharacterTrainingMapper iCharacterTrainingMapper;
-
-
-
-    @Autowired
-    private BusinessTransactions businessTransactions;
-    // Todos los cursos del personaje
-    public List<CharacterTraining> getTrainingsForCharacter(Long characterId) {
-        return trainingRepo.findByCharacterId(characterId);
-    }
-
-    // Cursos completados
-    public List<CharacterTraining> getCompletedTrainings(Long characterId) {
-        return trainingRepo.findByCharacterId(characterId);
-    }
-
-    // Cursos disponibles (puede incluir lógicos según XP y nivel)
-    public List<Formation> getAvailableFormations(Long characterId, EnumAll.EducationLevel eduLevel, int academicXp, int academicLevel, EnumAll.CareerInterest career) {
-        return formationRepo.findAvailableFormations(eduLevel, academicLevel, academicXp, career);
-    }
-
-    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto, Long id) {
-        dto.setCharacterId(id);
-        // Verificar si ya está inscrito
-        boolean exists = trainingRepo.existsByCharacterIdAndTrainingId(dto.getCharacterId(), dto.getTrainingId());
-
-
-        // Buscar la formación
-        Optional<Formation> formation = formationRepo.findById(dto.getTrainingId());
-
-        // Crear la entidad CharacterTraining
-        CharacterTraining training = new CharacterTraining();
-        training.setCharacterId(dto.getCharacterId());
-        training.setTrainingId(dto.getTrainingId());
-        training.setTrainingName(dto.getTrainingName());
-        training.setTrainingType(dto.getTrainingType());
-        training.setTrainingDifficulty(dto.getTrainingDifficulty());
-        training.setStatus(EnumAll.TrainingStatus.AVAILABLE);
-        training.setProgress(0);
-        training.setInvestedHours(0);
-        training.setStartedAt(LocalDateTime.now());
-        training.setFinishedAt(null);
-        training.setAcademicXpGained(dto.getAcademicXpGained());
-        training.setApplied(false);
-
-        trainingRepo.save(training);
-
-        // Mapear al DTO incluyendo info opcional
-        dto.setId(training.getId());
-        dto.setStatus(training.getStatus());
-        dto.setProgress(training.getProgress());
-        dto.setInvestedHours(training.getInvestedHours());
-        dto.setStartedAt(training.getStartedAt());
-        dto.setFinishedAt(training.getFinishedAt());
-        dto.setAcademicXpGained(training.getAcademicXpGained());
-        dto.setApplied(training.getApplied());
-
-        dto.setTrainingName(formation.get().getName());
-        dto.setTrainingType(formation.get().getType());
-        dto.setTrainingDifficulty(formation.get().getDifficulty());
-        SExpenseResponseDto expenseResponseDto = new SExpenseResponseDto();
-        expenseResponseDto.setCategory(EnumAll.ExpenseCategory.EDUCATION);
-        expenseResponseDto.setAmount(formation.get().getCost());
-        expenseResponseDto.setConcept(formation.get().getName());
-        expenseResponseDto.setExternalRefId(training.getCharacterId());
-        expenseResponseDto.setStartDate(training.getStartedAt().toLocalDate());
-        expenseResponseDto.setFrequency(EnumAll.Frequency.YEARLY);
-        SExpenseResponseDto sExpenseResponseDto = businessTransactions.setExpense(expenseResponseDto,dto.getCharacterId());
-        return dto;
-    }
-
-    @Override
-    public List<Formation> getAvailableCoursesForCharacter(Long characterId) {
-
-        CharacterDto personDto = businessTransactions.getPerson(characterId);
-
-        List<Formation> allTrainings = formationRepo.findAllByActiveTrue();
-
-        List<CharacterTraining> listTraining =
-                trainingRepo.findByCharacterId(personDto.getId());
-
-        Set<Long> completedFormationIds = listTraining.stream()
-                .map(CharacterTraining::getTrainingId)
-                .collect(Collectors.toSet());
-
-        return allTrainings.stream()
-                .filter(training ->
-                        !completedFormationIds.contains(training.getId())
-                                && training.getCategory() != null
-                                && personDto.getInterests() != null
-                                && training.getCategory() ==
-                                EnumAll.CareerInterest.valueOf(personDto.getInterests().getFirst())
-                                && personDto.getXpAcademy() != null
-                                && training.getMinAcademicXp() != null
-                                && training.getMaxAcademicXp() != null
-                                && personDto.getXpAcademy() >= training.getMinAcademicXp()
-                                && personDto.getXpAcademy() < training.getMaxAcademicXp()
-                )
-                .toList();
-    }
-    @Override
-    public CharacterTrainingDto updateTraining(Long id, CharacterTrainingDto dto) {
-        Optional<CharacterTraining> entity = trainingRepo.findById(id);
-
-        // Actualiza campos permitidos, por ejemplo:
-        entity.get().setProgress(dto.getProgress());
-        entity.get().setStatus(dto.getStatus());
-        entity.get().setInvestedHours(dto.getInvestedHours());
-        entity.get().setAcademicXpGained(dto.getAcademicXpGained());
-
-        // Guardamos cambios
-        CharacterTraining save = trainingRepo.save(iCharacterTrainingMapper.fromOptional(entity));
-
-        return iCharacterTrainingMapper.toDto(entity.orElse(null));
-    }
+    // =========================
+    // Consultas básicas
+    // =========================
     @Override
     public CharacterTraining getById(Long id) {
-        return iCharacterTrainingMapper.fromOptional(trainingRepo.findById(id));
+        return characterTrainingRepository.findById(id).orElse(null);
     }
 
     @Override
-    public CharacterTraining getByCharacterIdAndTrainingId(Long id, Long trainingId) {
-        return trainingRepo.getByCharacterIdAndTrainingId(id,trainingId);
+    public List<CharacterTraining> getTrainingsForCharacter(Long characterId) {
+        return characterTrainingRepository.findByCharacterId(characterId);
     }
 
-    private void setNotification(CharacterApplicationDto dto) {
+    @Override
+    public List<CharacterTraining> getCompletedTrainings(Long characterId) {
+        return characterTrainingRepository.findByCharacterIdAndStatus(characterId, EnumAll.TrainingStatus.COMPLETED);
+    }
 
-        NotificationDTO notificationDTO = new NotificationDTO();
+    @Override
+    public List<CharacterTraining> getByCharacterIdAndStatus(Long characterId, EnumAll.TrainingStatus status) {
+        return characterTrainingRepository.findByCharacterIdAndStatus(characterId, status);
+    }
 
-        notificationDTO.setUserId(dto.getId());
-        notificationDTO.setFromUserId(dto.getCharacterId());
-        notificationDTO.setType(NotificationType.SYSTEM);
-
-        notificationDTO.setTitle("Nuevo curso");
-        notificationDTO.setSubTitle("Te has subscrito a un nuevo curso");
-        notificationDTO.setMessage("Te has matriculado en un nuevo curso.");
-
-        // 🔥 Nuevo sistema
-        notificationDTO.setResourceType(NotificationResourceType.COURSE);
-        notificationDTO.setResourceId(dto.getId());
-
-        // 🔥 Navegación directa frontend
-        notificationDTO.setActionUrl("/profile" );
-
-        // 🔥 Metadata (opcional pero muy recomendable)
-        notificationDTO.setMetadata("""
-        {
-            "characterId": %d
+    // =========================
+    // Suscripción y actualización
+    // =========================
+    @Override
+    public CharacterTrainingDto subscribeToCourse(CharacterTrainingDto dto, Long characterId) throws BusinessRuleException {
+        if (dto.getTrainingId() == null) {
+            throw new BusinessRuleException("2001", "TrainingId es obligatorio", null);
         }
-    """.formatted(dto.getId()));
 
-        notificationDTO.setRead(false);
+        Formation formation = formationRepository.findById(dto.getTrainingId())
+                .orElseThrow(() -> new BusinessRuleException("2002", "Formación no encontrada", null));
 
-        NotificationDTO resp = businessTransactions.setNotifications(notificationDTO);
+
+        CharacterTraining existing = characterTrainingRepository
+                .findByCharacterIdAndTrainingId(characterId, formation.getId())
+                .orElse(null);
+
+        if (existing != null) {
+            return characterTrainingMapper.toDto(existing); // ya suscrito
+        }
+
+        CharacterTraining training = new CharacterTraining();
+        training.setCharacterId(characterId);
+        training.setTrainingId(formation.getId());
+        training.setTrainingName(formation.getName());
+        training.setTrainingType(formation.getType());
+        training.setTrainingDifficulty(formation.getDifficulty());
+        training.setInvestedHours(0);
+        training.setAcademicXpGained(0);
+        training.setStatus(EnumAll.TrainingStatus.IN_PROGRESS);
+        training.setApplied(true);
+        training.setCost(formation.getCost());
+        training.setStartedAt(LocalDateTime.now());
+        training.setStats(new CharacterStats()); // stats iniciales
+
+        CharacterTraining saved = characterTrainingRepository.save(training);
+
+        return characterTrainingMapper.toDto(saved);
+    }
+
+    @Override
+    public CharacterTrainingDto updateTraining(Long id, CharacterTrainingDto dto) throws BusinessRuleException {
+        CharacterTraining training = characterTrainingRepository.findById(id)
+                .orElseThrow(() -> new BusinessRuleException("2004", "Entrenamiento no encontrado", null));
+
+        // Actualizar horas invertidas y progreso RPG
+        if (dto.getInvestedHours() != null) {
+            training.setInvestedHours(dto.getInvestedHours());
+            int progress = Math.min(100, training.getInvestedHours() * 100 / 500); // ejemplo: examen a 500h
+            training.setProgress(progress);
+        }
+
+        if (dto.getStatus() != null) {
+            training.setStatus(dto.getStatus());
+        }
+
+        CharacterTraining updated = characterTrainingRepository.save(training);
+        return characterTrainingMapper.toDto(updated);
+    }
+
+    // =========================
+    // Cursos disponibles RPG
+    // =========================
+    @Override
+    public List<Formation> getAvailableCoursesForCharacter(Long characterId) {
+        // Aquí podrías filtrar por educación, XP, carreras, etc.
+        // Ejemplo simplificado: todas las activas
+        return formationRepository.findByActiveTrue();
+    }
+
+    @Override
+    public Page<Formation> getAvailableCoursesForCharacter(Long characterId, Pageable pageable) {
+        List<Formation> list = getAvailableCoursesForCharacter(characterId);
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), list.size());
+        return new PageImpl<>(list.subList(start, end), pageable, list.size());
+    }
+
+    // =========================
+    // Exámenes RPG
+    // =========================
+    @Override
+    public List<FormationExam> getExamsForTraining(Long trainingId) {
+        return formationExamRepository.findByFormationId(trainingId);
+    }
+
+//    @Override
+//    public List<CharacterExam> getExamsForCharacter(Long characterId) {
+//        // Aquí podrías traer todos los exámenes asociados a los trainings del personaje
+//        List<CharacterTraining> trainings = getTrainingsForCharacter(characterId);
+//        List<Long> trainingIds = trainings.stream().map(CharacterTraining::getId).collect(Collectors.toList());
+//        return formationExamRepository.findCharacterExamsByCharacterTrainingId(trainingIds);
+//    }
+
+    // =========================
+    // Guardar y eliminar
+    // =========================
+    @Override
+    public CharacterTraining save(CharacterTraining training) {
+        return characterTrainingRepository.save(training);
+    }
+    @Override
+    public CharacterTraining getByCharacterIdAndTrainingId(Long id, Long trainingId) {
+        return characterTrainingRepository.getByCharacterIdAndTrainingId(id,trainingId);
+    }
+    @Override
+    public void deleteById(Long id) {
+        characterTrainingRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteAll() {
+        characterTrainingRepository.deleteAll();
     }
 }

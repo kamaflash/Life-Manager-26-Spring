@@ -50,6 +50,11 @@ public class ScholarshipController {
         return ResponseEntity.ok(scholarshipService.getAllActive());
     }
 
+    @GetMapping("/id/{id}")
+    public ResponseEntity<List<ScholarshipDto>> getForCharacterId(@PathVariable(name = "id") Long id) {
+        return ResponseEntity.ok(scholarshipService.getAllActive());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable(name = "id") Long id) {
         scholarshipService.delete(id);

@@ -1,8 +1,10 @@
 package com.pet.businessdomain.formationservice.entities;
 
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -19,9 +21,7 @@ public class ScholarshipEntity {
 
     private String description;
 
-    private Double amount;
-
-    private String country;
+    private BigDecimal amount;
 
     private Boolean active = true;
 
@@ -34,4 +34,18 @@ public class ScholarshipEntity {
     private LocalDate createdAt;
 
     private LocalDate updatedAt;
+
+    // Nivel formativo al que aplica
+    @Enumerated(EnumType.STRING)
+    private EnumAll.EducationLevel educationLevel; // PRIMARY, SECONDARY, UNIVERSITY, MASTER, etc.
+
+    // Requisitos académicos
+    private Double minGrade; // nota mínima (ej: 7.5)
+    private Boolean requiresMerit; // si requiere excelencia
+
+    // Requisitos económicos
+    private BigDecimal maxFamilyIncome; // renta máxima permitida
+    private Boolean requiresEconomicProof;
+
+    private LocalDate resolutionDate;
 }

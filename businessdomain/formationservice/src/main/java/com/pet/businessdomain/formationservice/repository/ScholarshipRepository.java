@@ -12,6 +12,4 @@ public interface ScholarshipRepository
 
     List<ScholarshipEntity> findByActiveTrue();
 
-    List<ScholarshipEntity> findByCountryIgnoreCase(String country);
-
 }
