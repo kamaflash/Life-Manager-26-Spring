@@ -5,11 +5,15 @@ import com.pet.businessdomain.formationservice.mapper.ICharacterTrainingMapper;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
 import com.pet.businessdomain.formationservice.repository.FormationExamRepository;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
-import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
+import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 
+import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
+import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,11 +27,16 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CharacterTrainingServiceImp implements ICharacterTrainingService {
-
-    private final ICharacterTrainingRepository characterTrainingRepository;
-    private final FormationRepository formationRepository;
-    private final FormationExamRepository formationExamRepository;
-    private final ICharacterTrainingMapper characterTrainingMapper;
+    @Autowired
+    private ICharacterTrainingRepository characterTrainingRepository;
+    @Autowired
+    private FormationRepository formationRepository;
+    @Autowired
+    private FormationExamRepository formationExamRepository;
+    @Autowired
+    private ICharacterTrainingMapper characterTrainingMapper;
+    @Autowired
+    private BusinessTransactions businessTransactions;
 
     // =========================
     // Consultas básicas
@@ -88,6 +97,12 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
         training.setStats(new CharacterStats()); // stats iniciales
 
         CharacterTraining saved = characterTrainingRepository.save(training);
+        if (!List.of(104L, 105L).contains(training.getTrainingId())) {
+            SystemDto systemDto = businessTransactions.getSystem(characterId);
+            systemDto = businessTransactions.updateSystem(characterId, systemDto.getActualityAt().plusHours(2),2);
+            createExpense(saved);
+            createNotification(saved);
+        }
 
         return characterTrainingMapper.toDto(saved);
     }
@@ -96,11 +111,12 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
     public CharacterTrainingDto updateTraining(Long id, CharacterTrainingDto dto) throws BusinessRuleException {
         CharacterTraining training = characterTrainingRepository.findById(id)
                 .orElseThrow(() -> new BusinessRuleException("2004", "Entrenamiento no encontrado", null));
-
+        Optional<Formation> formationOptional = formationRepository.findById(training.getTrainingId());
+        Formation formation = formationOptional.get();
         // Actualizar horas invertidas y progreso RPG
         if (dto.getInvestedHours() != null) {
             training.setInvestedHours(dto.getInvestedHours());
-            int progress = Math.min(100, training.getInvestedHours() * 100 / 500); // ejemplo: examen a 500h
+            int progress = Math.min(100, training.getInvestedHours() * 100 / formation.getDurationHours()); // ejemplo: examen a 500h
             training.setProgress(progress);
         }
 
@@ -165,5 +181,36 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
     @Override
     public void deleteAll() {
         characterTrainingRepository.deleteAll();
+    }
+
+
+    private void createExpense( CharacterTraining training) {
+        SExpenseResponseDto expenseResponseDto = new SExpenseResponseDto();
+        expenseResponseDto.setActive(true);
+        expenseResponseDto.setAmount(training.getCost());
+        expenseResponseDto.setCategory(EnumAll.ExpenseCategory.EDUCATION);
+        expenseResponseDto.setConcept("Curso: "+training.getTrainingName());
+        expenseResponseDto.setExternalRefId(training.getId());
+        expenseResponseDto.setExternalRefType(training.getTrainingType().toString());
+        expenseResponseDto.setFrequency(EnumAll.Frequency.OTHER);
+        CharacterDto characterDto = businessTransactions.getPerson(training.getCharacterId());
+        Long account = characterDto.getAccounts().get(0).getId();
+        SExpenseResponseDto setExpense = businessTransactions.setExpense(expenseResponseDto, account);
+    }
+
+    private void createNotification( CharacterTraining training) {
+        NotificationDTO notificationDTODto = new NotificationDTO();
+        notificationDTODto.setTitle("Subscrito a nuevo curso");
+        notificationDTODto.setSubTitle("Te has suscrito al curso "+training.getTrainingName());
+        notificationDTODto.setMessage("Te has suscrito al curso "+training.getTrainingName());
+        notificationDTODto.setFromUserId(training.getCharacterId());
+        notificationDTODto.setActionUrl("/");
+        notificationDTODto.setType(NotificationType.NEW_CONTENT);
+        notificationDTODto.setUserId(training.getCharacterId());
+        notificationDTODto.setRead(false);
+        notificationDTODto.setResourceId(training.getId());
+        notificationDTODto.setResourceType(NotificationResourceType.COURSE);
+
+        businessTransactions.setNotifications(notificationDTODto);
     }
 }

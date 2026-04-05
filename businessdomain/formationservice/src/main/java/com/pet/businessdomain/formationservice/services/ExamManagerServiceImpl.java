@@ -3,6 +3,7 @@ package com.pet.businessdomain.formationservice.services;
 import com.pet.businessdomain.formationservice.entities.CharacterExam;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.FormationExam;
+import com.pet.businessdomain.shareddto.dto.FormationExamDto;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class ExamManagerServiceImpl implements ExamManagerService {
         }
 
         // 2️⃣ Obtener el examen correspondiente según horas invertidas
-        FormationExam exam = formationExamService.getByFormationId(training.getTrainingId())
+        FormationExamDto exam = formationExamService.getByFormationId(training.getTrainingId())
                 .stream()
                 .filter(e -> e.getRequiredHours() <= training.getInvestedHours())
                 .findFirst()

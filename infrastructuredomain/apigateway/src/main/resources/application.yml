@@ -58,6 +58,16 @@ spring:
         predicates:
           - Path=/api/scholarships/**
 
+      - id: formation_service_trainer
+        uri: lb://businessdomain-formationservice
+        predicates:
+          - Path=/api/exams/**
+
+      - id: formation_service_trainer
+        uri: lb://businessdomain-formationservice
+        predicates:
+          - Path=/api/character-exams/**
+
       - id: finances_service_trainer
         uri: lb://businessdomain-financeservice
         predicates:

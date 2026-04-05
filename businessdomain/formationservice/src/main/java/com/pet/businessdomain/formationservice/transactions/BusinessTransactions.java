@@ -75,7 +75,33 @@ public class BusinessTransactions {
             return null; // o lanza excepción, según tu diseño
         }
     }
+    public CharacterDto updatePerson(CharacterDto character) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
 
+            return webClient.put()
+                    .uri("/stast/{id}", character.getId()) // ajusta endpoint si es distinto
+                    .bodyValue(character)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating user: " + e.getMessage());
+            return null;
+        }
+    }
     public SExpenseResponseDto setExpense(SExpenseResponseDto dto, Long accountId) {
 
         WebClient webClient = webClientBuilder

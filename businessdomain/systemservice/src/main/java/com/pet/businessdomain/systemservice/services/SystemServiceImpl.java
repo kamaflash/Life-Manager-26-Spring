@@ -200,7 +200,7 @@ public class SystemServiceImpl implements SystemService {
             int progress = edu.getProgress() != null ? edu.getProgress() : 0;
             CharacterTrainingDto dto = businessTransactions.getTrainning(edu.getCharacterId(),edu.getTrainingId());
             dto.setProgress(getProgress(2000, dto.getInvestedHours()));
-            dto.setProgress(progress + 1);
+            dto.setInvestedHours(hours + 6);
             dto = businessTransactions.updateAppTrainning(dto);
 
         }
