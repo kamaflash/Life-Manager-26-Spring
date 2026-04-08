@@ -6,6 +6,8 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 @Entity
 @Data
@@ -79,4 +81,12 @@ public class Formation {
     private List<EnumAll.WorkingDay> workingDays;
     @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL)
     private List<FormationExam> exams;
+
+    // NUEVO: Estadísticas que mejora este curso
+    @ElementCollection
+    @CollectionTable(name = "formation_stat_rewards",
+            joinColumns = @JoinColumn(name = "formation_id"))
+    @MapKeyColumn(name = "stat_name")
+    @Column(name = "reward_amount")
+    private Map<String, Integer> statRewards;
 }

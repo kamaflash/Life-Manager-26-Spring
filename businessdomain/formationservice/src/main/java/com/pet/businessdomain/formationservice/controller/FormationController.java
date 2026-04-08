@@ -16,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -61,11 +63,18 @@ public class FormationController {
      * - Si la formación existe, la convierte a DTO y devuelve 200.
      * - Si no existe (o el servicio lanza excepción), devuelve 404.
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<FormationDto> getFormationById(@PathVariable Long id) {
+    @GetMapping("/{id}/{characterId}")
+    public ResponseEntity<Map<String, Object>> getFormationById(@PathVariable(name = "id") Long id,
+                                                         @PathVariable(name = "characterId") Long characterId) {
         try {
             Formation formation = formationService.getById(id);
-            return ResponseEntity.ok(formationMapper.toDto(formation));
+            List<CharacterTraining> training = iCharacterTrainingService.getByCharacterIdAndStatus(characterId,EnumAll.TrainingStatus.IN_PROGRESS);
+            boolean isEnrolled = training.stream()
+                    .anyMatch(t -> t.getTrainingId().equals(formation.getId()));
+            Map<String, Object> response = new HashMap<>();
+            response.put("formation", formationMapper.toDto(formation));
+            response.put("isEnrolled", isEnrolled);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -151,7 +160,7 @@ public class FormationController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<FormationDto> updateFormation(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestBody FormationDto formationDto
     ) {
         try {
@@ -173,7 +182,7 @@ public class FormationController {
      * - Si falla por reglas de negocio, devuelve el status correspondiente.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFormation(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteFormation(@PathVariable(name = "id") Long id) {
         try {
             formationService.deactivateFormation(id);
             return ResponseEntity.noContent().build();

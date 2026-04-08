@@ -10,6 +10,7 @@ import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -99,14 +100,42 @@ public class SystemController {
         return ResponseEntity.status(HttpStatus.CREATED).body(systemDto);
     }
     @PostMapping("/cero_advance")
-    public LocalTime ceroAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
+    public LocalTime ceroAdvance(@RequestParam(name = "characterId") Long characterId)
+            throws BusinessRuleException, UnknownHostException, MessagingException {
+
         Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
         SystemEntity system = systemMapper.fromOptional(optSystem);
         SystemDto systemDto = systemMapper.toDto(system);
 
         CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
-        LocalTime time = systemService.getEducationEndTime(characterDto,false);
+        LocalTime time = systemService.getEducationEndTime(characterDto, false);
         LocalTime newTime = time.minusMinutes(30);
+
+        // CORRECCIÓN: Obtener solo la hora del LocalDateTime
+        LocalDateTime actualityDateTime = systemDto.getActualityAt();
+        LocalTime actualityAt = actualityDateTime.toLocalTime();
+
+        // Calcular diferencia en minutos considerando el cambio de día
+        long minutesDifference;
+        if (newTime.isBefore(actualityAt)) {
+            minutesDifference = Duration.between(actualityAt, LocalTime.MIDNIGHT).toMinutes()
+                    + Duration.between(LocalTime.MIDNIGHT, newTime).toMinutes();
+        } else {
+            minutesDifference = Duration.between(actualityAt, newTime).toMinutes();
+        }
+
+        long hoursDifference = minutesDifference / 60;
+        long result = hoursDifference * 10;
+        long resultStress = hoursDifference * 2;
+        int absoluteResult = Math.toIntExact(Math.abs(result));
+        int absoluteResultStress = Math.toIntExact(Math.abs(resultStress));
+
+        // Actualizar estadísticas
+        characterDto.getStats().setEnergy(Math.min(100, characterDto.getStats().getEnergy() + absoluteResult));
+        characterDto.getStats().setStress(Math.max(0, characterDto.getStats().getStress() - absoluteResultStress));
+
+        characterDto = businessTransactions.updatePerson(characterDto);
+
         return newTime;
     }
 
@@ -146,10 +175,39 @@ public class SystemController {
 
         CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
         LocalDateTime actuality = system.getActualityAt();
-        LocalTime at8 = LocalTime.from(LocalDateTime.of(actuality.toLocalDate(), LocalTime.of(9, 0)));
+        LocalTime at8 = LocalTime.from(LocalDateTime.of(actuality.toLocalDate(), LocalTime.of(10, 0)));
         system = systemService.plusSystems(characterDto,at8);
         system.setPa(5);
         systemRepository.save(system);
+
+        LocalDateTime actualityDateTime = systemDto.getActualityAt();
+        LocalTime actualityAt = actualityDateTime.toLocalTime();
+
+        // Calcular diferencia en minutos considerando el cambio de día
+        long minutesDifference;
+        if (at8.isBefore(actualityAt)) {
+            minutesDifference = Duration.between(actualityAt, LocalTime.MIDNIGHT).toMinutes()
+                    + Duration.between(LocalTime.MIDNIGHT, at8).toMinutes();
+        } else {
+            minutesDifference = Duration.between(actualityAt, at8).toMinutes();
+        }
+
+        long hoursDifference = minutesDifference / 60;
+        long result = hoursDifference * 10;
+        long resultStress = hoursDifference * 2;
+        int absoluteResult = Math.toIntExact(Math.abs(result));
+        int absoluteResultStress = Math.toIntExact(Math.abs(resultStress));
+
+        // Actualizar estadísticas
+        characterDto.getStats().setEnergy(Math.min(100, characterDto.getStats().getEnergy() + absoluteResult));
+        if(characterDto.getStats().getStress() > 60){
+            characterDto.getStats().setStress(50);
+        } else {
+            characterDto.getStats().setStress(20);
+        }
+
+        characterDto = businessTransactions.updatePerson(characterDto);
+
     }
 
     @PostMapping("/post")

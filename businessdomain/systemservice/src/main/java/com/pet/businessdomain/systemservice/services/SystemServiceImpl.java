@@ -258,15 +258,15 @@ public class SystemServiceImpl implements SystemService {
         int energyGain = (int) hours * 10;
         // Estres Perdida (2 por hora)
 
-        int stressGain = (int) hours * 2;
+        int stressGain = (int) hours;
         // Sumar energía (controlando máximo si quieres)
         int currentEnergy = character.getStats().getEnergy();
         int newEnergy = Math.min(currentEnergy + energyGain, 100);
         character.getStats().setEnergy(newEnergy);
 
         int currentStress = character.getStats().getStress();
-        int newStress = Math.min(currentStress - stressGain, 100);
-        character.getStats().setEnergy(newEnergy);
+        int newStress = Math.min(currentStress + stressGain, 100);
+        character.getStats().setStress(newStress);
         return character;
     }
 

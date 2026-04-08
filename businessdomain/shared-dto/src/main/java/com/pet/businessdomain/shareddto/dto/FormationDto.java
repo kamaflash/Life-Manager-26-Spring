@@ -2,12 +2,19 @@ package com.pet.businessdomain.shareddto.dto;
 
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.Data;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FormationDto {
     private Long id;
 
@@ -34,6 +41,9 @@ public class FormationDto {
     private Integer academicXpReward;
 
     private List<String> skillsUnlocked;
+
+    // NUEVO: Estadísticas que mejora el curso
+    private Map<String, Integer> statRewards;
 
     private Boolean repeatable;
     private Boolean active;

@@ -47,6 +47,11 @@ public interface ICharacterTrainingService {
 //    List<CharacterExam> getExamsForCharacter(Long characterId);
 
     // =========================
+    // Acciones de estudio
+    // =========================
+    CharacterTrainingDto study(Long trainingId, int hours) throws BusinessRuleException;
+
+    // =========================
     // Guardar y eliminar
     // =========================
     CharacterTraining save(CharacterTraining training);
@@ -54,4 +59,6 @@ public interface ICharacterTrainingService {
     void deleteById(Long id);
 
     void deleteAll();
+
+    void setStasCharacter(CharacterTrainingDto dto);
 }

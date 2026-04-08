@@ -5,15 +5,15 @@ import lombok.Data;
 @Data
 public class StatsDto {
 
-    private int intelligence;
-    private int charisma;
-    private int creativity;
-    private int resilience;
+    private Integer intelligence;
+    private Integer charisma;
+    private Integer creativity;
+    private Integer resilience;
 
-    private int health;
-    private int energy;
-    private int happiness;
-    private int stress;
+    private Integer health;
+    private Integer energy;
+    private Integer happiness;
+    private Integer stress;
 
-    private int finances;
+    private Integer finances;
 }

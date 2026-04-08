@@ -37,12 +37,14 @@ public class CharacterTraining {
     private EnumAll.TrainingType trainingType;
     private EnumAll.DifficultyLevel trainingDifficulty;
 
-    private Integer investedHours = 0;
+    private Integer investedHours = 0; // Horas de asistencia
+    private Integer studyHours = 0; // Horas de estudio dedicadas
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
 
     // ===== RESULTADO =====
     private Integer academicXpGained;
+    private Double grade; // Nota obtenida en el último examen
     private Boolean applied;
     private BigDecimal cost;
     private CharacterStats stats;

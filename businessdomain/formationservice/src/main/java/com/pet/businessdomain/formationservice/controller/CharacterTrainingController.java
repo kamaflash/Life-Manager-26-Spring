@@ -1,19 +1,19 @@
 package com.pet.businessdomain.formationservice.controller;
 
+import com.pet.businessdomain.formationservice.entities.CharacterExam;
 import com.pet.businessdomain.formationservice.entities.CharacterTraining;
 import com.pet.businessdomain.formationservice.entities.Formation;
 import com.pet.businessdomain.formationservice.entities.FormationExam;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
+import com.pet.businessdomain.formationservice.mapper.CharacterExamMapper;
+import com.pet.businessdomain.formationservice.mapper.FormationExamMapper;
 import com.pet.businessdomain.formationservice.mapper.FormationMapper;
 import com.pet.businessdomain.formationservice.mapper.ICharacterTrainingMapper;
 import com.pet.businessdomain.formationservice.services.ExamManagerService;
 import com.pet.businessdomain.formationservice.services.FormationService;
 import com.pet.businessdomain.formationservice.services.ICharacterTrainingService;
 import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
-import com.pet.businessdomain.shareddto.dto.FormationDto;
-import com.pet.businessdomain.shareddto.dto.SystemDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +57,13 @@ public class CharacterTrainingController {
 
     @Autowired
     private ExamManagerService examManagerService;
+
+    @Autowired
+    private CharacterExamMapper characterExamMapper;
+
+
+    @Autowired
+    private FormationExamMapper formationExamMapper;
 
     @Autowired
     private BusinessTransactions businessTransactions;
@@ -139,7 +146,7 @@ public class CharacterTrainingController {
             log.warn("Entrenamiento no encontrado: {}", id);
             return ResponseEntity.notFound().build();
         }
-        response.put("trainning", training);
+        response.put("trainning", characterTrainingMapper.toDto(training));
         response.put("formationDto", formationDto);
         return ResponseEntity.ok(response);
     }
@@ -242,13 +249,7 @@ public class CharacterTrainingController {
     public CharacterTrainingDto attendTraining(@PathVariable(name = "id")  Long id, @RequestBody CharacterTrainingDto dto) throws BusinessRuleException {
         dto.setInvestedHours(dto.getInvestedHours() + 2);
         CharacterTrainingDto updated = characterTrainingService.updateTraining(id, dto);
-        CharacterDto characterDto = businessTransactions.getPerson(updated.getCharacterId());
-        Integer energy = characterDto.getStats().getEnergy();
-
-        characterDto.getStats().setEnergy(energy - 10);
-        characterDto = businessTransactions.updatePerson(characterDto);
-        SystemDto systemDto = businessTransactions.getSystem(dto.getCharacterId());
-        systemDto = businessTransactions.updateSystem(dto.getCharacterId(),systemDto.getActualityAt().plusHours(2),2);
+        characterTrainingService.setStasCharacter(dto);
         return updated;
     }
     @PutMapping("/dto/{id}")
@@ -304,6 +305,22 @@ public class CharacterTrainingController {
         return ResponseEntity.ok(updated);
     }
 
+    /**
+     * Registra horas de estudio dedicadas.
+     * - Suma las horas especificadas a studyHours.
+     * - Por defecto 2 horas si no se especifica.
+     */
+    @PutMapping("/{id}/study")
+    public ResponseEntity<CharacterTrainingDto> studyTraining(
+            @PathVariable(name = "id") Long id,
+            @RequestParam(name = "hours", defaultValue = "2") int hours) throws BusinessRuleException {
+        log.info("Registrando {} horas de estudio para entrenamiento: {}", hours, id);
+
+        CharacterTrainingDto updated = characterTrainingService.study(id, hours);
+        characterTrainingService.setStasCharacter(updated);
+        return ResponseEntity.ok(updated);
+    }
+
 // ======================== EXÁMENES ========================
 
     /**
@@ -311,16 +328,16 @@ public class CharacterTrainingController {
      * - Devuelve 204 si no hay exámenes.
      */
     @GetMapping("/{trainingId}/exams")
-    public ResponseEntity<List<FormationExam>> getExamsForTraining(
+    public ResponseEntity<List<FormationExamDto>> getExamsForTraining(
             @PathVariable(name = "trainingId") Long trainingId) {
         log.info("Obteniendo exámenes para entrenamiento: {}", trainingId);
 
         List<FormationExam> exams = characterTrainingService.getExamsForTraining(trainingId);
         if (exams.isEmpty()) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(formationExamMapper.toDtoList(exams));
         }
 
-        return ResponseEntity.ok(exams);
+        return ResponseEntity.ok(formationExamMapper.toDtoList(exams));
     }
 
     /**
@@ -348,6 +365,22 @@ public class CharacterTrainingController {
      * - Llama al servicio de exámenes.
      * - Maneja errores devolviendo 500 si falla.
      */
+    @PostMapping("/take-exam")
+    public ResponseEntity<CharacterExam> takeExam(@RequestBody Map<String, Long> payload) {
+        Long characterId = payload.get("characterId");
+        Long trainingId = payload.get("trainingId");
+
+        if (characterId == null || trainingId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            CharacterExam exam = examManagerService.takeExam(characterId, trainingId);
+            return ResponseEntity.ok(exam);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(null); // O un error específico
+        }
+    }
     @PostMapping("/{trainingId}/exams/take/{characterId}")
     public ResponseEntity<?> takeExam(
             @PathVariable(name = "trainingId") Long trainingId,

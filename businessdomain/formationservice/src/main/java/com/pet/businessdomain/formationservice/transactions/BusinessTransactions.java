@@ -84,7 +84,7 @@ public class BusinessTransactions {
                     .build();
 
             return webClient.put()
-                    .uri("/stast/{id}", character.getId()) // ajusta endpoint si es distinto
+                    .uri("/stats/{id}", character.getId()) // ajusta endpoint si es distinto
                     .bodyValue(character)
                     .retrieve()
                     .onStatus(

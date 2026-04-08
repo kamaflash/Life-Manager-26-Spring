@@ -84,14 +84,14 @@ public class CharacterController {
     }
 
     @PutMapping("/stats/{id}")
-    public ResponseEntity<CharacterDto> updateCharacterStats(
+    public CharacterDto updateCharacterStats(
             @PathVariable(name = "id") Long id,
             @RequestBody CharacterDto characterDto) {
         try {
             CharacterDto updated = characterService.updateCharacter(id, characterDto);
-            return ResponseEntity.ok(updated);
+            return updated;
         } catch (RuntimeException ex) {
-            return ResponseEntity.notFound().build();
+            return null;
         }
     }
 

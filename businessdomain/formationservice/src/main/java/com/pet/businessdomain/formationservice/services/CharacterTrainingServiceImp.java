@@ -163,6 +163,23 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
 //    }
 
     // =========================
+    // Acciones de estudio
+    // =========================
+    @Override
+    public CharacterTrainingDto study(Long trainingId, int hours) throws BusinessRuleException {
+        CharacterTraining training = getById(trainingId);
+        if (training == null) {
+            throw new BusinessRuleException("2004", "Entrenamiento no encontrado", null);
+        }
+        if (training.getStudyHours() == null) {
+            training.setStudyHours(0);
+        }
+        training.setStudyHours(training.getStudyHours() + hours);
+        CharacterTraining saved = save(training);
+        return characterTrainingMapper.toDto(saved);
+    }
+
+    // =========================
     // Guardar y eliminar
     // =========================
     @Override
@@ -182,7 +199,18 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
     public void deleteAll() {
         characterTrainingRepository.deleteAll();
     }
+    @Override
+    public void setStasCharacter(CharacterTrainingDto dto) {
+        CharacterDto characterDto = businessTransactions.getPerson(dto.getCharacterId());
+        Integer energy = characterDto.getStats().getEnergy();
+        Integer stress = characterDto.getStats().getStress();
 
+        characterDto.getStats().setEnergy(energy - 10);
+        characterDto.getStats().setStress(stress + 10);
+        characterDto = businessTransactions.updatePerson(characterDto);
+        SystemDto systemDto = businessTransactions.getSystem(dto.getCharacterId());
+        systemDto = businessTransactions.updateSystem(dto.getCharacterId(),systemDto.getActualityAt().plusHours(2),2);
+    }
 
     private void createExpense( CharacterTraining training) {
         SExpenseResponseDto expenseResponseDto = new SExpenseResponseDto();

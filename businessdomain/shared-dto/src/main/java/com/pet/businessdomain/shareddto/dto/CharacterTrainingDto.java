@@ -24,10 +24,13 @@ public class CharacterTrainingDto {
 
     private Integer investedHours = 0;
 
+    private Integer studyHours = 0;
+
     private LocalDateTime startedAt;
     private LocalDateTime finishedAt;
 
     private Integer academicXpGained;
+    private Double grade;
 
     private Boolean applied;
     private BigDecimal cost;
