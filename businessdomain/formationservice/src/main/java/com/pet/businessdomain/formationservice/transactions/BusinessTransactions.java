@@ -1,14 +1,13 @@
 package com.pet.businessdomain.formationservice.transactions;
 
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.NotificationDTO;
-import com.pet.businessdomain.shareddto.dto.SExpenseResponseDto;
-import com.pet.businessdomain.shareddto.dto.SystemDto;
+import com.pet.businessdomain.formationservice.repository.FormationRepository;
+import com.pet.businessdomain.shareddto.dto.*;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -17,43 +16,40 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import com.pet.businessdomain.formationservice.repository.FormationRepository;
 
 @Service
 public class BusinessTransactions {
+
     @Autowired
     private FormationRepository formationRepository;
 
     @Autowired
     private WebClient.Builder webClientBuilder;
 
-    //webClient requires HttpClient library to work propertly
+    // URL base del microservicio de personaje
+    @Value("${services.person-service.url:http://BUSINESSDOMAIN-PERSONSERVICE/api/characters}")
+    private String personServiceUrl;
+
+    // Configuración de HttpClient
     HttpClient client = HttpClient.create()
-            //Connection Timeout: is a period within which a connection between a client and a server must be established
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
             .option(ChannelOption.SO_KEEPALIVE, true)
             .option(EpollChannelOption.TCP_KEEPIDLE, 300)
             .option(EpollChannelOption.TCP_KEEPINTVL, 60)
-            //Response Timeout: The maximun time we wait to receive a response after sending a request
             .responseTimeout(Duration.ofSeconds(5))
-            // Read and Write Timeout: A read timeout occurs when no data was read within a certain
-            //period of time, while the write timeout when a write operation cannot finish at a specific time
             .doOnConnected(connection -> {
                 connection.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS));
                 connection.addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS));
             });
 
-
     public CharacterDto getPerson(Long id) {
         try {
             WebClient webClient = webClientBuilder
                     .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
+                    .baseUrl(personServiceUrl)
                     .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .build();
 
@@ -68,23 +64,24 @@ public class BusinessTransactions {
                                     )))
                     )
                     .bodyToMono(CharacterDto.class)
-                    .block(); // devuelve UserDto directamente
+                    .block();
 
         } catch (Exception e) {
             System.err.println("Error fetching user: " + e.getMessage());
-            return null; // o lanza excepción, según tu diseño
+            return null;
         }
     }
+
     public CharacterDto updatePerson(CharacterDto character) {
         try {
             WebClient webClient = webClientBuilder
                     .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
+                    .baseUrl(personServiceUrl)
                     .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .build();
 
             return webClient.put()
-                    .uri("/stats/{id}", character.getId()) // ajusta endpoint si es distinto
+                    .uri("/stats/{id}", character.getId())
                     .bodyValue(character)
                     .retrieve()
                     .onStatus(
@@ -102,8 +99,42 @@ public class BusinessTransactions {
             return null;
         }
     }
-    public SExpenseResponseDto setExpense(SExpenseResponseDto dto, Long accountId) {
 
+    /**
+     * Actualiza los skills y estadísticas de un personaje al completar una formación
+     */
+    public CharacterSkillsUpdateResponseDto updateCharacterSkills(CharacterSkillsUpdateRequestDto request) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl(personServiceUrl)
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/skills/update")
+                    .bodyValue(request)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from Person service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterSkillsUpdateResponseDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating character skills: " + e.getMessage());
+            CharacterSkillsUpdateResponseDto errorResponse = new CharacterSkillsUpdateResponseDto();
+            errorResponse.setSuccess(false);
+            errorResponse.setMessage("Error al actualizar skills: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    public SExpenseResponseDto setExpense(SExpenseResponseDto dto, Long accountId) {
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
                 .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/expenses")
@@ -111,14 +142,14 @@ public class BusinessTransactions {
                 .build();
 
         return webClient.post()
-                .uri("/{accountId}", accountId) // llamamos a /api/incomes/{accountId}
-                .bodyValue(dto) // enviamos el DTO en el body
+                .uri("/{accountId}", accountId)
+                .bodyValue(dto)
                 .retrieve()
-                .bodyToMono(SExpenseResponseDto.class) // esperamos un solo DTO
-                .block(); // bloqueamos hasta recibir respuesta
+                .bodyToMono(SExpenseResponseDto.class)
+                .block();
     }
-    public NotificationDTO setNotifications(NotificationDTO dto) {
 
+    public NotificationDTO setNotifications(NotificationDTO dto) {
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
                 .baseUrl("http://BUSINESSDOMAIN-NOTIFICATIONSERVICE/api/notifications")
@@ -127,10 +158,10 @@ public class BusinessTransactions {
 
         return webClient.post()
                 .uri("/post")
-                .bodyValue(dto) // enviamos el DTO en el body
+                .bodyValue(dto)
                 .retrieve()
-                .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
-                .block(); // bloqueamos hasta recibir respuesta
+                .bodyToMono(NotificationDTO.class)
+                .block();
     }
 
     public SystemDto getSystem(Long uid) {
@@ -148,17 +179,18 @@ public class BusinessTransactions {
                             status -> status.is4xxClientError() || status.is5xxServerError(),
                             response -> response.bodyToMono(String.class)
                                     .flatMap(body -> Mono.error(new RuntimeException(
-                                            "Error from User service: " + response.statusCode() + " - " + body
+                                            "Error from System service: " + response.statusCode() + " - " + body
                                     )))
                     )
                     .bodyToMono(SystemDto.class)
-                    .block(); // devuelve UserDto directamente
+                    .block();
 
         } catch (Exception e) {
-            System.err.println("Error fetching user: " + e.getMessage());
-            return null; // o lanza excepción, según tu diseño
+            System.err.println("Error fetching system: " + e.getMessage());
+            return null;
         }
     }
+
     public SystemDto updateSystem(Long uid, LocalDateTime time, Integer pa) {
         try {
             WebClient webClient = webClientBuilder
@@ -168,8 +200,8 @@ public class BusinessTransactions {
                     .build();
 
             return webClient.put()
-                    .uri("/{uid}/{pa}", uid,pa)
-                    .bodyValue(time) // 👈 enviamos el body
+                    .uri("/{uid}/{pa}", uid, pa)
+                    .bodyValue(time)
                     .retrieve()
                     .onStatus(
                             status -> status.is4xxClientError() || status.is5xxServerError(),
@@ -186,5 +218,4 @@ public class BusinessTransactions {
             return null;
         }
     }
-
 }

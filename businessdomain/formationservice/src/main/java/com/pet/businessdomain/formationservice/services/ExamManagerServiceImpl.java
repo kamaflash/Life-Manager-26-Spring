@@ -7,6 +7,7 @@ import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExamManagerServiceImpl implements ExamManagerService {
@@ -94,13 +96,29 @@ public class ExamManagerServiceImpl implements ExamManagerService {
         if (isFinalExam(training.getTrainingId(), exam) && status == EnumAll.ExamStatus.PASSED) {
             training.setStatus(EnumAll.TrainingStatus.COMPLETED);
             training.setFinishedAt(LocalDateTime.now());
-            CharacterDto characterDto = businessTransactions.getPerson(training.getCharacterId());
-            Formation formation = formationService.getById(training.getTrainingId());
-            Map<String, Integer> rewards = formation.getStatRewards();
-            CharacterStats characterStats = mapToCharacterStats(rewards);
 
-            applyStats(characterDto, characterStats);
-            setNotification(characterDto, training);
+            Formation formation = formationService.getById(training.getTrainingId());
+
+            // Crear request para actualizar personaje
+            CharacterSkillsUpdateRequestDto request = new CharacterSkillsUpdateRequestDto();
+            request.setCharacterId(characterId);
+            request.setSkillsToUnlock(formation.getSkillsUnlocked());
+            request.setTotalXpReward(formation.getAcademicXpReward());
+            request.setStatRewards(formation.getStatRewards());
+            request.setAcademicXpReward(formation.getAcademicXpReward());
+
+            // Llamar al microservicio de personaje
+            CharacterSkillsUpdateResponseDto response = businessTransactions.updateCharacterSkills(request);
+
+            if (response.isSuccess()) {
+                log.info("Personaje {} actualizado: {}", characterId, response.getMessage());
+                // Crear notificación (opcional)
+                CharacterDto characterDto = new CharacterDto();
+                characterDto.setId(characterId);
+                setNotification(characterDto, training);
+            } else {
+                log.error("Error al actualizar personaje: {}", response.getMessage());
+            }
         }
         characterTrainingService.save(training);
 

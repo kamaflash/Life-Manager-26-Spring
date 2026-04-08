@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +26,9 @@ import java.util.stream.Collectors;
 @Transactional
 public class CharacterServiceImpl implements CharacterService {
 
+    private static final int BASE_XP_PER_LEVEL = 100;
+    private static final int MAX_SKILL_LEVEL = 10;
+    private static final int MIN_XP_PER_SKILL = 10;
     @Autowired
     private CharacterRepository characterRepository;
 
@@ -244,6 +248,133 @@ public class CharacterServiceImpl implements CharacterService {
         notificationDTO.setRead(false);
 
         businessTransactions.setNotifications(notificationDTO);
+    }
+
+    @Override
+    public CharacterSkillsUpdateResponseDto updateCharacterSkills(CharacterSkillsUpdateRequestDto request) {
+        CharacterSkillsUpdateResponseDto response = new CharacterSkillsUpdateResponseDto();
+        response.setCharacterId(request.getCharacterId());
+
+        try {
+            CharacterEntity character = characterRepository.findById(request.getCharacterId())
+                    .orElseThrow(() -> new RuntimeException("Personaje no encontrado"));
+
+            // 1. Actualizar STATS
+            if (request.getStatRewards() != null && !request.getStatRewards().isEmpty()) {
+                updateStats(character, request.getStatRewards());
+            }
+
+            // 2. Actualizar SKILLS
+            Map<String, SkillStateEmbeddable> updatedSkills = updateSkills(
+                    character,
+                    request.getSkillsToUnlock(),
+                    request.getTotalXpReward()
+            );
+
+            // 3. Convertir a DTO para respuesta
+            Map<String, SkillStateDto> responseSkills = new HashMap<>();
+            for (Map.Entry<String, SkillStateEmbeddable> entry : updatedSkills.entrySet()) {
+                SkillStateEmbeddable s = entry.getValue();
+                responseSkills.put(entry.getKey(), new SkillStateDto());
+            }
+
+            // 4. Actualizar XP académico
+            int currentXp = character.getXpAcademy() != null ? character.getXpAcademy() : 0;
+            character.setXpAcademy(currentXp + request.getAcademicXpReward());
+
+            characterRepository.save(character);
+
+            response.setUpdatedSkills(responseSkills);
+            response.setNewAcademicXp(character.getXpAcademy());
+            response.setUpdatedStats(mapToStatsDto(character.getStats()));
+            response.setSuccess(true);
+            response.setMessage("Skills actualizados correctamente");
+
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return response;
+    }
+
+    private void updateStats(CharacterEntity character, Map<String, Integer> rewards) {
+        // Obtener o crear las estadísticas
+        CharacterStats stats = character.getStats();
+        if (stats == null) {
+            stats = new CharacterStats();
+            character.setStats(stats);
+        }
+
+        final CharacterStats finalStats = stats;
+
+        // Mapeo de claves a setters
+        rewards.forEach((key, value) -> {
+            switch (key.toLowerCase()) {
+                case "intelligence" -> finalStats.setIntelligence(finalStats.getIntelligence() + value);
+                case "charisma" -> finalStats.setCharisma(finalStats.getCharisma() + value);
+                case "creativity" -> finalStats.setCreativity(finalStats.getCreativity() + value);
+                case "resilience" -> finalStats.setResilience(finalStats.getResilience() + value);
+                case "finances" -> finalStats.setFinances(finalStats.getFinances() + value);
+            }
+        });
+    }
+
+    private Map<String, SkillStateEmbeddable> updateSkills(CharacterEntity character, List<String> skillsToUnlock, int totalXpReward) {
+        if (skillsToUnlock == null || skillsToUnlock.isEmpty()) {
+            return character.getSkills();
+        }
+
+        int xpPerSkill = Math.max(MIN_XP_PER_SKILL, totalXpReward / skillsToUnlock.size());
+
+        Map<String, SkillStateEmbeddable> skills = character.getSkills();
+        if (skills == null) {
+            skills = new HashMap<>();
+            character.setSkills(skills);
+        }
+
+        for (String skillKey : skillsToUnlock) {
+            SkillStateEmbeddable skill = skills.get(skillKey);
+            if (skill == null) {
+                skill = new SkillStateEmbeddable();
+                skill.setKeyValue(skillKey);
+                skill.setLevel(1);
+                skill.setXp(0);
+                skill.setLocked(false);
+                skills.put(skillKey, skill);
+            }
+            addSkillXp(skill, xpPerSkill);
+        }
+        return skills;
+    }
+
+    private void addSkillXp(SkillStateEmbeddable skill, int xpGained) {
+        if (Boolean.TRUE.equals(skill.isLocked())) return;
+
+        int newXp = (skill.getXp() != 0 ? skill.getXp() : 0) + xpGained;
+        int newLevel = skill.getLevel() != 0 ? skill.getLevel() : 1;
+
+        while (newXp >= BASE_XP_PER_LEVEL * newLevel && newLevel < MAX_SKILL_LEVEL) {
+            newXp -= BASE_XP_PER_LEVEL * newLevel;
+            newLevel++;
+        }
+
+        skill.setXp(newXp);
+        skill.setLevel(newLevel);
+    }
+
+    private StatsDto mapToStatsDto(CharacterStats stats) {
+        if (stats == null) return new StatsDto();
+        StatsDto dto = new StatsDto();
+        dto.setIntelligence(stats.getIntelligence());
+        dto.setCharisma(stats.getCharisma());
+        dto.setCreativity(stats.getCreativity());
+        dto.setResilience(stats.getResilience());
+        dto.setFinances(stats.getFinances());
+        dto.setHealth(stats.getHealth());
+        dto.setEnergy(stats.getEnergy());
+        dto.setHappiness(stats.getHappiness());
+        dto.setStress(stats.getStress());
+        return dto;
     }
 }
 

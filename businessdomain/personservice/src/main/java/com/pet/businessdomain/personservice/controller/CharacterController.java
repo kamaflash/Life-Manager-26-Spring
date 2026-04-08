@@ -4,6 +4,8 @@ package com.pet.businessdomain.personservice.controller;
 import com.pet.businessdomain.shareddto.dto.CharacterDto;
 import com.pet.businessdomain.personservice.repository.CharacterRepository;
 import com.pet.businessdomain.personservice.services.CharacterService;
+import com.pet.businessdomain.shareddto.dto.CharacterSkillsUpdateRequestDto;
+import com.pet.businessdomain.shareddto.dto.CharacterSkillsUpdateResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +32,13 @@ public class CharacterController {
         CharacterDto created = characterService.createCharacter(characterDto);
         return ResponseEntity.ok(created);
     }
-
+    @PostMapping("/skills/update")
+    public ResponseEntity<CharacterSkillsUpdateResponseDto> updateCharacterSkills(
+            @RequestBody CharacterSkillsUpdateRequestDto request
+    ) {
+        CharacterSkillsUpdateResponseDto response = characterService.updateCharacterSkills(request);
+        return ResponseEntity.ok(response);
+    }
     // Obtener todos los personajes
     @GetMapping
     public ResponseEntity<List<CharacterDto>> getAllCharacters() {
