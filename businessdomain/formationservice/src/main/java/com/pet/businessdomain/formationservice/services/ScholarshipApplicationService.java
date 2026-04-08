@@ -1,6 +1,7 @@
 package com.pet.businessdomain.formationservice.services;
 
 import com.pet.businessdomain.shareddto.dto.ScholarshipApplicationDto;
+import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 
 import java.util.List;
 
@@ -12,5 +13,6 @@ public interface ScholarshipApplicationService {
 
     List<ScholarshipApplicationDto> getApplicationsByScholarship(Long scholarshipId);
 
-    ScholarshipApplicationDto updateStatus(Long applicationId, String status);
+    ScholarshipApplicationDto updateStatus(Long applicationId, EnumFormation.ApplicationStatus statuss);
+    boolean hasApplied(Long scholarshipId, Long characterId);
 }

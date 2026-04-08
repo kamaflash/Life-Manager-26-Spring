@@ -1,8 +1,8 @@
 package com.pet.businessdomain.systemservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.CharacterTrainingDto;
+import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -104,7 +104,6 @@ public class BusinessTransactions {
             return null;
         }
     }
-
     public CharacterTrainingDto getTrainning(Long id, Long trainingId) {
         try {
             WebClient webClient = webClientBuilder
@@ -131,7 +130,6 @@ public class BusinessTransactions {
             return null; // o lanza excepción, según tu diseño
         }
     }
-
     public CharacterTrainingDto updateAppTrainning(CharacterTrainingDto character) {
         try {
             WebClient webClient = webClientBuilder
@@ -159,6 +157,129 @@ public class BusinessTransactions {
             return null;
         }
     }
+    public List<ScholarshipApplicationDto> getBecas(Long characterId) {
 
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/scholarships")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/by-character/list/{characterId}")
+                        .build(characterId))
+                .retrieve()
+                .bodyToFlux(ScholarshipApplicationDto.class)
+                .collectList()
+                .block();
+    }
+    public ScholarshipDto getScholarshipById(Long scholarshipId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/scholarships")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
 
+            return webClient.get()
+                    .uri("/dto/{id}", scholarshipId) // ajusta endpoint si es distinto
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(ScholarshipDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating user: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Actualiza el estado de una solicitud de beca
+     */
+    public ScholarshipApplicationDto updateScholarshipStatus(Long applicationId, EnumFormation.ApplicationStatus status) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/scholarships")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.put()
+                    .uri("/dto/{applicationId}/statuss?statuss={status}", applicationId, status.name())  // ✅ Enviar como query param
+                    .retrieve()
+                    .onStatus(
+                            statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from Formation service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(ScholarshipApplicationDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating scholarship status: " + e.getMessage());
+            return null;
+        }
+    }public List<SFinanceAccountResponseDto> getAccount(Long ownerId) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/accounts")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/owner/full/{ownerId}")
+                        .build(ownerId))
+                .retrieve()
+                .bodyToFlux(SFinanceAccountResponseDto.class)
+                .collectList()
+                .block();
+    }
+    public SIncomeResponseDto setIncome(SIncomeResponseDto dto, Long accountId) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-FINANCESERVICE/api/incomes")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/{accountId}", accountId)
+                .bodyValue(dto)
+                .retrieve()
+                .onStatus(
+                        status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new RuntimeException(
+                                        "FinanceService Error: " + response.statusCode() + " - " + body
+                                )))
+                )
+                .bodyToMono(SIncomeResponseDto.class)
+                .block();
+    }
+
+    public NotificationDTO setNotifications(NotificationDTO dto) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-NOTIFICATIONSERVICE/api/notifications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/post")
+                .bodyValue(dto) // enviamos el DTO en el body
+                .retrieve()
+                .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
+                .block(); // bloqueamos hasta recibir respuesta
+    }
 }

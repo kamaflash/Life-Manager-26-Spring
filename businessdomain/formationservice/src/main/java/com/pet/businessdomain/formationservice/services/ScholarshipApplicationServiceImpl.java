@@ -1,5 +1,8 @@
 package com.pet.businessdomain.formationservice.services;
 
+import com.pet.businessdomain.formationservice.entities.CharacterTraining;
+import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
+import com.pet.businessdomain.shareddto.dto.NotificationDTO;
 import com.pet.businessdomain.shareddto.dto.ScholarshipApplicationDto;
 import com.pet.businessdomain.formationservice.entities.ScholarshipApplicationEntity;
 import com.pet.businessdomain.formationservice.entities.ScholarshipEntity;
@@ -9,11 +12,15 @@ import com.pet.businessdomain.formationservice.repository.ScholarshipApplication
 import com.pet.businessdomain.formationservice.repository.ScholarshipRepository;
 import java.time.LocalDate;
 
+import com.pet.businessdomain.shareddto.dto.SystemDto;
 import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
+import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
+import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,6 +35,8 @@ public class ScholarshipApplicationServiceImpl implements ScholarshipApplication
     private ScholarshipApplicationMapper mapperA;
     @Autowired
     private  ScholarshipRepository scholarshipRepository;
+    @Autowired
+    private BusinessTransactions businessTransactions;
 
     @Override
     public ScholarshipApplicationDto applyToScholarship(Long scholarshipId, Long characterId) {
@@ -45,7 +54,15 @@ public class ScholarshipApplicationServiceImpl implements ScholarshipApplication
                 .appliedAt(LocalDate.now())
                 .status(EnumFormation.ApplicationStatus.PENDING)
                 .build();
+        createNotification(scholarship, application);
+        SystemDto systemDto = businessTransactions.getSystem(application.getCharacterId());
+        systemDto.setPa(systemDto.getPa() - 1);
+        LocalDateTime current = systemDto.getActualityAt();
 
+        // Sumamos 1 día y ajustamos la hora y minuto según LocalTime
+        LocalDateTime newActuality = current.plusHours(1);
+        systemDto.setActualityAt(newActuality);
+        systemDto = businessTransactions.updateSystem(systemDto.getUid(),newActuality,1);
         return mapperA.toDto(applicationRepository.save(application));
     }
 
@@ -60,14 +77,34 @@ public class ScholarshipApplicationServiceImpl implements ScholarshipApplication
     }
 
     @Override
-    public ScholarshipApplicationDto updateStatus(Long applicationId, String status) {
+    public ScholarshipApplicationDto updateStatus(Long applicationId, EnumFormation.ApplicationStatus statuss) {
         ScholarshipApplicationEntity application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        application.setStatus(
-                EnumFormation.ApplicationStatus.valueOf(status.toUpperCase())
-        );
+        application.setStatus( statuss );
 
         return mapperA.toDto(applicationRepository.save(application));
+    }
+    @Override
+    public boolean hasApplied(Long scholarshipId, Long characterId) {
+        return applicationRepository
+                .findByScholarshipIdAndCharacterId(scholarshipId, characterId)
+                .isPresent();  // Si existe, ya aplicó
+    }
+
+    private void createNotification( ScholarshipEntity scholarship, ScholarshipApplicationEntity application ) {
+        NotificationDTO notificationDTODto = new NotificationDTO();
+        notificationDTODto.setTitle("Has aplicado a una nueva beca");
+        notificationDTODto.setSubTitle("Has aplicado a la beca "+scholarship.getTitle());
+        notificationDTODto.setMessage("Has aplicado a la beca "+scholarship.getTitle());
+        notificationDTODto.setFromUserId(application.getCharacterId());
+        notificationDTODto.setActionUrl("/");
+        notificationDTODto.setType(NotificationType.NEW_CONTENT);
+        notificationDTODto.setUserId(application.getCharacterId());
+        notificationDTODto.setRead(false);
+        notificationDTODto.setResourceId(application.getId());
+        notificationDTODto.setResourceType(NotificationResourceType.COURSE);
+
+        businessTransactions.setNotifications(notificationDTODto);
     }
 }

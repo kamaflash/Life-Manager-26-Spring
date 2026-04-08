@@ -5,14 +5,20 @@
 package com.pet.businessdomain.systemservice.services;
 
 import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
+import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
+import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
 import lombok.extern.slf4j.Slf4j;
@@ -236,6 +242,7 @@ public class SystemServiceImpl implements SystemService {
                 .withNano(0);
 
         system.setActualityAt(newActuality);
+        revisedData(character);
 
         return system;
     }
@@ -278,5 +285,217 @@ public class SystemServiceImpl implements SystemService {
         double invested = (investedHours != null) ? investedHours : 0;
 
         return (int) Math.round((invested / durationHours) * 100);
+    }
+
+    private void revisedData(CharacterDto character) {
+        // 1. Obtener todas las solicitudes de becas del personaje
+        List<ScholarshipApplicationDto> applications = businessTransactions.getBecas(character.getId());
+
+        if (applications == null || applications.isEmpty()) {
+            log.info("No hay solicitudes de becas para el personaje {}", character.getId());
+            return;
+        }
+
+        // 2. Filtrar solo las solicitudes PENDIENTES
+        List<ScholarshipApplicationDto> pendingApplications = applications.stream()
+                .filter(app -> app.getStatus() == EnumFormation.ApplicationStatus.PENDING)
+                .collect(Collectors.toList());
+
+        if (pendingApplications.isEmpty()) {
+            log.info("No hay solicitudes pendientes para el personaje {}", character.getId());
+            return;
+        }
+
+        log.info("Procesando {} solicitudes de becas pendientes para personaje {}", pendingApplications.size(), character.getId());
+
+        // 3. Procesar cada solicitud pendiente
+        for (ScholarshipApplicationDto application : pendingApplications) {
+            // Obtener los detalles de la beca
+            ScholarshipDto scholarship = businessTransactions.getScholarshipById(application.getScholarshipId());
+
+            if (scholarship == null) {
+                log.warn("No se encontró la beca con ID {} para la solicitud {}", application.getScholarshipId(), application.getId());
+                continue;
+            }
+
+            // 4. Evaluar si el personaje cumple los requisitos
+            boolean meetsRequirements = checkScholarshipRequirements(character, scholarship);
+
+            if (meetsRequirements) {
+                // APROBAR beca
+                approveScholarship(character, application, scholarship);
+            } else {
+                // RECHAZAR beca
+                rejectScholarship(application);
+            }
+        }
+    }
+
+    /**
+     * Verifica si el personaje cumple los requisitos de la beca
+     */
+    private boolean checkScholarshipRequirements(CharacterDto character, ScholarshipDto scholarship) {
+        // Verificar nota mínima
+//        if (scholarship.getMinGrade() != null) {
+//            double characterGrade = character.getStats() != null ?
+//                    character.getStats().getGrade() : 0;
+//            if (characterGrade < scholarship.getMinGrade()) {
+//                log.info("Personaje {} no cumple nota mínima: {} < {}",
+//                        character.getId(), characterGrade, scholarship.getMinGrade());
+//                return false;
+//            }
+//        }
+
+        // Verificar XP mínimo
+        if (scholarship.getMinXpRequired() != null) {
+            int characterXp = character.getXpAcademy() != null ? character.getXpAcademy() : 0;
+            if (characterXp < scholarship.getMinXpRequired()) {
+                log.info("Personaje {} no cumple XP mínimo: {} < {}",
+                        character.getId(), characterXp, scholarship.getMinXpRequired());
+                return false;
+            }
+        }
+
+        // Verificar nivel educativo
+//        if (scholarship.getEducationLevel() != null && character.getEducationLevel() != null) {
+//            if (!isEducationLevelValid(character.getEducationLevel(), scholarship.getEducationLevel())) {
+//                log.info("Personaje {} no cumple nivel educativo requerido: {} requería {}",
+//                        character.getId(), character.getEducationLevel(), scholarship.getEducationLevel());
+//                return false;
+//            }
+//        }
+
+        // Verificar ingreso familiar máximo
+        if (scholarship.getMaxFamilyIncome() != null && scholarship.getMaxFamilyIncome().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal familyIncome = character.getAccounts().get(0).getIncomes().get(0).getAmount() != null ? character.getAccounts().get(0).getIncomes().get(0).getAmount() : BigDecimal.valueOf(0);
+            if (familyIncome.compareTo(scholarship.getMaxFamilyIncome()) > 0)  {
+                log.info("Personaje {} supera ingreso familiar máximo: {} > {}",
+                        character.getId(), familyIncome, scholarship.getMaxFamilyIncome());
+                return false;
+            }
+        }
+
+        // Verificar mérito académico (si requiere)
+//        if (scholarship.getRequiresMerit() != null && scholarship.getRequiresMerit()) {
+//            boolean hasMerit = character.getHasAcademicMerit() != null && character.getHasAcademicMerit();
+//            if (!hasMerit) {
+//                log.info("Personaje {} no tiene mérito académico requerido", character.getId());
+//                return false;
+//            }
+//        }
+
+        log.info("Personaje {} CUMPLE todos los requisitos para la beca {}", character.getId(), scholarship.getId());
+        return true;
+    }
+
+    /**
+     * Acepta una solicitud de beca y crea el ingreso correspondiente
+     */
+    private void approveScholarship(CharacterDto character, ScholarshipApplicationDto application, ScholarshipDto scholarship) {
+        log.info("Aprobando beca {} para personaje {}", scholarship.getId(), character.getId());
+
+        try {
+            // 1. Actualizar estado de la solicitud a APPROVED
+            ScholarshipApplicationDto updatedApplication = businessTransactions.updateScholarshipStatus(
+                    application.getId(),
+                    EnumFormation.ApplicationStatus.APPROVED
+            );
+
+            if (updatedApplication == null) {
+                log.error("No se pudo actualizar el estado de la solicitud {}", application.getId());
+                return;
+            }
+
+            // 2. Crear income con la cantidad de la beca
+            createScholarshipIncome(character, scholarship);
+
+            // 3. Enviar notificación de aprobación
+            sendScholarshipApprovalNotification(character, scholarship);
+
+            log.info("Beca {} aprobada y procesada correctamente para personaje {}",
+                    scholarship.getId(), character.getId());
+
+        } catch (Exception e) {
+            log.error("Error al aprobar beca {} para personaje {}: {}",
+                    scholarship.getId(), character.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Rechaza una solicitud de beca
+     */
+    private void rejectScholarship(ScholarshipApplicationDto application) {
+        log.info("Rechazando solicitud de beca {}", application.getId());
+
+        try {
+            ScholarshipApplicationDto updatedApplication = businessTransactions.updateScholarshipStatus(
+                    application.getId(),
+                    EnumFormation.ApplicationStatus.REJECTED
+            );
+
+            if (updatedApplication != null) {
+                log.info("Solicitud de beca {} rechazada correctamente", application.getId());
+            }
+        } catch (Exception e) {
+            log.error("Error al rechazar solicitud de beca {}: {}", application.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Crea un ingreso en la cuenta del personaje por la cantidad de la beca
+     */
+    private void createScholarshipIncome(CharacterDto character, ScholarshipDto scholarship) {
+        try {
+            // Obtener la cuenta principal del personaje
+            if (character.getAccounts() == null || character.getAccounts().isEmpty()) {
+                log.warn("Personaje {} no tiene cuentas asociadas", character.getId());
+                return;
+            }
+
+            Long accountId = character.getAccounts().get(0).getId();
+
+            // Crear el DTO de ingreso
+            SIncomeResponseDto incomeDto = new SIncomeResponseDto();
+            incomeDto.setAmount(scholarship.getAmount());
+            incomeDto.setExternalRefId(character.getId());
+            incomeDto.setExternalRefType("SCHOLARSHIP");
+            incomeDto.setActive(true);
+            incomeDto.setCategory(EnumAll.ExpenseCategory.EDUCATION);
+            incomeDto.setAmount(scholarship.getAmount());
+            incomeDto.setFrequency(EnumAll.Frequency.OTHER);
+            incomeDto.setSource("Beca: " + scholarship.getTitle());
+
+            // Llamar al servicio de finanzas para crear el ingreso
+            SIncomeResponseDto createdIncome = businessTransactions.setIncome(incomeDto, accountId);
+
+            if (createdIncome != null) {
+                log.info("Ingreso de beca creado: {} € para personaje {}", scholarship.getAmount(), character.getId());
+            }
+
+        } catch (Exception e) {
+            log.error("Error al crear ingreso de beca para personaje {}: {}", character.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Envía una notificación al personaje informando que su beca fue aprobada
+     */
+    private void sendScholarshipApprovalNotification(CharacterDto character, ScholarshipDto scholarship) {
+        NotificationDTO notification = new NotificationDTO();
+        notification.setUserId(character.getId());
+        notification.setFromUserId(character.getUid());
+        notification.setType(NotificationType.SYSTEM);
+        notification.setTitle("¡Beca Aprobada! 🎉");
+        notification.setSubTitle("Tu solicitud para " + scholarship.getTitle() + " ha sido aprobada");
+        notification.setMessage(String.format(
+                "¡Felicidades! Tu beca de %s € ha sido aprobada y el dinero ha sido depositado en tu cuenta.",
+                scholarship.getAmount()
+        ));
+        notification.setResourceType(NotificationResourceType.SYSTEM);
+        notification.setResourceId(character.getId());
+        notification.setActionUrl("/profile");
+        notification.setRead(false);
+
+        businessTransactions.setNotifications(notification);
     }
 }
