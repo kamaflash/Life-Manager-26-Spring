@@ -70,7 +70,6 @@ public class SystemServiceImpl implements SystemService {
     }
     @Override
     public SystemDto createSystem(SystemDto systemDto) {
-        systemDto.setCreatedAt(LocalDateTime.now());
         systemDto.setPa(5);
         SystemEntity system = systemMapper.toEntity(systemDto);
         system = systemRepository.save(system);

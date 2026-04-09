@@ -71,8 +71,6 @@ public class FinanceAccountController {
         if (expense.compareTo(BigDecimal.ZERO) != 0) {
             dtoExpense = accountService.setExpense(EnumAll.ExpenseCategory.HOUSING, expense,resp ,"Habitación");
         }
-        CreateExpenseRequestDto dtoExpense2 = accountService.setExpense(EnumAll.ExpenseCategory.FOOD, BigDecimal.valueOf(200),resp ,"Alimentación");
-        CreateExpenseRequestDto dtoExpense3 = accountService.setExpense(EnumAll.ExpenseCategory.TRANSPORT, BigDecimal.valueOf(50),resp ,"Transporte");
 
         List<CreateIncomeRequestDto> listIncomes = new ArrayList();
         listIncomes.add(dtoIncome);
@@ -81,9 +79,7 @@ public class FinanceAccountController {
         if (expense.compareTo(BigDecimal.ZERO) != 0) {
             listExpenses.add(dtoExpense);
         }
-        listExpenses.add(dtoExpense2);
-        listExpenses.add(dtoExpense3);
-        resp.setExpenses(listExpenses);
+
         return resp;
     }
     @PostMapping("/full")

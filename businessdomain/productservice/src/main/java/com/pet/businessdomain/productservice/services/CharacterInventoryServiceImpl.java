@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -72,7 +73,112 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
 
         return personDto;
     }
+    @Override
+    public CharacterDto ussedProduct(Long characterId, Long productId, Integer pa, Integer quantity) {
 
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        CharacterDto personDto = businessTransactions.getPerson(characterId);
+
+        // 🔥 1. Aplicar efectos multiplicados por PA
+        personDto = applyEffectsWithMultiplier(personDto, product, pa);
+
+        // 🔥 3. Actualizar stats del personaje
+        personDto = businessTransactions.updateCharacterStats(characterId, personDto);
+        personDto = businessTransactions.getPerson(characterId);
+
+        // 🔥 4. Actualizar sistema (PA y tiempo)
+        SystemDto systemDto = businessTransactions.getSystem(personDto.getUid());
+        systemDto.setPa(systemDto.getPa() - pa);
+        LocalDateTime current = systemDto.getActualityAt();
+        LocalDateTime newActuality = current.plusHours(pa);
+        systemDto.setActualityAt(newActuality);
+        systemDto = businessTransactions.updateSystem(systemDto.getUid(), newActuality, pa);
+
+        return personDto;
+    }
+
+    /**
+     * Aplica los efectos del producto multiplicados por el multiplicador (PA)
+     */
+    private CharacterDto applyEffectsWithMultiplier(CharacterDto character, Product product, int multiplier) {
+        if (product.getEffects() == null || product.getEffects().isEmpty()) {
+            return character;
+        }
+
+        for (ProductEffect effect : product.getEffects()) {
+            int multipliedValue = effect.getValue() * multiplier;
+
+            switch (effect.getCategory()) {
+                case "ENERGY":
+                    character.getStats().setEnergy(
+                            clamp(character.getStats().getEnergy() + multipliedValue, 0, 100)
+                    );
+                    break;
+
+                case "CHARISMA":
+                    character.getStats().setCharisma(
+                            character.getStats().getCharisma() + multipliedValue
+                    );
+                    break;
+
+                case "INTELLIGENCE":
+                    character.getStats().setIntelligence(
+                            character.getStats().getIntelligence() + multipliedValue
+                    );
+                    break;
+
+                case "CREATIVITY":
+                    character.getStats().setCreativity(
+                            character.getStats().getCreativity() + multipliedValue
+                    );
+                    break;
+
+                case "RESILIENCE":
+                    character.getStats().setResilience(
+                            character.getStats().getResilience() + multipliedValue
+                    );
+                    break;
+
+                case "HEALTH":
+                    character.getStats().setHealth(
+                            clamp(character.getStats().getHealth() + multipliedValue, 0, 100)
+                    );
+                    break;
+
+                case "HAPPINESS":
+                    character.getStats().setHappiness(
+                            clamp(character.getStats().getHappiness() + multipliedValue, 0, 100)
+                    );
+                    break;
+
+                case "STRESS":
+                    character.getStats().setStress(
+                            clamp(character.getStats().getStress() + multipliedValue, 0, 100)
+                    );
+                    break;
+
+                case "FINANCES":
+                    character.getStats().setFinances(
+                            character.getStats().getFinances() + multipliedValue
+                    );
+                    break;
+
+                default:
+                    log.warn("Efecto desconocido: {}", effect.getCategory());
+            }
+        }
+
+        return character;
+    }
+
+    /**
+     * Método auxiliar para mantener valores dentro de un rango
+     */
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
     @Override
     public List<CharacterInventoryResponseDTO> getInventory(Long characterId) {
 

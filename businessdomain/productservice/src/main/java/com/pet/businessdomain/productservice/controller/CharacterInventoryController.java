@@ -29,4 +29,14 @@ public class CharacterInventoryController {
     public List<CharacterInventoryResponseDTO> getInventory(@PathVariable(name="characterId") Long characterId) {
         return inventoryService.getInventory(characterId);
     }
+
+    @PostMapping("/ussed/{characterId}/{productId}/{pa}")
+    public CharacterDto ussedProduct(
+            @PathVariable(name="characterId") Long characterId,
+            @PathVariable(name="productId") Long productId,
+            @PathVariable(name="pa") Integer pa,
+            @RequestParam(name="quantity", defaultValue = "1") Integer quantity
+    ) {
+        return inventoryService.ussedProduct(characterId, productId, pa, quantity);
+    }
 }
