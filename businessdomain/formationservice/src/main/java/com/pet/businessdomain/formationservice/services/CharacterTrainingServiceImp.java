@@ -10,6 +10,7 @@ import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.formationservice.exceptions.BusinessRuleException;
 
+import com.pet.businessdomain.shareddto.enumentities.NotificationEventType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -238,6 +239,7 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
         notificationDTODto.setRead(false);
         notificationDTODto.setResourceId(training.getId());
         notificationDTODto.setResourceType(NotificationResourceType.COURSE);
+        notificationDTODto.setEventType(NotificationEventType.COURSE_ENROLLMENT );
 
         businessTransactions.setNotifications(notificationDTODto);
     }

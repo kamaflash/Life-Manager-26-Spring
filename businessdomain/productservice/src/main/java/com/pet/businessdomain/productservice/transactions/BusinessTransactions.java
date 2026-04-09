@@ -78,7 +78,7 @@ public class BusinessTransactions {
                     .build();
 
             return webClient.put()
-                    .uri("/stast/{id}", id)
+                    .uri("/stats/{id}", id)
                     .bodyValue(characterDto)
                     .retrieve()
                     .onStatus(

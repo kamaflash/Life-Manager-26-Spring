@@ -54,7 +54,7 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
 
         // 🔥 2. Actualizar stats
         personDto = businessTransactions.updateCharacterStats(characterId, personDto);
-
+        personDto = businessTransactions.getPerson(characterId);
         SystemDto systemDto = businessTransactions.getSystem(personDto.getUid());
         systemDto.setPa(systemDto.getPa() - pa);
         LocalDateTime current = systemDto.getActualityAt();
@@ -190,6 +190,7 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
 
         // 🔥 Recurso asociado
         notificationDTO.setResourceType(NotificationResourceType.PRODUCT);
+        notificationDTO.setEventType(NotificationEventType.NEW_PRODUCT);
         notificationDTO.setResourceId(product.getId());
 
         // 🔥 Navegación directa
@@ -270,6 +271,6 @@ public class CharacterInventoryServiceImpl implements CharacterInventoryService 
         expense.setExternalRefType("Product");
         expense.setEssential(false);
 
-        businessTransactions.setExpense(expense, personDto.getId());
+        businessTransactions.setExpense(expense, personDto.getAccounts().get(0).getId());
     }
 }

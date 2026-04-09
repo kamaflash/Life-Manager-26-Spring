@@ -1,5 +1,6 @@
 package com.pet.businessdomain.shareddto.dto;
 
+import com.pet.businessdomain.shareddto.enumentities.NotificationEventType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationPriority;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
@@ -21,7 +22,7 @@ public class NotificationDTO {
 
     // Tipo de notificación (determina plantilla frontend)
     private NotificationType type;
-
+    private NotificationEventType eventType;
     // Prioridad (HIGH, MEDIUM, LOW)
     private NotificationPriority priority;
 

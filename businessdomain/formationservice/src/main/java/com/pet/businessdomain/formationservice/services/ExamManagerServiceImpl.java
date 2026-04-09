@@ -4,6 +4,7 @@ import com.pet.businessdomain.formationservice.entities.*;
 import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
 import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.NotificationEventType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -224,7 +225,7 @@ public class ExamManagerServiceImpl implements ExamManagerService {
         // 🔥 Nuevo sistema
         notificationDTO.setResourceType(NotificationResourceType.COURSE);
         notificationDTO.setResourceId(dto.getId());
-
+        notificationDTO.setEventType(NotificationEventType.EXAM_PASSED);
         // 🔥 Navegación directa frontend
         notificationDTO.setActionUrl("/profile" );
 

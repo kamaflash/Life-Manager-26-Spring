@@ -5,10 +5,7 @@
 package com.pet.businessdomain.systemservice.services;
 
 import com.pet.businessdomain.shareddto.dto.*;
-import com.pet.businessdomain.shareddto.enumentities.EnumAll;
-import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
-import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
-import com.pet.businessdomain.shareddto.enumentities.NotificationType;
+import com.pet.businessdomain.shareddto.enumentities.*;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
@@ -326,7 +323,7 @@ public class SystemServiceImpl implements SystemService {
                 approveScholarship(character, application, scholarship);
             } else {
                 // RECHAZAR beca
-                rejectScholarship(application);
+                rejectScholarship(character, application, scholarship);
             }
         }
     }
@@ -410,7 +407,7 @@ public class SystemServiceImpl implements SystemService {
             createScholarshipIncome(character, scholarship);
 
             // 3. Enviar notificación de aprobación
-            sendScholarshipApprovalNotification(character, scholarship);
+            sendScholarshipApprovalNotification(character, scholarship, true);
 
             log.info("Beca {} aprobada y procesada correctamente para personaje {}",
                     scholarship.getId(), character.getId());
@@ -424,7 +421,7 @@ public class SystemServiceImpl implements SystemService {
     /**
      * Rechaza una solicitud de beca
      */
-    private void rejectScholarship(ScholarshipApplicationDto application) {
+    private void rejectScholarship(CharacterDto character, ScholarshipApplicationDto application, ScholarshipDto scholarship) {
         log.info("Rechazando solicitud de beca {}", application.getId());
 
         try {
@@ -432,7 +429,8 @@ public class SystemServiceImpl implements SystemService {
                     application.getId(),
                     EnumFormation.ApplicationStatus.REJECTED
             );
-
+// 3. Enviar notificación de aprobación
+            sendScholarshipApprovalNotification(character, scholarship,false);
             if (updatedApplication != null) {
                 log.info("Solicitud de beca {} rechazada correctamente", application.getId());
             }
@@ -480,18 +478,28 @@ public class SystemServiceImpl implements SystemService {
     /**
      * Envía una notificación al personaje informando que su beca fue aprobada
      */
-    private void sendScholarshipApprovalNotification(CharacterDto character, ScholarshipDto scholarship) {
+    private void sendScholarshipApprovalNotification(CharacterDto character, ScholarshipDto scholarship, boolean isAccept) {
         NotificationDTO notification = new NotificationDTO();
         notification.setUserId(character.getId());
         notification.setFromUserId(character.getUid());
         notification.setType(NotificationType.SYSTEM);
-        notification.setTitle("¡Beca Aprobada! 🎉");
-        notification.setSubTitle("Tu solicitud para " + scholarship.getTitle() + " ha sido aprobada");
-        notification.setMessage(String.format(
-                "¡Felicidades! Tu beca de %s € ha sido aprobada y el dinero ha sido depositado en tu cuenta.",
-                scholarship.getAmount()
-        ));
-        notification.setResourceType(NotificationResourceType.SYSTEM);
+        if(isAccept) {
+            notification.setTitle("¡Beca Aprobada! 🎉");
+            notification.setSubTitle("Tu solicitud para " + scholarship.getTitle() + " ha sido aprobada");
+            notification.setMessage(String.format(
+                    "¡Felicidades! Tu beca de %s € ha sido aprobada y el dinero ha sido depositado en tu cuenta.",
+                    scholarship.getAmount()
+            ));
+            notification.setEventType(NotificationEventType.SCHOLARSHIP_APPROVED);
+        } else {
+            notification.setTitle("¡Beca Rechazada! 🎉");
+            notification.setSubTitle("Tu solicitud para " + scholarship.getTitle() + " ha sido rechazada");
+            notification.setMessage("¡Lo sentimos! Tu beca ha sido rechaza por no cumplir los requisitos.");
+            notification.setEventType(NotificationEventType.SCHOLARSHIP_REJECTED);
+
+        }
+
+        notification.setResourceType(NotificationResourceType.COURSE);
         notification.setResourceId(character.getId());
         notification.setActionUrl("/profile");
         notification.setRead(false);

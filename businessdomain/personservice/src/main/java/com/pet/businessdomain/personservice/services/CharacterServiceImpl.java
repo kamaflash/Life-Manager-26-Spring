@@ -8,6 +8,7 @@ import com.pet.businessdomain.personservice.repository.CharacterRepository;
 import com.pet.businessdomain.personservice.transactions.BusinessTransactions;
 import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.NotificationEventType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -234,7 +235,7 @@ public class CharacterServiceImpl implements CharacterService {
         // 🔥 Nuevo sistema
         notificationDTO.setResourceType(NotificationResourceType.USER);
         notificationDTO.setResourceId(dto.getId());
-
+        notificationDTO.setEventType(NotificationEventType.WELCOME);
         // 🔥 Navegación directa frontend
         notificationDTO.setActionUrl("/profile" );
 

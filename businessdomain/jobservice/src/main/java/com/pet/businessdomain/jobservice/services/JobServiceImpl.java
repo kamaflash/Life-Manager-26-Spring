@@ -514,7 +514,7 @@ public class JobServiceImpl implements IJobService {
         notificationDTO.setTitle("Nuevo trabajo");
         notificationDTO.setSubTitle("Has aplicado a un nuevo puesto de trabajo");
         notificationDTO.setMessage("Has aplicado a un nuevo puesto de trabajo.");
-
+        notificationDTO.setEventType(NotificationEventType.JOB_APPLICATION_ACCEPTED);
         // 🔥 Nuevo sistema
         notificationDTO.setResourceType(NotificationResourceType.JOBS);
         notificationDTO.setResourceId(dto.getVacancyId());

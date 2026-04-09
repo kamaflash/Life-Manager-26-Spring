@@ -42,7 +42,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         if (accountId == null) {
             throw new IllegalArgumentException("Account id is required");
         }
-        if (dto == null || dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (dto == null || dto.getAmount() == null ) {
             throw new IllegalArgumentException("Expense amount must be positive");
         }
 
@@ -60,7 +60,9 @@ public class ExpenseServiceImpl implements ExpenseService {
         tx.setDescription(expense.getConcept());
         tx.setExecutedAt(LocalDateTime.now());
         tx.setCategory(expense.getCategory());
-        transactionRepository.save(tx);
+        if (expense.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+            transactionRepository.save(tx);
+        }
 
         account.setBalance(account.getBalance().subtract(expense.getAmount()));
         accountRepository.save(account);
