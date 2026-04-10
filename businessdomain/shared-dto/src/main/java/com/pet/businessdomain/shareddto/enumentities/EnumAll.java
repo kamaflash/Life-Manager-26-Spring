@@ -176,4 +176,52 @@ public class EnumAll {
         SATURDAY,
         SUNDAY
     }
+    // 🔥 NUEVOS ENUMS
+    public enum JobLevel {
+        INTERN, JUNIOR, SEMI_SENIOR, SENIOR, LEAD, MANAGER, DIRECTOR, VP, C_LEVEL
+    }
+
+    public enum CareerPath {
+        TECHNOLOGY,      // Desarrollo, software, IT, datos, ciberseguridad
+        BUSINESS,        // Finanzas, administración, marketing, ventas
+        HEALTH,          // Medicina, enfermería, fisioterapia, salud mental
+        CREATIVE,        // Diseño, arte, audiovisual, música, escritura
+        CONSTRUCTION,    // Obra, arquitectura, electricidad, fontanería
+        SOCIAL,          // Educación, trabajo social, psicología, orientación
+        SCIENCE,         // Biología, química, física, investigación
+        HOSPITALITY,     // Hostelería, turismo, restauración, hoteles
+        SPORTS,          // Deporte, entrenamiento, actividad física
+        ARTS,            // Artes plásticas, galerías, museos, conservación
+        LEGAL,           // Derecho, abogacía, asesoría legal
+        ENGINEERING,     // Ingeniería industrial, mecánica, eléctrica
+        LOGISTICS,       // Transporte, logística, cadena de suministro
+        AGRICULTURE,     // Agricultura, ganadería, agroindustria
+        COMMUNICATION    // Periodismo, comunicación, relaciones públicas
+    }
+
+    // 🔥 NUEVOS ENUMS
+    public enum ContractType {
+        FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE, TEMPORAL
+    }
+
+    public enum WorkModality {
+        ONSITE, REMOTE, HYBRID
+    }
+
+    public enum ApplicationStatus {
+        PENDING, REVIEWING, INTERVIEW_SCHEDULED, OFFERED, HIRED, REJECTED, WITHDRAWN
+    }
+
+    public enum ApplicationStage {
+        APPLICATION, CV_REVIEW, PHONE_SCREEN, TECHNICAL_TEST, TECHNICAL_INTERVIEW, HR_INTERVIEW, OFFER, HIRED
+    }
+
+    public enum EventType {
+        BONUS, PROMOTION, DEMOTION, CONFLICT, PROJECT_SUCCESS, PROJECT_FAILURE,
+        BURNOUT, OFFER_FROM_RIVAL, MENTOR_LEAVES, TEAM_RESTRUCTURE, QUARTERLY_REVIEW
+    }
+
+    public enum MissionDifficulty {
+        EASY, MEDIUM, HARD, EPIC
+    }
 }

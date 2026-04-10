@@ -91,7 +91,42 @@ spring:
       - id: jobs_service_trainer
         uri: lb://businessdomain-jobservice
         predicates:
-          - Path=/api/jobs/**
+          - Path=/api/character-jobs/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/companies/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/job-positions/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/job-applications/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/job-events/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/job-vacancies/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/work-relationships/**
+
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/missions/**
 
       - id: products_service_trainer
         uri: lb://businessdomain-productservice

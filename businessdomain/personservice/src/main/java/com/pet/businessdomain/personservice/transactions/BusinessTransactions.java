@@ -96,7 +96,7 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
-    public List<JobPositionDto> getJobs(Long id) {
+    public List<JobPositionDTO> getJobs(Long id) {
 
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
@@ -108,7 +108,7 @@ public class BusinessTransactions {
                         .path("/positions/fulldto/{id}")
                         .build(id))
                 .retrieve()
-                .bodyToFlux(JobPositionDto.class)
+                .bodyToFlux(JobPositionDTO.class)
                 .collectList()
                 .block();
     }
@@ -128,20 +128,19 @@ public class BusinessTransactions {
                 .collectList()
                 .block();
     }
-    public CharacterApplicationDto getJobsApplication(Long characterId) {
+    public List<CharacterJobDTO> getCharacterJobs(Long characterId) {
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
-                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/jobs")
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
 
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/applications/character/all/{characterId}")
-                        .build(characterId))
+                .uri("/api/character-jobs/character/all/{characterId}", characterId)
                 .retrieve()
-                .bodyToMono(CharacterApplicationDto.class)
-                .block(); // importante
+                .bodyToFlux(CharacterJobDTO.class)
+                .collectList()
+                .block();
     }
     public List<CharacterInventoryResponseDTO> getInvetory(Long characterId) {
 
@@ -211,4 +210,5 @@ public class BusinessTransactions {
                 .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
     }
+
 }

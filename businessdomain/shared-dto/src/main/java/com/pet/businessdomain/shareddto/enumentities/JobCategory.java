@@ -12,5 +12,6 @@ public enum JobCategory {
     ARTS,
     EDUCATION,
     SPORTS,
+    FINANCE,
     OTHER
 }

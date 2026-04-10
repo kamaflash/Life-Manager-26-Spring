@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
 
 /**
  *
@@ -18,18 +19,33 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
-    public static final String URLACCOUNT = "/api/jobs/**";
+    public static final String URLCHARACTERJOB = "/api/character-jobs/**";
+    public static final String URLCOMPANY = "/api/companies/**";
+    public static final String URLJOBAPP = "/api/job-applications/**";
+    public static final String URLJOBEVENT = "/api/job-events/**";
+    public static final String URLJOBVACANCIES = "/api/job-vacancies/**";
+    public static final String URLWORK = "/api/work-relationships/**";
+    public static final String URLJOBPOS = "/api/job-positions/**";
+    public static final String URLMISSIONS = "/api/missions/**";
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers
+                        .addHeaderWriter(new XFrameOptionsHeaderWriter(
+                                XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN
+                        ))
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, URLACCOUNT).permitAll()
-                        .requestMatchers(HttpMethod.POST, URLACCOUNT).permitAll()
-                        .requestMatchers(HttpMethod.PUT, URLACCOUNT).permitAll()
-                        .requestMatchers(HttpMethod.DELETE, URLACCOUNT).permitAll()
+                        // ✅ AÑADIR ESTO: Permitir acceso a la consola H2
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
+                        .requestMatchers(HttpMethod.POST, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
+                        .requestMatchers(HttpMethod.PUT, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

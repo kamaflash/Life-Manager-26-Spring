@@ -30,7 +30,7 @@ public class CharacterDto {
     private Map<String, SkillStateDto> skills;
 
     private List<CharacterTrainingDto> education;
-    private List<JobPositionDto> jobs;
+    private List<CharacterJobDTO> jobs;
     private List<SocialExperienceDto> social;
 
     private List<String> interests;

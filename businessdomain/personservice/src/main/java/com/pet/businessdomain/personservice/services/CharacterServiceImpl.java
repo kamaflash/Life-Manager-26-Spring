@@ -63,13 +63,15 @@ public class CharacterServiceImpl implements CharacterService {
     public CharacterDto getCharacterById(Long id) {
         CharacterEntity entity = characterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Character not found with id " + id));
+
         entity.setAccounts(businessTransactions.getAccount(id));
         CharacterDto dto = characterMapper.toDto(entity);
         dto.setEducation(businessTransactions.getEducation(entity.getId()));
-        CharacterApplicationDto aDto = businessTransactions.getJobsApplication(entity.getId());
-        if(aDto.getCharacterId() != null) {
-            dto.setJobs(businessTransactions.getJobs(aDto.getVacancyId()));
-        }
+
+        // 🔥 NUEVO: Obtener todos los trabajos del personaje directamente
+        List<CharacterJobDTO> characterJobs = businessTransactions.getCharacterJobs(entity.getId());
+        dto.setJobs(characterJobs != null ? characterJobs : List.of()); // Setear lista de trabajos
+
         dto.setInventory(businessTransactions.getInventory(id));
 
         return dto;
@@ -79,14 +81,30 @@ public class CharacterServiceImpl implements CharacterService {
     public CharacterDto getCharacterByUid(Long uid) {
         CharacterEntity entity = characterRepository.findByUid(uid)
                 .orElseThrow(() -> new RuntimeException("Character not found with id " + uid));
+
         entity.setAccounts(businessTransactions.getAccount(entity.getId()));
         CharacterDto dto = characterMapper.toDto(entity);
         dto.setEducation(businessTransactions.getEducation(entity.getId()));
-        CharacterApplicationDto aDto = businessTransactions.getJobsApplication(entity.getId());
-        if(aDto.getCharacterId() != null) {
-            dto.setJobs(businessTransactions.getJobs(aDto.getVacancyId()));
+
+        // 🔥 Obtener todos los trabajos y filtrar el activo (o tomar el primero)
+        List<CharacterJobDTO> characterJobs = businessTransactions.getCharacterJobs(entity.getId());
+
+        if (characterJobs != null && !characterJobs.isEmpty()) {
+            // Opción 1: Tomar el trabajo activo
+            CharacterJobDTO activeJob = characterJobs.stream()
+                    .findFirst()
+                    .orElse(characterJobs.get(0)); // O tomar el primero
+
+            dto.setJobs(List.of(activeJob));
+
+            // Opción 2: Setear todos los trabajos
+            // dto.setJobs(characterJobs);
+        } else {
+            dto.setJobs(List.of()); // Lista vacía si no tiene trabajos
         }
-        dto.setInventory(businessTransactions.getInvetory(entity.getId()));
+
+        dto.setInventory(businessTransactions.getInventory(entity.getId()));
+
         return dto;
     }
 

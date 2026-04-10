@@ -3,10 +3,8 @@ package com.pet.businessdomain.jobservice.entities;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,37 +17,44 @@ public class JobVacancyEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 💰 Salario
-    private BigDecimal salary;
-    private Integer payNumber;
+    @ManyToOne
+    @JoinColumn(name = "position_id")
+    private JobPositionEntity position;
 
-    // 📅 Estado de la vacante
+    // 💰 Salario
+    private BigDecimal minSalary;
+    private BigDecimal maxSalary;
+
+    // 📅 Estado
     private Boolean active = true;
     private LocalDate openingDate;
     private LocalDate closingDate;
     private Integer availableSlots;
 
-    // 📍 Detalles
+    // 📍 Detalles del puesto
     private String location;
-    private String contractType;
-    private String perks;
-    private Boolean remoteFriendly;
+
+    @Enumerated(EnumType.STRING)
+    private EnumAll.ContractType contractType; // FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE
+
+    @Enumerated(EnumType.STRING)
+    private EnumAll.WorkModality workModality; // ONSITE, REMOTE, HYBRID
+
     private Boolean visaSponsorship;
 
-    // ⏰ Horario
-    private Integer weeklyHours; // máximo 40
+    // ⏰ Horario semanal
+    private Integer weeklyHours; // 20, 30, 40, etc.
 
-    private LocalTime startTime;
-    private LocalTime endTime;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "job_working_days", joinColumns = @JoinColumn(name = "job_id"))
-    @Column(name = "day_of_week")
+    @ElementCollection
     @Enumerated(EnumType.STRING)
-    private List<EnumAll.WorkingDay> workingDays = new ArrayList<>();
+    private List<EnumAll.WorkingDay> workingDays; // MONDAY, TUESDAY...
 
-    // 🔗 Relación
-    @ManyToOne
-    @JoinColumn(name = "position_id")
-    private JobPositionEntity position;
+    // 🔥 NUEVO: Beneficios específicos de esta vacante
+    @ElementCollection
+    private List<String> benefits; // "bonus", "meal_vouchers", "transport"
+
+    // 🔥 NUEVO: Requisitos específicos
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RequirementEntity> requirements;
 }
+
