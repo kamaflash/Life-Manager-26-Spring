@@ -10,6 +10,9 @@ import com.pet.businessdomain.shareddto.dto.JobSearchFiltersDTO;
 import com.pet.businessdomain.shareddto.dto.JobVacancyDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,11 +131,6 @@ public class JobVacancyServiceImpl implements JobVacancyService {
         return jobVacancyMapper.toDtoList(jobVacancyRepository.findByWorkModality(workModality));
     }
 
-    @Override
-    public List<JobVacancyDTO> getByLocation(String location) {
-        // ⚠️ Este método no necesita JOIN FETCH porque solo devuelve datos básicos
-        return jobVacancyMapper.toDtoList(jobVacancyRepository.findByLocationContainingIgnoreCase(location));
-    }
 
     @Override
     public List<JobVacancyDTO> getBySalaryRange(BigDecimal min, BigDecimal max) {
@@ -141,11 +139,10 @@ public class JobVacancyServiceImpl implements JobVacancyService {
     }
 
     @Override
+    @Transactional  // ← Importante: mantener la transacción abierta
     public List<JobVacancyDTO> search(JobSearchFiltersDTO filters) {
-        // ⚠️ La búsqueda avanzada necesita JOIN FETCH para mostrar nombres de empresa y puesto
         List<JobVacancyEntity> entities = jobVacancyRepository.searchVacancies(
                 filters.getKeyword(),
-                filters.getLocation(),
                 filters.getContractTypes() != null && !filters.getContractTypes().isEmpty() ?
                         filters.getContractTypes().get(0) : null,
                 filters.getWorkModalities() != null && !filters.getWorkModalities().isEmpty() ?
@@ -154,15 +151,45 @@ public class JobVacancyServiceImpl implements JobVacancyService {
                 filters.getMaxSalary() != null ? BigDecimal.valueOf(filters.getMaxSalary()) : null
         );
 
-        // Cargar relaciones manualmente para cada entidad
+        // Forzar carga de relaciones dentro de la transacción
         for (JobVacancyEntity entity : entities) {
-            // Forzar carga de relaciones
-            if (entity.getPosition() != null && entity.getPosition().getCompany() != null) {
-                entity.getPosition().getCompany().getName();
+            Hibernate.initialize(entity.getPosition());
+            if (entity.getPosition() != null) {
+                Hibernate.initialize(entity.getPosition().getCompany());
             }
+            Hibernate.initialize(entity.getRequirements());
         }
 
         return jobVacancyMapper.toDtoList(entities);
+    }
+
+
+    @Override
+    @Transactional
+    public Page<JobVacancyDTO> search(JobSearchFiltersDTO filters, Pageable pageable) {
+        Page<JobVacancyEntity> entityPage = jobVacancyRepository.searchVacanciesPage(
+                filters.getKeyword(),
+                filters.getContractTypes() != null && !filters.getContractTypes().isEmpty() ?
+                        filters.getContractTypes().get(0) : null,
+                filters.getWorkModalities() != null && !filters.getWorkModalities().isEmpty() ?
+                        filters.getWorkModalities().get(0) : null,
+                filters.getMinSalary() != null ? BigDecimal.valueOf(filters.getMinSalary()) : null,
+                filters.getMaxSalary() != null ? BigDecimal.valueOf(filters.getMaxSalary()) : null,
+                pageable
+        );
+
+        // Forzar carga de relaciones dentro de la transacción (solo si es necesario)
+        // Con JOIN FETCH en la consulta, esto no debería ser necesario
+        for (JobVacancyEntity entity : entityPage.getContent()) {
+            Hibernate.initialize(entity.getPosition());
+            if (entity.getPosition() != null) {
+                Hibernate.initialize(entity.getPosition().getCompany());
+            }
+            Hibernate.initialize(entity.getRequirements());
+        }
+
+        // 🔥 CORREGIDO: Convertir Page<Entity> a Page<DTO> usando map
+        return entityPage.map(jobVacancyMapper::toDto);
     }
 
     @Override

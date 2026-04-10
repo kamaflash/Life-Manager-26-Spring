@@ -13,28 +13,28 @@ public class CompanyEntity {
     @Id
     private Long id;
 
+    @Column(columnDefinition = "VARCHAR(255)")
     private String name;
 
     @Enumerated(EnumType.STRING)
     private JobCategory category;
 
-    @Column(length = 1000)
+    @Column(length = 1000, columnDefinition = "TEXT")
     private String description;
 
-    private String location;           // Ciudad o sede principal
-    private String website;            // URL
-    private String logoUrl;            // Imagen de la empresa
-    private String contactEmail;       // Correo de RRHH
-    private String phone;              // Teléfono de contacto
+    @Column(columnDefinition = "VARCHAR(255)")
+    private String location;
+
+    private String website;
+    private String logoUrl;
+    private String contactEmail;
+    private String phone;
     private boolean active = true;
-
-    private Integer employeesCount;    // Tamaño de la empresa
-    private Integer foundedYear;       // Año de fundación
-
-    private Boolean remoteFriendly;    // Si acepta teletrabajo
-    private Boolean internshipAvailable; // Si tiene prácticas
+    private Integer employeesCount;
+    private Integer foundedYear;
+    private Boolean remoteFriendly;
+    private Boolean internshipAvailable;
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JobPositionEntity> positions;
-
 }

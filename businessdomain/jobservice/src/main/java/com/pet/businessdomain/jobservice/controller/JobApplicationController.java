@@ -167,7 +167,7 @@ public class JobApplicationController {
     @PatchMapping("/{id}/schedule-interview")
     public ResponseEntity<JobApplicationDTO> scheduleInterview(
             @PathVariable(name = "id") Long id,
-            @RequestParam LocalDateTime interviewDate) {
+            @RequestParam(name = "interviewDate") LocalDateTime interviewDate) {
         log.info("PATCH /api/job-applications/{}/schedule-interview - Schedule interview at {}", id, interviewDate);
         return ResponseEntity.ok(jobApplicationService.scheduleInterview(id, interviewDate));
     }
@@ -185,8 +185,8 @@ public class JobApplicationController {
     @PatchMapping("/{id}/interview-result")
     public ResponseEntity<JobApplicationDTO> updateInterviewResult(
             @PathVariable(name = "id") Long id,
-            @RequestParam String result,
-            @RequestParam(required = false) String notes) {
+            @RequestParam(name = "result") String result,
+            @RequestParam(name = "notes", required = false) String notes) {
         log.info("PATCH /api/job-applications/{}/interview-result - Update interview result: {}", id, result);
         return ResponseEntity.ok(jobApplicationService.updateInterviewResult(id, result, notes));
     }
@@ -203,7 +203,7 @@ public class JobApplicationController {
     @PatchMapping("/{id}/make-offer")
     public ResponseEntity<JobApplicationDTO> makeOffer(
             @PathVariable(name = "id") Long id,
-            @RequestParam BigDecimal salary) {
+            @RequestParam(name = "salary") BigDecimal salary) {
         log.info("PATCH /api/job-applications/{}/make-offer - Make offer with salary {}", id, salary);
         return ResponseEntity.ok(jobApplicationService.makeOffer(id, salary));
     }
@@ -234,7 +234,7 @@ public class JobApplicationController {
     @PatchMapping("/{id}/reject")
     public ResponseEntity<JobApplicationDTO> reject(
             @PathVariable(name = "id") Long id,
-            @RequestParam(required = false) String reason) {
+            @RequestParam(name = "reason", required = false) String reason) {
         log.info("PATCH /api/job-applications/{}/reject - Reject application: {}", id, reason);
         return ResponseEntity.ok(jobApplicationService.reject(id, reason));
     }
@@ -252,8 +252,8 @@ public class JobApplicationController {
      */
     @GetMapping("/check")
     public ResponseEntity<Boolean> hasApplied(
-            @RequestParam Long characterId,
-            @RequestParam Long vacancyId) {
+            @RequestParam(name = "characterId") Long characterId,
+            @RequestParam(name = "vacancyId") Long vacancyId) {
         log.info("GET /api/job-applications/check - Check if character {} applied to vacancy {}", characterId, vacancyId);
         return ResponseEntity.ok(jobApplicationService.hasApplied(characterId, vacancyId));
     }

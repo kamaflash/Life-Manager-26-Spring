@@ -2,25 +2,30 @@ package com.pet.businessdomain.jobservice.controller;
 
 import com.pet.businessdomain.jobservice.services.JobVacancyService;
 import com.pet.businessdomain.jobservice.services.RequirementService;
-import com.pet.businessdomain.shareddto.dto.JobPositionDTO;
-import com.pet.businessdomain.shareddto.dto.JobSearchFiltersDTO;
-import com.pet.businessdomain.shareddto.dto.JobVacancyDTO;
-import com.pet.businessdomain.shareddto.dto.RequirementDTO;
+import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.NotificationPriority;
+import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/job-vacancies")
 @RequiredArgsConstructor
 public class JobVacancyController {
-
+    private static final int DEFAULT_PAGE_SIZE = 10;
     private final JobVacancyService jobVacancyService;
     private final RequirementService requirementService;
 
@@ -278,20 +283,6 @@ public class JobVacancyController {
     }
 
     /**
-     * Obtiene vacantes por ubicación
-     *
-     * @param location Ciudad o ubicación
-     * @return Lista de JobVacancyDTO con vacantes en esa ubicación
-     *
-     * @example GET /api/job-vacancies/location?location=Madrid
-     */
-    @GetMapping("/location")
-    public ResponseEntity<List<JobVacancyDTO>> getByLocation(@RequestParam String location) {
-        log.info("GET /api/job-vacancies/location - Get vacancies by location: {}", location);
-        return ResponseEntity.ok(jobVacancyService.getByLocation(location));
-    }
-
-    /**
      * Obtiene vacantes por rango salarial
      *
      * @param min Salario mínimo
@@ -320,9 +311,16 @@ public class JobVacancyController {
      * @example Body: { "category": "TECHNOLOGY", "location": "Madrid", "minSalary": 40000 }
      */
     @PostMapping("/search")
-    public ResponseEntity<List<JobVacancyDTO>> search(@RequestBody JobSearchFiltersDTO filters) {
+    public ResponseEntity<Map<String, Object>> search(@RequestBody JobSearchFiltersDTO filters) {
         log.info("POST /api/job-vacancies/search - Search vacancies");
-        return ResponseEntity.ok(jobVacancyService.search(filters));
+        Pageable pageable = PageRequest.of(filters.getPage(), DEFAULT_PAGE_SIZE);
+        Page<JobVacancyDTO> jobVacancyDTOS = jobVacancyService.search(filters,pageable);
+        Map<String, Object> response = new HashMap<>();
+        response.put("jobs", jobVacancyDTOS.getContent());
+        response.put("currentPage", jobVacancyDTOS.getNumber());
+        response.put("totalItems", jobVacancyDTOS.getTotalElements());
+        response.put("totalPages", jobVacancyDTOS.getTotalPages());
+        return ResponseEntity.ok(response);
     }
 
     /**

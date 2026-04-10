@@ -14,6 +14,7 @@ public interface JobVacancyMapper {
     @Mapping(source = "position.title", target = "positionTitle")
     @Mapping(source = "position.company.name", target = "companyName")
     @Mapping(source = "position.company.logoUrl", target = "companyLogo")
+    @Mapping(source = "description", target = "description")
     JobVacancyDTO toDto(JobVacancyEntity entity);
     List<JobVacancyDTO> toDtoList(List<JobVacancyEntity> entities);
 

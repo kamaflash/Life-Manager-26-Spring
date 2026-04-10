@@ -1,6 +1,8 @@
 package com.pet.businessdomain.jobservice.repository;
 
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,7 +58,6 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Lo
     List<JobVacancyEntity> findByActiveTrue();
     List<JobVacancyEntity> findByContractType(String contractType);
     List<JobVacancyEntity> findByWorkModality(String workModality);
-    List<JobVacancyEntity> findByLocationContainingIgnoreCase(String location);
     List<JobVacancyEntity> findByMinSalaryBetween(BigDecimal min, BigDecimal max);
 
     // ===== VACANTES POR EMPRESA =====
@@ -75,21 +76,50 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Lo
     List<JobVacancyEntity> findWithAvailableSlots();
 
     // ===== BÚSQUEDA AVANZADA =====
-    @Query("SELECT v FROM JobVacancyEntity v " +
-            "WHERE v.active = true AND v.availableSlots > 0 " +
-            "AND (:keyword IS NULL OR LOWER(v.position.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(v.position.company.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:location IS NULL OR LOWER(v.location) LIKE LOWER(CONCAT('%', :location, '%'))) " +
-            "AND (:contractType IS NULL OR v.contractType = :contractType) " +
-            "AND (:workModality IS NULL OR v.workModality = :workModality) " +
-            "AND (:minSalary IS NULL OR v.maxSalary >= :minSalary) " +
-            "AND (:maxSalary IS NULL OR v.minSalary <= :maxSalary)")
-    List<JobVacancyEntity> searchVacancies(@Param("keyword") String keyword,
-                                           @Param("location") String location,
-                                           @Param("contractType") String contractType,
-                                           @Param("workModality") String workModality,
-                                           @Param("minSalary") BigDecimal minSalary,
-                                           @Param("maxSalary") BigDecimal maxSalary);
+    @Query("""
+        SELECT DISTINCT jv FROM JobVacancyEntity jv
+        JOIN FETCH jv.position p
+        JOIN FETCH p.company c
+        WHERE jv.active = true
+        AND jv.availableSlots > 0
+        AND (:keyword IS NULL OR :keyword = '' OR 
+             LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+             OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        AND (:contractType IS NULL OR :contractType = '' OR jv.contractType = :contractType)
+        AND (:workModality IS NULL OR :workModality = '' OR jv.workModality = :workModality)
+        AND (:maxSalary IS NULL OR jv.maxSalary >= :maxSalary)
+        AND (:minSalary IS NULL OR jv.minSalary <= :minSalary)
+        """)
+    List<JobVacancyEntity> searchVacancies(
+            @Param("keyword") String keyword,
+            @Param("contractType") String contractType,
+            @Param("workModality") String workModality,
+            @Param("maxSalary") BigDecimal maxSalary,
+            @Param("minSalary") BigDecimal minSalary
+    );
+
+    @Query("""
+    SELECT DISTINCT jv FROM JobVacancyEntity jv
+    JOIN FETCH jv.position p
+    JOIN FETCH p.company c
+    WHERE jv.active = true
+    AND jv.availableSlots > 0
+    AND (:keyword IS NULL OR :keyword = '' OR 
+         LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+         OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    AND (:contractType IS NULL OR :contractType = '' OR jv.contractType = :contractType)
+    AND (:workModality IS NULL OR :workModality = '' OR jv.workModality = :workModality)
+    AND (:maxSalary IS NULL OR jv.maxSalary >= :maxSalary)
+    AND (:minSalary IS NULL OR jv.minSalary <= :minSalary)
+    """)
+    Page<JobVacancyEntity> searchVacanciesPage(
+            @Param("keyword") String keyword,
+            @Param("contractType") String contractType,
+            @Param("workModality") String workModality,
+            @Param("maxSalary") BigDecimal maxSalary,
+            @Param("minSalary") BigDecimal minSalary,
+            Pageable pageable  // ← AÑADIR ESTE PARÁMETRO
+    );
 
     // ===== CONTADOR DE POSTULANTES =====
     @Query("SELECT v.id, COUNT(a) FROM JobVacancyEntity v " +

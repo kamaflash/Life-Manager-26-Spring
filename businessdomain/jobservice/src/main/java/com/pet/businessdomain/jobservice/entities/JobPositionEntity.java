@@ -14,12 +14,13 @@ public class JobPositionEntity {
     @Id
     private Long id;
 
+    @Column(columnDefinition = "VARCHAR(255)")
     private String title;
 
     @Enumerated(EnumType.STRING)
-    private EnumAll.JobLevel level; // JUNIOR, SEMI_SENIOR, SENIOR, LEAD, MANAGER, DIRECTOR
+    private EnumAll.JobLevel level;
 
-    @Column(length = 1000)
+    @Column(length = 1000, columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -31,15 +32,12 @@ public class JobPositionEntity {
 
     private Boolean active = true;
 
-    // 🔥 NUEVO: Rama de especialización
     @Enumerated(EnumType.STRING)
-    private EnumAll.CareerPath careerPath; // TECHNOLOGY, BUSINESS, HEALTH, CREATIVE, CONSTRUCTION, SOCIAL
+    private EnumAll.CareerPath careerPath;
 
     @OneToMany(mappedBy = "position", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JobVacancyEntity> vacancies;
 
-    // 🔥 NUEVO: Perks que desbloquea este puesto
     @ElementCollection
-    private List<String> perks; // "health_insurance", "gym_membership", "stock_options"
+    private List<String> perks;
 }
-

@@ -3,6 +3,7 @@ package com.pet.businessdomain.shareddto.dto;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -24,18 +25,21 @@ public class JobVacancyDTO {
     private Integer availableSlots;
 
     // Detalles
-    private String location;
-    private String contractType; // FULL_TIME, PART_TIME, INTERNSHIP, FREELANCE, TEMPORAL
-    private String workModality; // ONSITE, REMOTE, HYBRID
+    private String contractType;
+    private String workModality;
     private Boolean visaSponsorship;
     private Integer weeklyHours;
-    private List<String> workingDays; // MONDAY, TUESDAY...
-    private List<String> benefits;
+    private LocalTime startTime;
+    private LocalTime endTime;
 
-    // Requisitos
+    // 🔥 NUEVO: Descripción
+    private String description;
+
+    private List<String> workingDays;
+    private List<String> benefits;
     private List<RequirementDTO> requirements;
 
-    // Estadísticas de la vacante
+    // Estadísticas
     private Integer totalApplicants;
-    private Integer matchScore; // Para el personaje que consulta
+    private Integer matchScore;
 }

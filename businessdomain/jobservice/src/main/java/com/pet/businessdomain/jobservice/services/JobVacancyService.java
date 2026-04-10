@@ -2,6 +2,8 @@ package com.pet.businessdomain.jobservice.services;
 
 import com.pet.businessdomain.shareddto.dto.JobVacancyDTO;
 import com.pet.businessdomain.shareddto.dto.JobSearchFiltersDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,11 +27,11 @@ public interface JobVacancyService {
     List<JobVacancyDTO> getByCompany(Long companyId);
     List<JobVacancyDTO> getByContractType(String contractType);
     List<JobVacancyDTO> getByWorkModality(String workModality);
-    List<JobVacancyDTO> getByLocation(String location);
     List<JobVacancyDTO> getBySalaryRange(BigDecimal min, BigDecimal max);
 
     // ===== BÚSQUEDAS AVANZADAS =====
     List<JobVacancyDTO> search(JobSearchFiltersDTO filters);
+    Page<JobVacancyDTO> search(JobSearchFiltersDTO filters, Pageable pageable);
     List<JobVacancyDTO> findExpiringSoon();
 
     // ===== ESTADÍSTICAS =====
