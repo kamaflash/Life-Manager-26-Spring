@@ -2,6 +2,7 @@ package com.pet.businessdomain.jobservice.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 @Entity
 @Table(name = "job_requirements")
@@ -12,16 +13,13 @@ public class RequirementEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String type; // SKILL, STAT, EDUCATION, EXPERIENCE_YEARS, LEVEL
+    private String type;
+    private String skill_key;
+    private Integer minValue;
+    private Boolean mandatory;
 
-    private String skill_key; // "programming", "intelligence", "bachelor_degree"
-
-    private Integer minValue; // Nivel mínimo requerido
-
-    private Boolean mandatory; // Si es obligatorio o solo recomendado
-
-    // ✅ AÑADIR: Relación con JobVacancyEntity
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vacancy_id", nullable = false)
+    @ToString.Exclude  // Evita recursión infinita
     private JobVacancyEntity vacancy;
 }

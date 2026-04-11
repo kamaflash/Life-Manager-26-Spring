@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import java.text.Normalizer;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -214,4 +215,30 @@ public class BusinessTransactions {
                 .block(); // bloqueamos hasta recibir respuesta
     }
 
+    public FormationDto getFormation(Long formationId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/formations")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/{id}", formationId)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(FormationDto.class)
+                    .block(); // devuelve UserDto directamente
+
+        } catch (Exception e) {
+            System.err.println("Error fetching user: " + e.getMessage());
+            return null; // o lanza excepción, según tu diseño
+        }
+    }
 }

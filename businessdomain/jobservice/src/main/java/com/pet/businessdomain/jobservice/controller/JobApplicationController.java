@@ -4,6 +4,8 @@ import com.pet.businessdomain.jobservice.services.JobApplicationService;
 import com.pet.businessdomain.shareddto.dto.JobApplicationDTO;
 import com.pet.businessdomain.shareddto.dto.JobApplicationRequestDTO;
 import com.pet.businessdomain.shareddto.dto.JobApplicationResultDTO;
+import com.pet.businessdomain.shareddto.dto.JobContractDTO;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -111,7 +114,21 @@ public class JobApplicationController {
         log.info("GET /api/job-applications/status/{} - Get applications by status", status);
         return ResponseEntity.ok(jobApplicationService.getByStatus(status));
     }
-
+    /**
+     * Obtiene todas las aplicaciones de un personaje por estado
+     *
+     * @param characterId ID del personaje
+     * @param status Estado de las aplicaciones (PENDING, ACCEPTED, REJECTED, OFFERED, etc.)
+     * @return Lista de aplicaciones con el estado especificado
+     */
+    @GetMapping("/character/{characterId}/status/{status}")
+    public ResponseEntity<List<JobApplicationDTO>> getByCharacterAndStatus(
+            @PathVariable(name = "characterId") Long characterId,
+            @PathVariable(name = "status") EnumAll.ApplicationStatus status) {
+        log.info("GET /api/job-applications/character/{}/status/{}", characterId, status);
+        List<JobApplicationDTO> applications = jobApplicationService.getByCharacterAndStatus(characterId, status);
+        return ResponseEntity.ok(applications);
+    }
     /**
      * Obtiene todas las postulaciones pendientes de revisión
      *
@@ -306,5 +323,106 @@ public class JobApplicationController {
     public ResponseEntity<Integer> countByVacancy(@PathVariable(name = "vacancyId") Long vacancyId) {
         log.info("GET /api/job-applications/vacancy/{}/count - Count by vacancy", vacancyId);
         return ResponseEntity.ok(jobApplicationService.countByVacancy(vacancyId));
+    }
+
+    /**
+     * Procesa todas las postulaciones pendientes de un personaje evaluando su match score
+     * Las postulaciones con match score >= 70 pasan a entrevista, las demás son rechazadas
+     *
+     * @param characterId ID del personaje
+     * @param minMatchScore Puntaje mínimo para pasar a entrevista (por defecto 70)
+     * @return Resumen del procesamiento
+     *
+     * @example POST /api/job-applications/character/789/process?minMatchScore=70
+     */
+    @PostMapping("/character/{characterId}/process")
+    public ResponseEntity<Map<String, Object>> processPendingApplications(
+            @PathVariable(name = "characterId") Long characterId,
+            @RequestParam(name = "minMatchScore", defaultValue = "60") Integer minMatchScore) {
+        log.info("POST /api/job-applications/character/{}/process - Processing pending applications with min score {}",
+                characterId, minMatchScore);
+        return ResponseEntity.ok(jobApplicationService.processPendingApplications(characterId, minMatchScore));
+    }
+    /**
+     * Procesa las entrevistas programadas para el personaje en fecha actual, aceptándolas si salud > 50 y estrés < 80,
+     * o rechazándolas en caso contrario.
+     */
+    @PostMapping("/character/{characterId}/process-interviews")
+    public ResponseEntity<Map<String, Object>> processPendingInterviews(
+            @PathVariable(name = "characterId") Long characterId) {
+        log.info("POST /api/job-applications/character/{}/process-interviews - Processing pending interviews",
+                characterId);
+
+        Map<String, Object> result = jobApplicationService.processPendingInterviews(characterId);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Procesa una postulación específica evaluando su match score
+     *
+     * @param applicationId ID de la postulación
+     * @param minMatchScore Puntaje mínimo para pasar a entrevista
+     * @return Resultado del procesamiento
+     *
+     * @example POST /api/job-applications/123/process?minMatchScore=70
+     */
+    @PostMapping("/{applicationId}/process")
+    public ResponseEntity<JobApplicationDTO> processApplication(
+            @PathVariable(name = "applicationId") Long applicationId,
+            @RequestParam(name = "minMatchScore", defaultValue = "70") Integer minMatchScore) {
+        log.info("POST /api/job-applications/{}/process - Processing application with min score {}",
+                applicationId, minMatchScore);
+        return ResponseEntity.ok(jobApplicationService.processApplication(applicationId, minMatchScore));
+    }
+    @PostMapping("/{applicationId}/all/process")
+    public JobApplicationDTO processApplicationAll(
+            @PathVariable(name = "applicationId") Long applicationId,
+            @RequestParam(name = "minMatchScore", defaultValue = "70") Integer minMatchScore) {
+        log.info("POST /api/job-applications/{}/process - Processing application with min score {}",
+                applicationId, minMatchScore);
+        return jobApplicationService.processApplication(applicationId, minMatchScore);
+    }
+
+    /**
+     * Genera el contrato para una postulación que ha pasado la entrevista.
+     * El salario ofrecido se calcula según el match score:
+     * - Match score 50 → salario mínimo
+     * - Match score 100 → salario máximo
+     * - Valores intermedios → salario proporcional
+     *
+     * @param applicationId ID de la postulación
+     * @return Contrato generado con todos los detalles
+     */
+
+    @PostMapping("/{applicationId}/generate-contract")
+    public JobContractDTO generateContract(
+            @PathVariable(name = "applicationId") Long applicationId) {
+        return jobApplicationService.generateContract(applicationId);
+    }
+
+    @GetMapping("/character/{characterId}/contracts")
+    public ResponseEntity<List<JobContractDTO>> getCharacterContracts(
+            @PathVariable(name = "characterId") Long characterId) {
+        log.info("GET /api/job-applications/character/{}/contracts - Get all contracts", characterId);
+        List<JobContractDTO> contracts = jobApplicationService.getCharacterContracts(characterId);
+        return ResponseEntity.ok(contracts);
+    }
+
+    /**
+     * Obtiene los contratos de un personaje filtrados por estado
+     *
+     * @param characterId ID del personaje
+     * @param status Estado del contrato (PENDING, ACCEPTED, REJECTED)
+     * @return Lista de contratos filtrados
+     *
+     * @example GET /api/job-applications/character/1/contracts/status/PENDING
+     */
+    @GetMapping("/character/{characterId}/contracts/status/{status}")
+    public ResponseEntity<List<JobContractDTO>> getCharacterContractsByStatus(
+            @PathVariable(name = "characterId") Long characterId,
+            @PathVariable(name = "status") String status) {
+        log.info("GET /api/job-applications/character/{}/contracts/status/{} - Get contracts by status", characterId, status);
+        List<JobContractDTO> contracts = jobApplicationService.getCharacterContractsByStatus(characterId, status);
+        return ResponseEntity.ok(contracts);
     }
 }

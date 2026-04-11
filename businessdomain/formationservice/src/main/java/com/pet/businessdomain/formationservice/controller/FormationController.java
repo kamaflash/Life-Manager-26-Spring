@@ -79,6 +79,15 @@ public class FormationController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+    @GetMapping("/{id}")
+    public FormationDto getFormationByIdAll(@PathVariable(name = "id") Long id) {
+        try {
+            Formation formation = formationService.getById(id);
+            return formationMapper.toDto(formation);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
 
     // =========================
     // 🔍 OBTENER FORMACIONES POR CATEGORÍA

@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 @Table(name = "job_vacancies")
 @Data
@@ -36,17 +37,31 @@ public class JobVacancyEntity {
 
     private Boolean visaSponsorship;
     private Integer weeklyHours;
-    private LocalTime startTime;  // Hora de inicio (ej: 09:00:00)
+    private LocalTime startTime;
     private LocalTime endTime;
+
     @ElementCollection
     @Enumerated(EnumType.STRING)
     private List<EnumAll.WorkingDay> workingDays;
+
     @Column(length = 2000)
     private String description;
+
     @ElementCollection
     private List<String> benefits;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RequirementEntity> requirements;
-}
+    // CORREGIDO: Añadir mappedBy y cascade
+    @OneToMany(mappedBy = "vacancy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<RequirementEntity> requirements = new ArrayList<>();
 
+    // Método helper para mantener consistencia
+    public void addRequirement(RequirementEntity requirement) {
+        requirements.add(requirement);
+        requirement.setVacancy(this);
+    }
+
+    public void removeRequirement(RequirementEntity requirement) {
+        requirements.remove(requirement);
+        requirement.setVacancy(null);
+    }
+}

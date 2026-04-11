@@ -1,6 +1,7 @@
 package com.pet.businessdomain.jobservice.repository;
 
 import com.pet.businessdomain.jobservice.entities.JobApplicationEntity;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +31,13 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
     // Aplicaciones por etapa del proceso
     List<JobApplicationEntity> findByStage(String stage);
 
+    List<JobApplicationEntity> findByCharacterIdAndStatus(Long characterId, EnumAll.ApplicationStatus status);
+    List<JobApplicationEntity> findByCharacterIdAndStatusAndInterviewDateBetween(
+            Long characterId,
+            EnumAll.ApplicationStatus status,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
     // IDs de vacantes a las que aplicó un personaje
     @Query("SELECT a.vacancy.id FROM JobApplicationEntity a WHERE a.characterId = :characterId")
     List<Long> findVacancyIdsByCharacterId(@Param("characterId") Long characterId);
@@ -74,4 +82,11 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
     @Query("SELECT a FROM JobApplicationEntity a " +
             "WHERE a.status = 'INTERVIEW_SCHEDULED' AND a.interviewDate < CURRENT_TIMESTAMP")
     List<JobApplicationEntity> findPendingInterviewResults();
+
+    @Query("SELECT DISTINCT a FROM JobApplicationEntity a " +
+            "LEFT JOIN FETCH a.vacancy v " +
+            "LEFT JOIN FETCH v.position p " +
+            "LEFT JOIN FETCH p.company c " +
+            "WHERE a.id = :id")
+    Optional<JobApplicationEntity> findByIdWithAllRelations(@Param("id") Long id);
 }

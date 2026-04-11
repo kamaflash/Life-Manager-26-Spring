@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Long> {
@@ -27,7 +28,10 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Lo
             "LEFT JOIN FETCH p.company c " +
             "WHERE v.id = :id")
     JobVacancyEntity findByIdWithRelations(@Param("id") Long id);
-
+    @Query("SELECT DISTINCT jv FROM JobVacancyEntity jv " +
+            "LEFT JOIN FETCH jv.requirements " +
+            "WHERE jv.id = :id")
+    Optional<JobVacancyEntity> findByIdWithRequirements(@Param("id") Long id);
     @Query("SELECT DISTINCT v FROM JobVacancyEntity v " +
             "LEFT JOIN FETCH v.position p " +
             "LEFT JOIN FETCH p.company c " +
@@ -120,6 +124,7 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Lo
     AND (
         :categories IS NULL OR :categories = '' OR
         LOWER(p.category) LIKE LOWER(CONCAT('%', :categories, '%'))
+        OR LOWER(p.category) = 'other'
     )
     AND (
         :contractTypes IS NULL OR :contractTypes = '' OR

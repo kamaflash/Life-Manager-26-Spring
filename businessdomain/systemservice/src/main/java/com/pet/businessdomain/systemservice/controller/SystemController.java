@@ -4,8 +4,12 @@
  */
 package com.pet.businessdomain.systemservice.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.JobApplicationDTO;
+import com.pet.businessdomain.shareddto.dto.JobContractDTO;
 import com.pet.businessdomain.shareddto.dto.SystemDto;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
@@ -13,10 +17,8 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
 import jakarta.mail.MessagingException;
@@ -209,7 +211,37 @@ public class SystemController {
         characterDto = businessTransactions.updatePerson(characterDto);
 
     }
+    @GetMapping("/processed-data")
+    public void processedAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
+        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+        SystemEntity system = systemMapper.fromOptional(optSystem);
+        SystemDto systemDto = systemMapper.toDto(system);
 
+        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+
+
+        List<JobApplicationDTO> jobApplicationDTOS = businessTransactions.getApplicationsByCharacterAndStatus(characterDto.getId(), EnumAll.ApplicationStatus.OFFERED);
+        if(!jobApplicationDTOS.isEmpty()) {
+            List<JobContractDTO> generatedContracts = jobApplicationDTOS.stream()
+                    .map(application -> {
+                        try {
+                            return businessTransactions.generateContract(application.getId());
+                        } catch (Exception e) {
+                            log.error("Error generating contract for application {}: {}", application.getId(), e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            log.info("Generated {} contracts out of {} applications", generatedContracts.size(), jobApplicationDTOS.size());
+        }
+        Map<String, Object> response = businessTransactions.processedAdvance(characterDto.getId(), 70);
+        Map<String, Object> response2 = businessTransactions.processPendingInterviews(characterDto.getId());
+
+
+
+    }
     @PostMapping("/post")
     public SystemDto createSystemPost(@RequestBody SystemDto systemDto) throws BusinessRuleException, UnknownHostException, MessagingException {
         systemDto = systemService.createSystem(systemDto);

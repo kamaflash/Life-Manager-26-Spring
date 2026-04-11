@@ -87,8 +87,14 @@ INSERT INTO job_positions (id, title, level, description, category, company_id, 
 (32, 'Ayudante de Cocina', 'JUNIOR', 'Apoyo en cocina para media jornada', 'OTHER', 27, true, 'BUSINESS'),
 (33, 'Dependiente', 'JUNIOR', 'Atención al cliente en tienda', 'OTHER', 28, true, 'BUSINESS'),
 (34, 'Asistente Virtual', 'JUNIOR', 'Soporte administrativo remoto', 'OTHER', 29, true, 'BUSINESS'),
-(35, 'Becario Universitario', 'INTERN', 'Prácticas en administración y gestión', 'OTHER', 30, true, 'BUSINESS');
-
+(35, 'Becario Universitario', 'INTERN', 'Prácticas en administración y gestión', 'OTHER', 30, true, 'BUSINESS'),
+(36, 'Repartidor', 'JUNIOR', 'Reparto de pedidos en zona urbana', 'OTHER', 24, true, 'BUSINESS'),
+(37, 'Fregaplatos', 'JUNIOR', 'Limpieza y organización de cocina', 'OTHER', 27, true, 'BUSINESS'),
+(38, 'Repartidor de Publicidad', 'JUNIOR', 'Reparto de folletos y publicidad', 'OTHER', 26, true, 'BUSINESS'),
+(39, 'Ayudante de Reparto', 'JUNIOR', 'Ayuda en carga y reparto de mercancía', 'OTHER', 24, true, 'BUSINESS'),
+(40, 'Limpiador', 'JUNIOR', 'Limpieza de instalaciones', 'OTHER', 27, true, 'BUSINESS'),
+(41, 'Mozo de Almacén', 'JUNIOR', 'Preparación de pedidos y organización de almacén', 'OTHER', 29, true, 'BUSINESS'),
+(42, 'Camarero de Eventos', 'JUNIOR', 'Servicio en eventos y banquetes', 'HOSPITALITY', 18, true, 'BUSINESS');
 -- ============================================
 -- 3. JOB VACANCIES
 -- ============================================
@@ -127,8 +133,14 @@ INSERT INTO job_vacancies (id, position_id, min_salary, max_salary, contract_typ
 (32, 32, 18000, 24000, 'PART_TIME', 'ONSITE', 4, 20, true, false, CURRENT_DATE, '18:00:00', '22:00:00', 'Ayudante de Cocina para apoyo en cocina en horario de tarde/noche.'),
 (33, 33, 19000, 25000, 'PART_TIME', 'ONSITE', 5, 20, true, false, CURRENT_DATE, '16:00:00', '20:00:00', 'Dependiente para atención al cliente en tienda. Horario de tardes.'),
 (34, 34, 20000, 28000, 'PART_TIME', 'REMOTE', 3, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Asistente Virtual para soporte administrativo remoto en horario de mañana.'),
-(35, 35, 18000, 24000, 'INTERNSHIP', 'HYBRID', 4, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Becario Universitario para prácticas en administración y gestión. Convenio con universidad.');
-
+(35, 35, 18000, 24000, 'INTERNSHIP', 'HYBRID', 4, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Becario Universitario para prácticas en administración y gestión. Convenio con universidad.'),
+(36, 36, 18000, 24000, 'PART_TIME', 'ONSITE', 8, 20, true, false, CURRENT_DATE, '17:00:00', '22:00:00', 'Repartidor para entregas en zona centro. Se requiere movilidad propia (bici o moto). Sin experiencia necesaria. Horario flexible de tardes.'),
+(37, 37, 18000, 22000, 'PART_TIME', 'ONSITE', 6, 20, true, false, CURRENT_DATE, '20:00:00', '00:00:00', 'Fregaplatos para restaurante. No se requiere experiencia. Turno de noche. Comida incluida.'),
+(38, 38, 16000, 20000, 'PART_TIME', 'ONSITE', 10, 15, true, false, CURRENT_DATE, '16:00:00', '20:00:00', 'Reparto de publicidad y folletos por domicilios. Sin experiencia. Horario de tardes. Ideal para estudiantes.'),
+(39, 39, 18000, 23000, 'PART_TIME', 'ONSITE', 5, 20, true, false, CURRENT_DATE, '18:00:00', '22:00:00', 'Ayudante de reparto para carga y descarga de mercancía. No requiere experiencia. Horario de tardes.'),
+(40, 40, 17000, 21000, 'PART_TIME', 'ONSITE', 4, 20, true, false, CURRENT_DATE, '22:00:00', '02:00:00', 'Limpieza de oficinas por la noche. Sin experiencia. Horario nocturno. Se ofrece formación.'),
+(41, 41, 18000, 25000, 'PART_TIME', 'ONSITE', 6, 20, true, false, CURRENT_DATE, '16:00:00', '21:00:00', 'Mozo de almacén para preparación de pedidos. Sin experiencia. Horario de tardes. Contrato flexible.'),
+(42, 42, 18000, 24000, 'PART_TIME', 'ONSITE', 8, 16, true, false, CURRENT_DATE, '19:00:00', '23:00:00', 'Camarero para eventos y banquetes. Sin experiencia. Horario de fines de semana y tardes. Formación incluida.');
 -- ============================================
 -- 4. JOB REQUIREMENTS
 -- ============================================

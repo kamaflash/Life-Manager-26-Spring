@@ -2,15 +2,18 @@ package com.pet.businessdomain.systemservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,6 +22,7 @@ import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import com.pet.businessdomain.systemservice.repository.SystemRepository;
 
@@ -281,5 +285,74 @@ public class BusinessTransactions {
                 .retrieve()
                 .bodyToMono(NotificationDTO.class) // esperamos un solo DTO
                 .block(); // bloqueamos hasta recibir respuesta
+    }
+    public Map<String, Object> processedAdvance(Long characterId, Integer minMatchScore) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/job-applications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        Integer score = minMatchScore != null ? minMatchScore : 70;
+
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/character/{characterId}/process")
+                        .queryParam("minMatchScore", score)
+                        .build(characterId))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+    }
+    public Map<String, Object> processPendingInterviews(Long characterId) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/job-applications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/character/{characterId}/process-interviews")
+                        .build(characterId))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+    }
+    public JobContractDTO generateContract(Long applicationId) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/job-applications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/{applicationId}/generate-contract")
+                        .build(applicationId))
+                .retrieve()
+                .bodyToMono(JobContractDTO.class)
+                .block();
+    }
+
+    public List<JobApplicationDTO> getApplicationsByCharacterAndStatus(Long characterId, EnumAll.ApplicationStatus status) {
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/job-applications")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/character/{characterId}/status/{status}")
+                        .build(characterId, status))
+                .retrieve()
+                .bodyToFlux(JobApplicationDTO.class)
+                .collectList()
+                .block();
     }
 }

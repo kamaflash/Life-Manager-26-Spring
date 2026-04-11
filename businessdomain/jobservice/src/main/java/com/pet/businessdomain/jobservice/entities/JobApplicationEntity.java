@@ -3,6 +3,8 @@ package com.pet.businessdomain.jobservice.entities;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -33,4 +35,7 @@ public class JobApplicationEntity {
     // 🔥 NUEVO: Seguimiento del proceso
     @Enumerated(EnumType.STRING)
     private EnumAll.ApplicationStage stage; // APPLICATION, CV_REVIEW, PHONE_SCREEN, TECHNICAL, HR, OFFER, HIRED
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal offeredSalary;
 }
