@@ -7,10 +7,7 @@ import com.pet.businessdomain.shareddto.enumentities.NotificationPriority;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -313,14 +310,44 @@ public class JobVacancyController {
     @PostMapping("/search")
     public ResponseEntity<Map<String, Object>> search(@RequestBody JobSearchFiltersDTO filters) {
         log.info("POST /api/job-vacancies/search - Search vacancies");
-        Pageable pageable = PageRequest.of(filters.getPage(), DEFAULT_PAGE_SIZE);
-        Page<JobVacancyDTO> jobVacancyDTOS = jobVacancyService.search(filters,pageable);
+
+        // 🔥 Mapear nombres de ordenamiento de DTO a Entity
+        String sortByEntity = mapSortField(filters.getSortBy());
+
+        Sort sort = Sort.by(filters.getSortDir().equalsIgnoreCase("desc") ?
+                Sort.Direction.DESC : Sort.Direction.ASC, sortByEntity);
+        Pageable pageable = PageRequest.of(filters.getPage(), filters.getSize(), sort);
+
+        Page<JobVacancyDTO> jobVacancyDTOS = jobVacancyService.search(filters, pageable);
+
         Map<String, Object> response = new HashMap<>();
         response.put("jobs", jobVacancyDTOS.getContent());
         response.put("currentPage", jobVacancyDTOS.getNumber());
         response.put("totalItems", jobVacancyDTOS.getTotalElements());
         response.put("totalPages", jobVacancyDTOS.getTotalPages());
+        response.put("pageSize", jobVacancyDTOS.getSize());
+
         return ResponseEntity.ok(response);
+    }
+
+    // 🔥 Método para mapear campos de ordenamiento
+    private String mapSortField(String sortBy) {
+        if (sortBy.equals("")) return "id";
+
+        return switch (sortBy) {
+            case "positionTitle" -> "position.title";
+            case "companyName" -> "position.company.name";
+            case "minSalary" -> "minSalary";
+            case "maxSalary" -> "maxSalary";
+            case "contractType" -> "contractType";
+            case "workModality" -> "workModality";
+            case "availableSlots" -> "availableSlots";
+            case "matchScore" -> "matchScore";
+            case "weeklyHours" -> "weeklyHours";
+            case "startTime" -> "startTime";
+            case "endTime" -> "endTime";
+            default -> sortBy;
+        };
     }
 
     /**

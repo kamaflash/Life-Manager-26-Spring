@@ -30,7 +30,7 @@ public interface JobVacancyService {
     List<JobVacancyDTO> getBySalaryRange(BigDecimal min, BigDecimal max);
 
     // ===== BÚSQUEDAS AVANZADAS =====
-    List<JobVacancyDTO> search(JobSearchFiltersDTO filters);
+//    List<JobVacancyDTO> search(JobSearchFiltersDTO filters);
     Page<JobVacancyDTO> search(JobSearchFiltersDTO filters, Pageable pageable);
     List<JobVacancyDTO> findExpiringSoon();
 

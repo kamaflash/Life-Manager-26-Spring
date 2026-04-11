@@ -8,6 +8,7 @@ import com.pet.businessdomain.jobservice.repository.JobVacancyRepository;
 import com.pet.businessdomain.jobservice.services.JobVacancyService;
 import com.pet.businessdomain.shareddto.dto.JobSearchFiltersDTO;
 import com.pet.businessdomain.shareddto.dto.JobVacancyDTO;
+import com.pet.businessdomain.shareddto.enumentities.JobCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -138,57 +139,99 @@ public class JobVacancyServiceImpl implements JobVacancyService {
         return jobVacancyMapper.toDtoList(jobVacancyRepository.findByMinSalaryBetween(min, max));
     }
 
-    @Override
-    @Transactional  // ← Importante: mantener la transacción abierta
-    public List<JobVacancyDTO> search(JobSearchFiltersDTO filters) {
-        List<JobVacancyEntity> entities = jobVacancyRepository.searchVacancies(
-                filters.getKeyword(),
-                filters.getContractTypes() != null && !filters.getContractTypes().isEmpty() ?
-                        filters.getContractTypes().get(0) : null,
-                filters.getWorkModalities() != null && !filters.getWorkModalities().isEmpty() ?
-                        filters.getWorkModalities().get(0) : null,
-                filters.getMinSalary() != null ? BigDecimal.valueOf(filters.getMinSalary()) : null,
-                filters.getMaxSalary() != null ? BigDecimal.valueOf(filters.getMaxSalary()) : null
-        );
-
-        // Forzar carga de relaciones dentro de la transacción
-        for (JobVacancyEntity entity : entities) {
-            Hibernate.initialize(entity.getPosition());
-            if (entity.getPosition() != null) {
-                Hibernate.initialize(entity.getPosition().getCompany());
-            }
-            Hibernate.initialize(entity.getRequirements());
-        }
-
-        return jobVacancyMapper.toDtoList(entities);
-    }
+//    @Override
+//    @Transactional  // ← Importante: mantener la transacción abierta
+//    public List<JobVacancyDTO> search(JobSearchFiltersDTO filters) {
+//        List<JobVacancyEntity> entities = jobVacancyRepository.searchVacancies(
+//                filters.getKeyword(),
+//                filters.getContractTypes() != null && !filters.getContractTypes().isEmpty() ?
+//                        filters.getContractTypes().get(0) : null,
+//                filters.getWorkModalities() != null && !filters.getWorkModalities().isEmpty() ?
+//                        filters.getWorkModalities().get(0) : null,
+//                filters.getMinSalary() != null ? BigDecimal.valueOf(filters.getMinSalary()) : null,
+//                filters.getMaxSalary() != null ? BigDecimal.valueOf(filters.getMaxSalary()) : null
+//        );
+//
+//        // Forzar carga de relaciones dentro de la transacción
+//        for (JobVacancyEntity entity : entities) {
+//            Hibernate.initialize(entity.getPosition());
+//            if (entity.getPosition() != null) {
+//                Hibernate.initialize(entity.getPosition().getCompany());
+//            }
+//            Hibernate.initialize(entity.getRequirements());
+//        }
+//
+//        return jobVacancyMapper.toDtoList(entities);
+//    }
 
 
     @Override
     @Transactional
     public Page<JobVacancyDTO> search(JobSearchFiltersDTO filters, Pageable pageable) {
+
+        // Keyword
+        String keyword = filters.getKeywordAsString();
+
+        // 🔥 Convertir listas a Strings con separador '|' para búsqueda OR
+        String positionTitles = null;
+        if (filters.getPositionTitles() != null && !filters.getPositionTitles().isEmpty()) {
+            positionTitles = String.join("|", filters.getPositionTitles());
+        }
+
+        String companyNames = null;
+        if (filters.getCompanyNames() != null && !filters.getCompanyNames().isEmpty()) {
+            companyNames = String.join("|", filters.getCompanyNames());
+        }
+
+        String categories = null;
+        List<String> categoryList = filters.getCategoriesList();
+        if (categoryList != null && !categoryList.isEmpty()) {
+            categories = String.join("|", categoryList);
+        }
+
+        String contractTypes = null;
+        if (filters.getContractTypes() != null && !filters.getContractTypes().isEmpty()) {
+            contractTypes = String.join("|", filters.getContractTypes());
+        }
+
+        String workModalities = null;
+        if (filters.getWorkModalities() != null && !filters.getWorkModalities().isEmpty()) {
+            workModalities = String.join("|", filters.getWorkModalities());
+        }
+
+        String weeklyHours = null;
+        if (filters.getWeeklyHours() != null && !filters.getWeeklyHours().isEmpty()) {
+            weeklyHours = String.join("|", filters.getWeeklyHours().stream().map(String::valueOf).toArray(String[]::new));
+        }
+
+        String schedule = null;
+        if (filters.getSchedule() != null && !filters.getSchedule().isEmpty()) {
+            schedule = filters.getSchedule();
+        }
+
+        Integer minAvailableSlots = filters.getAvailableSlots() != null
+                ? filters.getAvailableSlots() : null;
+
+        BigDecimal minSalary = filters.getMinSalary() != null
+                ? filters.getMinSalary() : null;
+        BigDecimal maxSalary = filters.getMaxSalary() != null
+                ? filters.getMaxSalary() : null;
+
         Page<JobVacancyEntity> entityPage = jobVacancyRepository.searchVacanciesPage(
-                filters.getKeyword(),
-                filters.getContractTypes() != null && !filters.getContractTypes().isEmpty() ?
-                        filters.getContractTypes().get(0) : null,
-                filters.getWorkModalities() != null && !filters.getWorkModalities().isEmpty() ?
-                        filters.getWorkModalities().get(0) : null,
-                filters.getMinSalary() != null ? BigDecimal.valueOf(filters.getMinSalary()) : null,
-                filters.getMaxSalary() != null ? BigDecimal.valueOf(filters.getMaxSalary()) : null,
+                keyword,
+                positionTitles,
+                companyNames,
+                categories,
+                contractTypes,
+                workModalities,
+                weeklyHours,
+                schedule,
+                minAvailableSlots,
+                minSalary,
+                maxSalary,
                 pageable
         );
 
-        // Forzar carga de relaciones dentro de la transacción (solo si es necesario)
-        // Con JOIN FETCH en la consulta, esto no debería ser necesario
-        for (JobVacancyEntity entity : entityPage.getContent()) {
-            Hibernate.initialize(entity.getPosition());
-            if (entity.getPosition() != null) {
-                Hibernate.initialize(entity.getPosition().getCompany());
-            }
-            Hibernate.initialize(entity.getRequirements());
-        }
-
-        // 🔥 CORREGIDO: Convertir Page<Entity> a Page<DTO> usando map
         return entityPage.map(jobVacancyMapper::toDto);
     }
 

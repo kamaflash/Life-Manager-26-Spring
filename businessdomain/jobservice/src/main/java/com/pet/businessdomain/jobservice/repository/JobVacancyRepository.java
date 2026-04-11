@@ -100,25 +100,60 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Lo
 
     @Query("""
     SELECT DISTINCT jv FROM JobVacancyEntity jv
-    JOIN FETCH jv.position p
-    JOIN FETCH p.company c
+    LEFT JOIN FETCH jv.position p
+    LEFT JOIN FETCH p.company c
     WHERE jv.active = true
     AND jv.availableSlots > 0
-    AND (:keyword IS NULL OR :keyword = '' OR 
-         LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-         OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
-    AND (:contractType IS NULL OR :contractType = '' OR jv.contractType = :contractType)
-    AND (:workModality IS NULL OR :workModality = '' OR jv.workModality = :workModality)
-    AND (:maxSalary IS NULL OR jv.maxSalary >= :maxSalary)
-    AND (:minSalary IS NULL OR jv.minSalary <= :minSalary)
+    AND (
+        :keyword IS NULL OR :keyword = '' OR 
+        LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+    AND (
+        :positionTitles IS NULL OR :positionTitles = '' OR
+        LOWER(p.title) LIKE LOWER(CONCAT('%', :positionTitles, '%'))
+    )
+    AND (
+        :companyNames IS NULL OR :companyNames = '' OR
+        LOWER(c.name) LIKE LOWER(CONCAT('%', :companyNames, '%'))
+    )
+    AND (
+        :categories IS NULL OR :categories = '' OR
+        LOWER(p.category) LIKE LOWER(CONCAT('%', :categories, '%'))
+    )
+    AND (
+        :contractTypes IS NULL OR :contractTypes = '' OR
+        LOWER(jv.contractType) LIKE LOWER(CONCAT('%', :contractTypes, '%'))
+    )
+    AND (
+        :workModalities IS NULL OR :workModalities = '' OR
+        LOWER(jv.workModality) LIKE LOWER(CONCAT('%', :workModalities, '%'))
+    )
+    AND (
+        :weeklyHours IS NULL OR :weeklyHours = '' OR
+        CAST(jv.weeklyHours AS string) LIKE CONCAT('%', :weeklyHours, '%')
+    )
+    AND (
+        :schedule IS NULL OR :schedule = '' OR 
+        CONCAT(jv.startTime, ' - ', jv.endTime) LIKE CONCAT('%', :schedule, '%')
+    )
+    AND (:minAvailableSlots IS NULL OR jv.availableSlots >= :minAvailableSlots)
+    AND (:minSalary IS NULL OR jv.minSalary >= :minSalary)
+    AND (:maxSalary IS NULL OR jv.maxSalary <= :maxSalary)
     """)
     Page<JobVacancyEntity> searchVacanciesPage(
             @Param("keyword") String keyword,
-            @Param("contractType") String contractType,
-            @Param("workModality") String workModality,
-            @Param("maxSalary") BigDecimal maxSalary,
+            @Param("positionTitles") String positionTitles,
+            @Param("companyNames") String companyNames,
+            @Param("categories") String categories,
+            @Param("contractTypes") String contractTypes,
+            @Param("workModalities") String workModalities,
+            @Param("weeklyHours") String weeklyHours,
+            @Param("schedule") String schedule,
+            @Param("minAvailableSlots") Integer minAvailableSlots,
             @Param("minSalary") BigDecimal minSalary,
-            Pageable pageable  // ← AÑADIR ESTE PARÁMETRO
+            @Param("maxSalary") BigDecimal maxSalary,
+            Pageable pageable
     );
 
     // ===== CONTADOR DE POSTULANTES =====
