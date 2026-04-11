@@ -232,7 +232,7 @@ public class SystemController {
                         }
                     })
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
 
             log.info("Generated {} contracts out of {} applications", generatedContracts.size(), jobApplicationDTOS.size());
         }

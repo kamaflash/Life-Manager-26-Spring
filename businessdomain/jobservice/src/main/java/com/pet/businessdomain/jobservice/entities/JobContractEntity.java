@@ -29,17 +29,12 @@ public class JobContractEntity {
     // ========== DATOS DEL EMPLEADO (PERSONAJE) ==========
     private Long characterId;
     private String characterName;
-    private String characterEmail;
-    private String characterPhone;
-    private String characterAddress;
-    private String characterDni;
     private Integer characterAge;
     private LocalDate characterBirthDate;
 
     // ========== DATOS DE LA EMPRESA ==========
     private Long companyId;
     private String companyName;
-    private String companyTaxId;
     private String companyAddress;
     private String companyPhone;
     private String companyEmail;

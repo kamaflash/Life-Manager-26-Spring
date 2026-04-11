@@ -15,6 +15,78 @@ ALTER SEQUENCE IF EXISTS job_events_id_seq RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS job_missions_id_seq RESTART WITH 1;
 
 -- ============================================
+-- 7. JOB CONTRACTS
+-- ============================================
+CREATE TABLE IF NOT EXISTS job_contracts (
+    id BIGSERIAL PRIMARY KEY,
+    contract_number VARCHAR(255) NOT NULL,
+    issued_at TIMESTAMP NOT NULL,
+    valid_until TIMESTAMP NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    contract_url VARCHAR(255),
+    character_id BIGINT NOT NULL,
+    character_name VARCHAR(255),
+    character_email VARCHAR(255),
+    character_phone VARCHAR(255),
+    character_address VARCHAR(255),
+    character_dni VARCHAR(255),
+    character_age INTEGER,
+    character_birth_date DATE,
+    company_id BIGINT NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    company_tax_id VARCHAR(255),
+    company_address VARCHAR(255),
+    company_phone VARCHAR(255),
+    company_email VARCHAR(255),
+    company_website VARCHAR(255),
+    position_id BIGINT NOT NULL,
+    position_title VARCHAR(255) NOT NULL,
+    position_level VARCHAR(50),
+    position_category VARCHAR(50),
+    position_description TEXT,
+    base_salary DECIMAL(19,2) NOT NULL,
+    monthly_salary DECIMAL(19,2) NOT NULL,
+    extra_payments DECIMAL(19,2),
+    salary_currency VARCHAR(10) NOT NULL,
+    variable_bonus DECIMAL(19,2),
+    salary_period VARCHAR(20) NOT NULL,
+    match_score INTEGER,
+    min_salary_range DECIMAL(19,2),
+    max_salary_range DECIMAL(19,2),
+    salary_calculation_note TEXT,
+    contract_type VARCHAR(50) NOT NULL,
+    work_modality VARCHAR(50) NOT NULL,
+    weekly_hours INTEGER,
+    start_time TIME,
+    end_time TIME,
+    working_days TEXT[],
+    schedule_note TEXT,
+    vacation_days INTEGER,
+    benefits TEXT[],
+    visa_sponsorship BOOLEAN,
+    training_plan TEXT,
+    probation_period VARCHAR(100),
+    termination_notice VARCHAR(100),
+    confidentiality_clause TEXT,
+    exclusivity_clause TEXT,
+    intellectual_property TEXT,
+    special_conditions TEXT[],
+    application_id BIGINT NOT NULL,
+    interview_date TIMESTAMP,
+    contract_generated_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP,
+    accepted_at TIMESTAMP,
+    rejected_at TIMESTAMP,
+    FOREIGN KEY (character_id) REFERENCES characters(id),
+    FOREIGN KEY (company_id) REFERENCES companies(id),
+    FOREIGN KEY (position_id) REFERENCES job_positions(id),
+    FOREIGN KEY (application_id) REFERENCES job_applications(id)
+);
+
+ALTER SEQUENCE IF EXISTS job_contracts_id_seq RESTART WITH 1;
+
+-- ============================================
 -- 1. COMPANIES
 -- ============================================
 INSERT INTO companies (id, name, category, description, location, website, logo_url, contact_email, phone, active, employees_count, founded_year, remote_friendly, internship_available) VALUES
