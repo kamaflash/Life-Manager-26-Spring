@@ -1,10 +1,9 @@
 package com.pet.businessdomain.jobservice.services;
 
-import com.pet.businessdomain.shareddto.dto.JobApplicationDTO;
-import com.pet.businessdomain.shareddto.dto.JobApplicationResultDTO;
-import com.pet.businessdomain.shareddto.dto.JobContractDTO;
-import com.pet.businessdomain.shareddto.dto.JobApplicationRequestDTO;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -68,4 +67,14 @@ public interface JobApplicationService {
     Map<String, Object> rejectContract(Long contractId);
 
     JobContractDTO getContractById(Long contractId);
+    // En JobApplicationService interface
+    // En JobApplicationService interface
+    Page<JobApplicationDTO> getByCharacterFilters(JobApplicationFiltersDTO filters, Pageable pageable);
+
+    Map<String, Object> updateContractStatus(ContractActionDTO request);
+
+    // En JobApplicationService interface
+    Page<JobContractDTO> getCharacterContractsByFilters(JobContractFiltersDTO filters, Pageable pageable);
+
+
 }

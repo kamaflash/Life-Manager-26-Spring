@@ -1,16 +1,16 @@
 -- ============================================
--- LIMPIAR TABLAS (PostgreSQL)
+-- LIMPIAR DATOS EXISTENTES
 -- ============================================
+TRUNCATE TABLE product_passive_effects CASCADE;
+TRUNCATE TABLE character_inventory CASCADE;
 TRUNCATE TABLE product_effects CASCADE;
 TRUNCATE TABLE products CASCADE;
-TRUNCATE TABLE character_inventory CASCADE;
-TRUNCATE TABLE product_passive_effects CASCADE;
 
--- Reiniciar secuencias (si usas IDENTITY)
-ALTER SEQUENCE IF EXISTS products_id_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS product_effects_id_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS character_inventory_id_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS product_passive_effects_id_seq RESTART WITH 1;
+-- Reiniciar secuencias
+ALTER SEQUENCE products_id_seq RESTART WITH 1;
+ALTER SEQUENCE product_effects_id_seq RESTART WITH 1;
+ALTER SEQUENCE character_inventory_id_seq RESTART WITH 1;
+ALTER SEQUENCE product_passive_effects_id_seq RESTART WITH 1;
 
 -- ============================================
 -- 1. PRODUCTS
@@ -91,14 +91,7 @@ INSERT INTO product_effects (product_id, category, effect_value) VALUES
 (40, 'INTELLIGENCE', 2), (40, 'HAPPINESS', 3);
 
 -- ============================================
--- 3. PRODUCT PASSIVE EFFECTS (ejemplo)
+-- 3. REINICIAR SECUENCIAS
 -- ============================================
--- INSERT INTO product_passive_effects (product_id, stat, value, percentage, condition, condition_value) VALUES
--- (6, 'ENERGY', 5, false, 'TIME_OF_DAY', 'MORNING'),
--- (16, 'INTELLIGENCE', 10, true, 'HAS_BUFF', 'STUDYING');
-
--- ============================================
--- 4. REINICIAR SECUENCIAS
--- ============================================
-SELECT setval('products_id_seq', (SELECT MAX(id) FROM products));
-SELECT setval('product_effects_id_seq', (SELECT MAX(id) FROM product_effects));
+SELECT setval('products_id_seq', COALESCE((SELECT MAX(id) FROM products), 40));
+SELECT setval('product_effects_id_seq', COALESCE((SELECT MAX(id) FROM product_effects), 56));

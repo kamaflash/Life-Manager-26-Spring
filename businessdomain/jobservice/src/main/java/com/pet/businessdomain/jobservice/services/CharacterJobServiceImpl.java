@@ -38,7 +38,7 @@ public class CharacterJobServiceImpl implements CharacterJobService {
         JobApplicationEntity application = jobApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found with id: " + applicationId));
 
-        if (!"OFFERED".equals(application.getStatus())) {
+        if (!EnumAll.ApplicationStatus.OFFERED.equals(application.getStatus())) {
             throw new RuntimeException("Cannot start job: application not in OFFERED status");
         }
 
@@ -87,6 +87,7 @@ public class CharacterJobServiceImpl implements CharacterJobService {
 
     @Override
     public List<CharacterJobDTO> getByCharacter(Long characterId) {
+        List<CharacterJobEntity> characterJobEntities = characterJobRepository.findByCharacterId(characterId);
         return characterJobMapper.toDtoList(characterJobRepository.findByCharacterId(characterId));
     }
 

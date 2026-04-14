@@ -62,6 +62,11 @@ public class CharacterJobController {
         CharacterJobDTO job = characterJobService.getCurrentJob(characterId);
         return job != null ? ResponseEntity.ok(job) : ResponseEntity.noContent().build();
     }
+    @GetMapping("/current/dto/{characterId}")
+    public CharacterJobDTO getCurrentJobDto(@PathVariable(name = "characterId") Long characterId) {
+        log.info("GET /api/character-jobs/current/{} - Get current job", characterId);
+        return characterJobService.getCurrentJob(characterId);
+    }
 
     /**
      * Renuncia voluntariamente a un trabajo
@@ -108,8 +113,14 @@ public class CharacterJobController {
      */
     @GetMapping("/character/{characterId}")
     public ResponseEntity<List<CharacterJobDTO>> getByCharacter(@PathVariable(name = "characterId") Long characterId) {
+        List<CharacterJobDTO> characterJobDTOS = characterJobService.getByCharacter(characterId);
         log.info("GET /api/character-jobs/character/{} - Get jobs by character", characterId);
         return ResponseEntity.ok(characterJobService.getByCharacter(characterId));
+    }
+    @GetMapping("/character/dto/{characterId}")
+    public List<CharacterJobDTO> getByCharacterdto(@PathVariable(name = "characterId") Long characterId) {
+        log.info("GET /api/character-jobs/character/{} - Get jobs by character", characterId);
+        return characterJobService.getByCharacter(characterId);
     }
 
     /**

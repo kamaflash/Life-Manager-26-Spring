@@ -131,12 +131,12 @@ public class BusinessTransactions {
     public List<CharacterJobDTO> getCharacterJobs(Long characterId) {
         WebClient webClient = webClientBuilder
                 .clientConnector(new ReactorClientHttpConnector(client))
-                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE")
+                .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/character-jobs")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
 
         return webClient.get()
-                .uri("/api/character-jobs/character/all/{characterId}", characterId)
+                .uri("/character/dto/{characterId}", characterId)
                 .retrieve()
                 .bodyToFlux(CharacterJobDTO.class)
                 .collectList()

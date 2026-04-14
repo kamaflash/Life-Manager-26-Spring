@@ -5,11 +5,16 @@ import com.pet.businessdomain.jobservice.mapper.JobApplicationMapper;
 import com.pet.businessdomain.jobservice.repository.JobApplicationRepository;
 import com.pet.businessdomain.jobservice.repository.JobContractRepository;
 import com.pet.businessdomain.jobservice.repository.JobVacancyRepository;
+import com.pet.businessdomain.jobservice.specifications.JobApplicationSpecifications;
+import com.pet.businessdomain.jobservice.specifications.JobContractSpecifications;
 import com.pet.businessdomain.jobservice.transactions.BusinessTransactions;
 import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     private final JobVacancyRepository jobVacancyRepository;
     private final JobContractRepository jobContractRepository;
     private final JobApplicationMapper jobApplicationMapper;
+    private final CharacterJobService characterJobService;
     private final BusinessTransactions businessTransactions;
 
     @Override
@@ -467,20 +473,40 @@ public class JobApplicationServiceImpl implements JobApplicationService {
             throw new RuntimeException("Contract cannot be accepted. Current status: " + contract.getStatus());
         }
 
+        // Convertir contrato a experiencia laboral
+        JobExperienceDto jobExperience = convertContractToJobExperience(contract);
+
+        // Añadir experiencia laboral al personaje
+        try {
+            CharacterDto updatedCharacter = businessTransactions.addJobExperience(
+                    contract.getCharacterId(),
+                    jobExperience
+            );
+            log.info("Job experience added to character: {}", updatedCharacter.getId());
+        } catch (Exception e) {
+            log.error("Error adding job experience to character: {}", e.getMessage());
+            throw new RuntimeException("Failed to add job experience to character", e);
+        }
+
         contract.setStatus("ACCEPTED");
         contract.setAcceptedAt(LocalDateTime.now());
         jobContractRepository.save(contract);
 
+        // Actualizar la aplicación original
         jobApplicationRepository.findById(contract.getApplicationId()).ifPresent(app -> {
             app.setStatus(EnumAll.ApplicationStatus.HIRED);
             app.setStage(EnumAll.ApplicationStage.HIRED);
             jobApplicationRepository.save(app);
         });
 
+        // Enviar notificación
+        sendContractAcceptedNotification(contract);
+
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "Contrato aceptado");
+        result.put("message", "Contrato aceptado. ¡Felicidades por tu nuevo trabajo!");
         result.put("contractId", contractId);
+        result.put("jobExperience", jobExperience);
 
         return result;
     }
@@ -980,5 +1006,207 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 company.getId(),
                 application.getCharacterId(),
                 System.currentTimeMillis());
+    }
+
+    // En JobApplicationServiceImpl
+    @Override
+    public Page<JobApplicationDTO> getByCharacterFilters(JobApplicationFiltersDTO filters, Pageable pageable) {
+        log.info("Getting applications by character with filters: {}", filters);
+
+        // Convertir listas vacías a null
+        List<String> status = (filters.getStatus() == null || filters.getStatus().isEmpty()) ? null : filters.getStatus();
+        List<String> stage = (filters.getStage() == null || filters.getStage().isEmpty()) ? null : filters.getStage();
+
+        // Parsear fechas
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+
+        if (filters.getFromDate() != null && !filters.getFromDate().isEmpty()) {
+            fromDate = LocalDateTime.parse(filters.getFromDate());
+        }
+        if (filters.getToDate() != null && !filters.getToDate().isEmpty()) {
+            toDate = LocalDateTime.parse(filters.getToDate());
+        }
+
+        // Construir Specification dinámicamente
+        Specification<JobApplicationEntity> spec = Specification
+                .where(JobApplicationSpecifications.byCharacterId(filters.getCharacterId()))
+                .and(JobApplicationSpecifications.bySearch(filters.getSearch()))
+                .and(JobApplicationSpecifications.byStatus(status))
+                .and(JobApplicationSpecifications.byStage(stage))
+                .and(JobApplicationSpecifications.byMinMatchScore(filters.getMinMatchScore()))
+                .and(JobApplicationSpecifications.byMaxMatchScore(filters.getMaxMatchScore()))
+                .and(JobApplicationSpecifications.byFromDate(fromDate))
+                .and(JobApplicationSpecifications.byToDate(toDate));
+
+        Page<JobApplicationEntity> applicationsPage = jobApplicationRepository.findAll(spec, pageable);
+
+        return applicationsPage.map(jobApplicationMapper::toDto);
+    }
+
+    // En JobApplicationServiceImpl
+    @Override
+    @Transactional
+    public Map<String, Object> updateContractStatus(ContractActionDTO request) {
+        log.info("Updating contract status: {}", request);
+
+        JobContractEntity contract = jobContractRepository.findById(request.getContractId())
+                .orElseThrow(() -> new RuntimeException("Contract not found: " + request.getContractId()));
+
+        if (!"PENDING".equals(contract.getStatus())) {
+            throw new RuntimeException("Contract cannot be modified. Current status: " + contract.getStatus());
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("contractId", request.getContractId());
+        result.put("accepted", request.isAccepted());
+        result.put("notes", request.getNotes());
+
+        if (request.isAccepted()) {
+            // Aceptar contrato
+            contract.setStatus("ACCEPTED");
+            contract.setAcceptedAt(LocalDateTime.now());
+            result.put("message", "Contrato aceptado correctamente");
+            result.put("status", "ACCEPTED");
+            CharacterJobDTO user = characterJobService.startJob(contract.getApplicationId());
+            // Actualizar la aplicación original
+            jobApplicationRepository.findById(contract.getApplicationId()).ifPresent(app -> {
+                app.setStatus(EnumAll.ApplicationStatus.HIRED);
+                app.setStage(EnumAll.ApplicationStage.HIRED);
+                jobApplicationRepository.save(app);
+
+                // Enviar notificación de éxito
+                sendContractAcceptedNotification(contract);
+            });
+
+            log.info("Contract {} ACCEPTED", request.getContractId());
+        } else {
+            // Rechazar contrato
+            contract.setStatus("REJECTED");
+            contract.setRejectedAt(LocalDateTime.now());
+            result.put("message", "Contrato rechazado");
+            result.put("status", "REJECTED");
+
+            // Actualizar la aplicación original
+            jobApplicationRepository.findById(contract.getApplicationId()).ifPresent(app -> {
+                app.setStatus(EnumAll.ApplicationStatus.REJECTED);
+                app.setStage(EnumAll.ApplicationStage.APPLICATION);
+                jobApplicationRepository.save(app);
+
+                // Enviar notificación de rechazo
+                sendContractRejectedNotification(app, contract);
+            });
+
+            log.info("Contract {} REJECTED", request.getContractId());
+        }
+
+        jobContractRepository.save(contract);
+
+        return result;
+    }
+
+    private void sendContractAcceptedNotification(JobContractEntity contract) {
+        CharacterDto characterDto = businessTransactions.getCharacter(contract.getCharacterId());
+
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setUserId(characterDto.getId());
+        notificationDTO.setFromUserId(characterDto.getUid());
+        notificationDTO.setType(NotificationType.JOBS);
+        notificationDTO.setResourceType(NotificationResourceType.JOBS);
+        notificationDTO.setResourceId(contract.getId());
+        notificationDTO.setRead(false);
+        notificationDTO.setActionUrl("/profile");
+        notificationDTO.setTitle("✅ ¡Contrato aceptado!");
+        notificationDTO.setSubTitle("Has aceptado la oferta laboral");
+        notificationDTO.setMessage(String.format(
+                "Has aceptado el contrato para el puesto de %s en %s con un salario de %s €. " +
+                        "Tu fecha de inicio es el %s. ¡Enhorabuena y mucho éxito en tu nueva etapa!",
+                contract.getPositionTitle(),
+                contract.getCompanyName(),
+                contract.getBaseSalary(),
+                contract.getStartDate()
+        ));
+        notificationDTO.setEventType(NotificationEventType.JOB_OFFER);
+
+        businessTransactions.setNotifications(notificationDTO);
+    }
+
+    private void sendContractRejectedNotification(JobApplicationEntity application, JobContractEntity contract) {
+        CharacterDto characterDto = businessTransactions.getCharacter(application.getCharacterId());
+
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setUserId(characterDto.getId());
+        notificationDTO.setFromUserId(characterDto.getUid());
+        notificationDTO.setType(NotificationType.JOBS);
+        notificationDTO.setResourceType(NotificationResourceType.JOBS);
+        notificationDTO.setResourceId(contract.getId());
+        notificationDTO.setRead(false);
+        notificationDTO.setActionUrl("/profile");
+        notificationDTO.setTitle("❌ Contrato rechazado");
+        notificationDTO.setSubTitle("Has rechazado la oferta laboral");
+        notificationDTO.setMessage(String.format(
+                "Has rechazado el contrato para el puesto de %s en %s. " +
+                        "Puedes seguir buscando otras oportunidades que se ajusten mejor a tus intereses.",
+                contract.getPositionTitle(),
+                contract.getCompanyName()
+        ));
+        notificationDTO.setEventType(NotificationEventType.JOB_APPLICATION_REJECTED);
+
+        businessTransactions.setNotifications(notificationDTO);
+    }
+
+    private JobExperienceDto convertContractToJobExperience(JobContractEntity contract) {
+        return JobExperienceDto.builder()
+                .company(contract.getCompanyName())
+                .role(contract.getPositionTitle())
+                .startDate(contract.getStartDate() != null ? contract.getStartDate() : LocalDate.now().plusDays(15))
+                .endDate(null) // Trabajo actual, sin fecha de fin
+                .monthlySalary(contract.getMonthlySalary())
+                .performanceScore(0) // Inicialmente 0, se irá actualizando
+                .responsibilities(new ArrayList<>())
+                .skillsGained(new ArrayList<>())
+                .contractType(contract.getContractType())
+                .workModality(contract.getWorkModality())
+                .weeklyHours(contract.getWeeklyHours())
+                .startTime(contract.getStartTime() != null ? contract.getStartTime().toString() : null)
+                .endTime(contract.getEndTime() != null ? contract.getEndTime().toString() : null)
+                .applicationId(contract.getApplicationId())
+                .vacancyId(contract.getPositionId())
+                .build();
+    }
+
+
+
+    // En JobApplicationServiceImpl
+    @Override
+    public Page<JobContractDTO> getCharacterContractsByFilters(JobContractFiltersDTO filters, Pageable pageable) {
+        log.info("Getting contracts by filters using Specifications: {}", filters);
+
+        // Convertir fechas
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+
+        if (filters.getFromDate() != null && !filters.getFromDate().isEmpty()) {
+            fromDate = LocalDateTime.parse(filters.getFromDate());
+        }
+        if (filters.getToDate() != null && !filters.getToDate().isEmpty()) {
+            toDate = LocalDateTime.parse(filters.getToDate());
+        }
+
+        // Construir Specification dinámicamente
+        Specification<JobContractEntity> spec = Specification
+                .where(JobContractSpecifications.byCharacterId(filters.getCharacterId()))
+                .and(JobContractSpecifications.bySearch(filters.getSearch()))
+                .and(JobContractSpecifications.byStatus(filters.getStatus()))
+                .and(JobContractSpecifications.byMinSalary(filters.getMinSalary()))
+                .and(JobContractSpecifications.byMaxSalary(filters.getMaxSalary()))
+                .and(JobContractSpecifications.byContractType(filters.getContractType()))
+                .and(JobContractSpecifications.byWorkModality(filters.getWorkModality()))
+                .and(JobContractSpecifications.byFromDate(fromDate))
+                .and(JobContractSpecifications.byToDate(toDate));
+
+        Page<JobContractEntity> contractsPage = jobContractRepository.findAll(spec, pageable);
+
+        return contractsPage.map(this::convertToDTO);
     }
 }

@@ -5,6 +5,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 public class BusinessTransactions {
 
@@ -239,6 +241,41 @@ public class BusinessTransactions {
         } catch (Exception e) {
             System.err.println("Error fetching user: " + e.getMessage());
             return null; // o lanza excepción, según tu diseño
+        }
+    }
+
+    /**
+     * Añade una experiencia laboral al personaje
+     *
+     * @param characterId ID del personaje
+     * @param jobExperience DTO con la experiencia laboral
+     * @return CharacterDto actualizado
+     */
+    public CharacterDto addJobExperience(Long characterId, JobExperienceDto jobExperience) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-PERSONSERVICE/api/characters")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/{characterId}/jobs", characterId)
+                    .bodyValue(jobExperience)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error adding job experience: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error adding job experience for character {}: {}", characterId, e.getMessage());
+            return null;
         }
     }
 }

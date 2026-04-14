@@ -1,9 +1,7 @@
 package com.pet.businessdomain.personservice.services;
 
 
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.CharacterSkillsUpdateRequestDto;
-import com.pet.businessdomain.shareddto.dto.CharacterSkillsUpdateResponseDto;
+import com.pet.businessdomain.shareddto.dto.*;
 
 import java.util.List;
 
@@ -23,4 +21,5 @@ public interface CharacterService {
 
     void deleteCharacter(Long id);
     CharacterSkillsUpdateResponseDto updateCharacterSkills(CharacterSkillsUpdateRequestDto request);
+    SkillPaginatedResponseDTO getCharacterSkills(SkillFiltersDTO filters);
 }

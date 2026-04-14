@@ -219,7 +219,7 @@ public class SystemController {
 
         CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
 
-
+        Map<String, Object> response2 = businessTransactions.processPendingInterviews(characterDto.getId());
         List<JobApplicationDTO> jobApplicationDTOS = businessTransactions.getApplicationsByCharacterAndStatus(characterDto.getId(), EnumAll.ApplicationStatus.OFFERED);
         if(!jobApplicationDTOS.isEmpty()) {
             List<JobContractDTO> generatedContracts = jobApplicationDTOS.stream()
@@ -237,7 +237,6 @@ public class SystemController {
             log.info("Generated {} contracts out of {} applications", generatedContracts.size(), jobApplicationDTOS.size());
         }
         Map<String, Object> response = businessTransactions.processedAdvance(characterDto.getId(), 70);
-        Map<String, Object> response2 = businessTransactions.processPendingInterviews(characterDto.getId());
 
 
 

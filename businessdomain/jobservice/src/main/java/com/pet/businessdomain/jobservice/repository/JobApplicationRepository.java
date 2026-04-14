@@ -2,7 +2,10 @@ package com.pet.businessdomain.jobservice.repository;
 
 import com.pet.businessdomain.jobservice.entities.JobApplicationEntity;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,10 +17,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface JobApplicationRepository extends JpaRepository<JobApplicationEntity, Long> {
+public interface JobApplicationRepository  extends JpaRepository<JobApplicationEntity, Long>,
+        JpaSpecificationExecutor<JobApplicationEntity> {
 
     // Aplicaciones de un personaje
     List<JobApplicationEntity> findByCharacterId(Long characterId);
+    Page<JobApplicationEntity> findByCharacterId(Long characterId, Pageable pageable);
 
     // Aplicaciones de un personaje a una vacante específica
     List<JobApplicationEntity> findByCharacterIdAndVacancyId(Long characterId, Long vacancyId);
@@ -89,4 +94,45 @@ public interface JobApplicationRepository extends JpaRepository<JobApplicationEn
             "LEFT JOIN FETCH p.company c " +
             "WHERE a.id = :id")
     Optional<JobApplicationEntity> findByIdWithAllRelations(@Param("id") Long id);
+
+    @Query(value = "SELECT DISTINCT a.* FROM job_applications a " +
+            "LEFT JOIN job_vacancies v ON v.id = a.vacancy_id " +
+            "LEFT JOIN job_positions p ON p.id = v.position_id " +
+            "LEFT JOIN companies c ON c.id = p.company_id " +
+            "WHERE a.character_id = :characterId " +
+            "AND (CAST(:search AS TEXT) IS NULL OR CAST(:search AS TEXT) = '' OR " +
+            "     LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%')) OR " +
+            "     LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%'))) " +
+            "AND (CAST(:status AS TEXT[]) IS NULL OR a.status = ANY(CAST(:status AS TEXT[]))) " +
+            "AND (CAST(:stage AS TEXT[]) IS NULL OR a.stage = ANY(CAST(:stage AS TEXT[]))) " +
+            "AND (CAST(:minMatchScore AS INTEGER) IS NULL OR a.match_score >= CAST(:minMatchScore AS INTEGER)) " +
+            "AND (CAST(:maxMatchScore AS INTEGER) IS NULL OR a.match_score <= CAST(:maxMatchScore AS INTEGER)) " +
+            "AND (CAST(:fromDate AS TIMESTAMP) IS NULL OR a.applied_at >= CAST(:fromDate AS TIMESTAMP)) " +
+            "AND (CAST(:toDate AS TIMESTAMP) IS NULL OR a.applied_at <= CAST(:toDate AS TIMESTAMP)) ",
+            countQuery = "SELECT COUNT(*) FROM job_applications a " +
+                    "LEFT JOIN job_vacancies v ON v.id = a.vacancy_id " +
+                    "LEFT JOIN job_positions p ON p.id = v.position_id " +
+                    "LEFT JOIN companies c ON c.id = p.company_id " +
+                    "WHERE a.character_id = :characterId " +
+                    "AND (CAST(:search AS TEXT) IS NULL OR CAST(:search AS TEXT) = '' OR " +
+                    "     LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%')) OR " +
+                    "     LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:search AS TEXT), '%'))) " +
+                    "AND (CAST(:status AS TEXT[]) IS NULL OR a.status = ANY(CAST(:status AS TEXT[]))) " +
+                    "AND (CAST(:stage AS TEXT[]) IS NULL OR a.stage = ANY(CAST(:stage AS TEXT[]))) " +
+                    "AND (CAST(:minMatchScore AS INTEGER) IS NULL OR a.match_score >= CAST(:minMatchScore AS INTEGER)) " +
+                    "AND (CAST(:maxMatchScore AS INTEGER) IS NULL OR a.match_score <= CAST(:maxMatchScore AS INTEGER)) " +
+                    "AND (CAST(:fromDate AS TIMESTAMP) IS NULL OR a.applied_at >= CAST(:fromDate AS TIMESTAMP)) " +
+                    "AND (CAST(:toDate AS TIMESTAMP) IS NULL OR a.applied_at <= CAST(:toDate AS TIMESTAMP)) ",
+            nativeQuery = true)
+    Page<JobApplicationEntity> findByCharacterIdAndFilters(
+            @Param("characterId") Long characterId,
+            @Param("search") String search,
+            @Param("status") List<String> status,
+            @Param("stage") List<String> stage,
+            @Param("minMatchScore") Integer minMatchScore,
+            @Param("maxMatchScore") Integer maxMatchScore,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable
+    );
 }

@@ -1,8 +1,6 @@
 package com.pet.businessdomain.shareddto.dto;
 
-
 import lombok.Data;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,7 +10,10 @@ import java.util.List;
 public class CharacterJobDTO {
     private Long id;
     private Long characterId;
-    private Long vacancyId;
+
+    // Cambia de vacancyId a vacancy (el objeto completo)
+    private JobVacancyDTO vacancy; // <-- CAMBIADO: ahora se llama vacancy
+
     private String positionTitle;
     private String companyName;
     private String companyLogo;
@@ -21,9 +22,9 @@ public class CharacterJobDTO {
     private Boolean active;
 
     // Progreso
-    private Integer performance; // 0-100
-    private Integer satisfaction; // 0-100
-    private Integer stressLevel; // 0-100
+    private Integer performance;
+    private Integer satisfaction;
+    private Integer stressLevel;
 
     // Historial
     private Integer promotionsReceived;

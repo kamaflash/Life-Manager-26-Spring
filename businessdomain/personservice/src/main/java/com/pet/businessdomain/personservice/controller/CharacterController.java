@@ -1,18 +1,19 @@
 package com.pet.businessdomain.personservice.controller;
 
 
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.personservice.repository.CharacterRepository;
 import com.pet.businessdomain.personservice.services.CharacterService;
-import com.pet.businessdomain.shareddto.dto.CharacterSkillsUpdateRequestDto;
-import com.pet.businessdomain.shareddto.dto.CharacterSkillsUpdateResponseDto;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/characters")
 public class CharacterController {
@@ -113,4 +114,38 @@ public class CharacterController {
     public void deleteAll() {
         characterRepository.deleteAll();
     }
+
+    /**
+     * Obtiene las habilidades de un personaje con paginación, ordenamiento y filtros.
+     *
+     * @param filters Filtros de búsqueda, paginación y ordenamiento
+     * @return ResponseEntity con la lista paginada de habilidades
+     *
+     * @example POST /api/characters/skills/search
+     * @example Body: {
+     *   "characterId": 1,
+     *   "page": 0,
+     *   "size": 10,
+     *   "sortBy": "level",
+     *   "sortDir": "desc",
+     *   "search": "programming",
+     *   "minLevel": 1,
+     *   "maxLevel": 5,
+     *   "locked": false
+     * }
+     */
+
+    @PostMapping("/skills/search")
+    public ResponseEntity<SkillPaginatedResponseDTO> getCharacterSkills(@RequestBody SkillFiltersDTO filters) {
+        log.info("POST /api/characters/skills/search - Buscando habilidades del personaje: {}",
+                filters.getCharacterId());
+
+        if (filters.getCharacterId() == null) {
+            throw new IllegalArgumentException("CharacterId es requerido");
+        }
+
+        SkillPaginatedResponseDTO response = characterService.getCharacterSkills(filters);
+        return ResponseEntity.ok(response);
+    }
+
 }

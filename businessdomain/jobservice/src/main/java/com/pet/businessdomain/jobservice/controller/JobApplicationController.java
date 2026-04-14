@@ -1,20 +1,23 @@
 package com.pet.businessdomain.jobservice.controller;
 
 import com.pet.businessdomain.jobservice.services.JobApplicationService;
-import com.pet.businessdomain.shareddto.dto.JobApplicationDTO;
-import com.pet.businessdomain.shareddto.dto.JobApplicationRequestDTO;
-import com.pet.businessdomain.shareddto.dto.JobApplicationResultDTO;
-import com.pet.businessdomain.shareddto.dto.JobContractDTO;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -76,15 +79,52 @@ public class JobApplicationController {
     /**
      * Obtiene todas las postulaciones de un personaje
      *
-     * @param characterId ID del personaje
+     *  ID del personaje
      * @return Lista de JobApplicationDTO con las postulaciones del personaje
      *
      * @example GET /api/job-applications/character/789
      */
-    @GetMapping("/character/{characterId}")
-    public ResponseEntity<List<JobApplicationDTO>> getByCharacter(@PathVariable(name = "characterId") Long characterId) {
-        log.info("GET /api/job-applications/character/{} - Get applications by character", characterId);
-        return ResponseEntity.ok(jobApplicationService.getByCharacter(characterId));
+    @PostMapping("/character/search")
+    public ResponseEntity<Map<String, Object>> getByCharacterFilters(@RequestBody JobApplicationFiltersDTO filters) {
+        log.info("POST /api/job-applications/character/search - Get applications by character with filters: {}", filters);
+
+        // Validar que characterId esté presente
+        if (filters.getCharacterId() == null) {
+            throw new IllegalArgumentException("CharacterId is required");
+        }
+
+        // Mapear nombres de ordenamiento de DTO a Entity
+        String sortByEntity = getValidSortField(filters.getSortBy());
+
+        Sort sort = Sort.by(filters.getSortDir().equalsIgnoreCase("desc") ?
+                Sort.Direction.DESC : Sort.Direction.ASC, sortByEntity);
+        Pageable pageable = PageRequest.of(filters.getPage(), filters.getSize(), sort);
+
+        Page<JobApplicationDTO> applicationsPage = jobApplicationService.getByCharacterFilters(filters, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("applications", applicationsPage.getContent());
+        response.put("currentPage", applicationsPage.getNumber());
+        response.put("totalItems", applicationsPage.getTotalElements());
+        response.put("totalPages", applicationsPage.getTotalPages());
+        response.put("pageSize", applicationsPage.getSize());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Valida que el campo de ordenamiento sea válido para evitar inyección SQL
+     */
+    private String getValidSortField(String sortBy) {
+        // Lista de campos permitidos para ordenamiento
+        Set<String> allowedFields = Set.of(
+                "appliedAt", "matchScore", "status", "stage", "id"
+        );
+
+        if (allowedFields.contains(sortBy)) {
+            return sortBy;
+        }
+        return "appliedAt"; // Campo por defecto
     }
 
     /**
@@ -424,5 +464,71 @@ public class JobApplicationController {
         log.info("GET /api/job-applications/character/{}/contracts/status/{} - Get contracts by status", characterId, status);
         List<JobContractDTO> contracts = jobApplicationService.getCharacterContractsByStatus(characterId, status);
         return ResponseEntity.ok(contracts);
+    }
+
+
+    /**
+     * Busca contratos de un personaje con filtros y paginación usando Specifications
+     *
+     * @param filters Filtros de búsqueda
+     * @return Página de contratos con metadatos de paginación
+     */
+    @PostMapping("/character/contracts/search")
+    public ResponseEntity<Map<String, Object>> getCharacterContractsByFilters(@RequestBody JobContractFiltersDTO filters) {
+        log.info("POST /api/job-applications/character/contracts/search - Get contracts by filters: {}", filters);
+
+        if (filters.getCharacterId() == null) {
+            throw new IllegalArgumentException("CharacterId is required");
+        }
+
+        String sortByEntity = getValidContractSortField(filters.getSortBy());
+
+        Sort sort = Sort.by(filters.getSortDir().equalsIgnoreCase("desc") ?
+                Sort.Direction.DESC : Sort.Direction.ASC, sortByEntity);
+        Pageable pageable = PageRequest.of(filters.getPage(), filters.getSize(), sort);
+
+        Page<JobContractDTO> contractsPage = jobApplicationService.getCharacterContractsByFilters(filters, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("contracts", contractsPage.getContent());
+        response.put("currentPage", contractsPage.getNumber());
+        response.put("totalItems", contractsPage.getTotalElements());
+        response.put("totalPages", contractsPage.getTotalPages());
+        response.put("pageSize", contractsPage.getSize());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Valida que el campo de ordenamiento sea válido para contratos
+     */
+    private String getValidContractSortField(String sortBy) {
+        Set<String> allowedFields = Set.of(
+                "issuedAt", "validUntil", "status", "baseSalary",
+                "matchScore", "contractType", "startDate"
+        );
+
+        if (allowedFields.contains(sortBy)) {
+            return sortBy;
+        }
+        return "issuedAt";
+    }
+
+    /**
+     * Actualiza el estado de un contrato (aceptar o rechazar)
+     *
+     * @param request DTO con contractId y accepted flag
+     * @return Resultado de la operación
+     *
+     * @example POST /api/job-applications/contracts/action
+     * @example Body: { "contractId": 1, "accepted": true, "notes": "Acepto las condiciones" }
+     */
+    @PostMapping("/contracts/action")
+    public ResponseEntity<Map<String, Object>> updateContractStatus(@RequestBody ContractActionDTO request) {
+        log.info("POST /api/job-applications/contracts/action - {} contract: {}",
+                request.isAccepted() ? "Accepting" : "Rejecting", request.getContractId());
+
+        Map<String, Object> result = jobApplicationService.updateContractStatus(request);
+        return ResponseEntity.ok(result);
     }
 }

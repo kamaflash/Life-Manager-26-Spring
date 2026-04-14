@@ -1,5 +1,6 @@
 package com.pet.businessdomain.shareddto.dto;
 
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,7 +36,7 @@ public class JobVacancyDTO {
     // 🔥 NUEVO: Descripción
     private String description;
 
-    private List<String> workingDays;
+    private List<EnumAll.WorkingDay> workingDays;
     private List<String> benefits;
     private List<RequirementDTO> requirements;
 
