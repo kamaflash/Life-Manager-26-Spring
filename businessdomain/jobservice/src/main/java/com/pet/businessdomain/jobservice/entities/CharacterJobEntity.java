@@ -14,7 +14,6 @@ public class CharacterJobEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private Long characterId;
 
     @ManyToOne

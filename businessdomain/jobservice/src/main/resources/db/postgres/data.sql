@@ -5,14 +5,10 @@ TRUNCATE TABLE job_requirements CASCADE;
 TRUNCATE TABLE job_vacancies CASCADE;
 TRUNCATE TABLE job_positions CASCADE;
 TRUNCATE TABLE companies CASCADE;
-TRUNCATE TABLE job_events CASCADE;
-TRUNCATE TABLE job_missions CASCADE;
 
 -- Reiniciar secuencias
 ALTER SEQUENCE IF EXISTS job_vacancies_id_seq RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS job_requirements_id_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS job_events_id_seq RESTART WITH 1;
-ALTER SEQUENCE IF EXISTS job_missions_id_seq RESTART WITH 1;
 
 -- ============================================
 -- 7. JOB CONTRACTS
@@ -301,50 +297,3 @@ INSERT INTO job_requirements (vacancy_id, type, skill_key, min_value, mandatory)
 (35, 'SKILL', 'office', 1, false),
 (35, 'EDUCATION', 'high_school', 1, false);
 
--- ============================================
--- 5. JOB EVENTS (con occurred_at para PostgreSQL)
--- ============================================
-INSERT INTO job_events (type, title, description, salary_change, performance_change, satisfaction_change, stress_change, resolved, occurred_at) VALUES
-('BONUS', '¡Bono por rendimiento!', 'Has superado las expectativas este mes. La empresa te reconoce con un bono económico.', 300, 10, 15, -5, false, CURRENT_TIMESTAMP),
-('BONUS', 'Bono por objetivos', 'Has cumplido todos los objetivos del trimestre. ¡Buen trabajo!', 500, 15, 20, -10, false, CURRENT_TIMESTAMP),
-('PROMOTION', '¡Ascenso!', 'Tu trabajo ha sido reconocido. Has sido ascendido a un puesto superior.', 400, 20, 25, 10, false, CURRENT_TIMESTAMP),
-('PROMOTION', 'Cambio de rol', 'Te han ofrecido un nuevo rol con más responsabilidades y mejor salario.', 350, 15, 20, 15, false, CURRENT_TIMESTAMP),
-('CONFLICT', 'Desacuerdo con compañero', 'Has tenido un conflicto con un compañero de trabajo por diferencias de opinión.', 0, -10, -15, 15, false, CURRENT_TIMESTAMP),
-('CONFLICT', 'Problemas con el jefe', 'Has tenido un desencuentro con tu supervisor directo.', 0, -15, -20, 20, false, CURRENT_TIMESTAMP),
-('PROJECT_SUCCESS', 'Proyecto exitoso', 'El proyecto en el que has trabajado ha sido un éxito rotundo.', 200, 15, 20, -10, false, CURRENT_TIMESTAMP),
-('PROJECT_SUCCESS', 'Reconocimiento público', 'La dirección ha reconocido públicamente tu contribución al proyecto.', 0, 10, 25, -5, false, CURRENT_TIMESTAMP),
-('PROJECT_FAILURE', 'Proyecto fallido', 'El proyecto no ha alcanzado los objetivos esperados.', 0, -15, -20, 15, false, CURRENT_TIMESTAMP),
-('PROJECT_FAILURE', 'Retraso en la entrega', 'No se ha cumplido con la fecha de entrega del proyecto.', 0, -10, -15, 10, false, CURRENT_TIMESTAMP),
-('BURNOUT', 'Agotamiento laboral', 'El exceso de trabajo está pasando factura a tu salud mental.', 0, -20, -25, 25, false, CURRENT_TIMESTAMP),
-('BURNOUT', 'Necesitas un descanso', 'Llevas muchas horas trabajando sin descanso.', 0, -10, -10, 15, false, CURRENT_TIMESTAMP),
-('OFFER_FROM_RIVAL', 'Oferta de la competencia', 'Una empresa rival te ha ofrecido un puesto con mejores condiciones.', 0, 0, 10, 5, false, CURRENT_TIMESTAMP),
-('MENTOR_LEAVES', 'Tu mentor se va', 'La persona que te mentorizaba ha dejado la empresa.', 0, -10, -15, 10, false, CURRENT_TIMESTAMP),
-('TEAM_RESTRUCTURE', 'Reestructuración del equipo', 'La empresa ha reorganizado los equipos.', 0, -5, -10, 15, false, CURRENT_TIMESTAMP),
-('QUARTERLY_REVIEW', 'Revisión trimestral positiva', 'Tu evaluación trimestral ha sido excelente.', 200, 10, 15, -10, false, CURRENT_TIMESTAMP),
-('QUARTERLY_REVIEW', 'Revisión trimestral negativa', 'Tu evaluación trimestral no ha sido buena.', 0, -10, -15, 15, false, CURRENT_TIMESTAMP),
-('DEMOTION', 'Descenso de categoría', 'Por motivos organizativos, tu puesto ha sido reajustado a la baja.', -200, -15, -25, 20, false, CURRENT_TIMESTAMP);
-
--- ============================================
--- 6. MISSIONS
--- ============================================
-INSERT INTO job_missions (title, description, difficulty, deadline_hours, xp_reward, salary_bonus, reputation_gain, skill_reward, completed) VALUES
-('Completar informe mensual', 'Entrega el informe de resultados del departamento antes del plazo', 'EASY', 24, 50, 100, 5, 'productivity', false),
-('Capacitar a nuevo empleado', 'Ayuda a integrar al nuevo compañero durante su primera semana', 'MEDIUM', 72, 100, 200, 10, 'leadership', false),
-('Optimizar proceso de trabajo', 'Propón y aplica una mejora en los procesos del departamento', 'HARD', 120, 200, 500, 15, 'problem_solving', false),
-('Proyecto trimestral', 'Lidera y completa el proyecto del trimestre con éxito', 'EPIC', 240, 500, 1000, 25, 'project_management', false),
-('Resolver queja de cliente', 'Atiende y resuelve satisfactoriamente una queja importante', 'MEDIUM', 48, 75, 150, 8, 'negotiation', false),
-('Documentar código', 'Documenta correctamente el código del último proyecto', 'EASY', 24, 40, 80, 4, 'communication', false),
-('Presentación al cliente', 'Prepara y presenta una propuesta a un cliente potencial', 'HARD', 96, 180, 400, 12, 'charisma', false),
-('Revisión de seguridad', 'Realiza una auditoría de seguridad del sistema', 'MEDIUM', 48, 90, 180, 7, 'cybersecurity_basics', false),
-('Capacitación técnica', 'Completa un curso de capacitación técnica ofrecido por la empresa', 'MEDIUM', 72, 120, 0, 10, 'technical_skill', false),
-('Organizar evento de equipo', 'Coordina una actividad de team building para el departamento', 'MEDIUM', 48, 80, 200, 15, 'teamwork', false),
-('Cumplir objetivos trimestrales', 'Alcanza todos los objetivos marcados para el trimestre', 'HARD', 240, 300, 800, 20, 'ambition', false),
-('Asistir a conferencia', 'Representa a la empresa en una conferencia del sector', 'MEDIUM', 48, 100, 300, 12, 'networking', false),
-('Mejorar métricas del equipo', 'Ayuda a mejorar las métricas de rendimiento del equipo', 'HARD', 168, 250, 600, 18, 'leadership', false),
-('Resolver bug crítico', 'Encuentra y soluciona un error crítico en producción', 'HARD', 24, 150, 300, 15, 'problem_solving', false),
-('Redactar propuesta comercial', 'Elabora una propuesta comercial para un cliente potencial', 'MEDIUM', 72, 90, 200, 10, 'negotiation', false),
-('Entrevistar candidato', 'Participa en el proceso de entrevista de un nuevo candidato', 'EASY', 24, 60, 0, 8, 'communication', false),
-('Actualizar documentación', 'Revisa y actualiza toda la documentación del proyecto', 'EASY', 48, 50, 100, 5, 'organization', false),
-('Desarrollar nueva funcionalidad', 'Implementa una nueva funcionalidad solicitada por el cliente', 'HARD', 120, 200, 500, 15, 'advanced_programming', false),
-('Analizar competencia', 'Realiza un análisis detallado de la competencia', 'MEDIUM', 72, 100, 200, 10, 'data_analysis', false),
-('Optimizar base de datos', 'Mejora el rendimiento de las consultas a la base de datos', 'HARD', 96, 180, 400, 12, 'sql', false);

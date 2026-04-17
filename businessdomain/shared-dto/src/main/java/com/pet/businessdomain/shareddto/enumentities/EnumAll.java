@@ -221,7 +221,65 @@ public class EnumAll {
         BURNOUT, OFFER_FROM_RIVAL, MENTOR_LEAVES, TEAM_RESTRUCTURE, QUARTERLY_REVIEW
     }
 
+    public enum MissionCategory {
+        STUDY, WORK, SOCIAL, ROMANCE, EXPLORATION, TRAINING, PERSONAL, SPECIAL
+    }
+
+    public enum MissionType {
+        ONE_TIME, DAILY, WEEKLY, MONTHLY, REPEATABLE, STORY
+    }
+
+    public enum MissionStatus {
+        ASSIGNED, ACTIVE, PAUSED, COMPLETED, FAILED, ABANDONED, EXPIRED
+    }
+
     public enum MissionDifficulty {
         EASY, MEDIUM, HARD, EPIC
     }
+
+    public enum EventCategory {
+        STUDY, WORK, SOCIAL, ROMANCE, REST, TRAVEL, SPECIAL, RANDOM
+    }
+
+    public enum EventStatus {
+        SCHEDULED, IN_PROGRESS, COMPLETED, SKIPPED, FAILED, CANCELLED
+    }
+
+    public enum InteractionType {
+        NONE, SINGLE_CLICK, MULTI_CHOICE, TIMER, MINIGAME, QTE, FORM
+    }
+
+    public enum AssignmentSource {
+        AUTOMATIC, TRIGGERED, MANUAL, STORY, DAILY_SCHEDULE
+    }
+
+    public enum RecurrencePattern {
+        ONCE, DAILY, WEEKLY, WEEKDAYS, WEEKENDS, CUSTOM
+    }
+
+    // ObjectiveType.java
+    public enum ObjectiveType {
+        REACH_STAT, REACH_XP, COMPLETE_ACTIONS, BUY_ITEM,
+        MAKE_FRIEND, GET_PARTNER, REACH_AGE, EARN_MONEY,
+        ATTEND_EVENT, COMPLETE_MISSION
+    }
+    // RewardType.java
+    public enum RewardType {
+        XP_JOBS, XP_ACADEMY, STAT_BOOST, SKILL_BOOST,
+        MONEY, ITEM, TITLE, UNLOCK_MISSION, UNLOCK_EVENT,
+        RELATIONSHIP_BONUS, BADGE
+    }
+    // RequirementType.java
+    public enum RequirementType {
+        MIN_AGE, MIN_STAT, MIN_XP_JOBS, MIN_XP_ACADEMY,
+        MISSION_COMPLETED, EVENT_ATTENDED, HAS_ITEM,
+        HAS_PARTNER, HAS_FRIENDS_COUNT, MIN_MONEY, HAS_TITLE
+    }
+    // EventType.java
+    // EventScope.java
+    public enum EventScope { GLOBAL, CITY, PERSONAL }
+    // EventParticipationStatus.java
+    public enum EventParticipationStatus { INVITED, REGISTERED, ATTENDED, MISSED, SKIPPED }
+    // EventOutcome.java
+    public enum EventOutcome { SUCCESS, PARTIAL, FAILURE, NEUTRAL }
 }

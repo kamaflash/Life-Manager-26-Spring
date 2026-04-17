@@ -8,7 +8,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {WorkRelationshipMapper.class, MissionMapper.class})
+@Mapper(componentModel = "spring")
 public interface CharacterJobMapper {
 
     // ENTITY → DTO

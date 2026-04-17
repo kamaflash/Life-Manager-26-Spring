@@ -96,4 +96,29 @@ public class CharacterEntity {
 
     @Transient
     private List<SFinanceAccountResponseDto> accounts;
+
+    // En CharacterEntity, añadir:
+
+    @ElementCollection
+    @CollectionTable(name = "character_active_missions", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "mission_record_id")
+    private List<Long> activeMissionIds;   // IDs de CharacterMissionRecord activos
+
+    @ElementCollection
+    @CollectionTable(name = "character_completed_missions", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "mission_code")
+    private List<String> completedMissionCodes;  // Para chequeos rápidos de requisitos
+
+    @ElementCollection
+    @CollectionTable(name = "character_titles", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "title")
+    private List<String> titles;           // Títulos ganados: "Graduado", "Empresario"
+
+    private String activeTitle;            // Título equipado actualmente
+
+    @ElementCollection
+    @CollectionTable(name = "character_badges", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "badge_code")
+    private List<String> badges;           // Logros/insignias
+
 }

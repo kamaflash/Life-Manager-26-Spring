@@ -123,11 +123,6 @@ spring:
         predicates:
           - Path=/api/work-relationships/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/missions/**
-
       - id: products_service_trainer
         uri: lb://businessdomain-productservice
         predicates:
@@ -142,6 +137,16 @@ spring:
         uri: lb://businessdomain-notificationservice
         predicates:
           - Path=/api/notifications/**
+
+      - id: event_service_mission_templates
+        uri: lb://businessdomain-eventservice
+        predicates:
+          - Path=/api/events/**
+
+      - id: event_service_event_templates
+        uri: lb://businessdomain-eventservice
+        predicates:
+          - Path=/api/missions/**
 
 logging:
   level:

@@ -40,6 +40,12 @@ public class CharacterDto {
     private List<String> familyIds;
 
     private List<CharacterInventoryResponseDTO> inventory;
+    // ===== NUEVOS CAMPOS PARA MISIÓN/EVENTOS =====
+    private List<Long> activeMissionIds;           // IDs de CharacterMissionRecord activos
+    private List<String> completedMissionCodes;    // Para chequeos rápidos de requisitos
+    private List<String> titles;                   // Títulos ganados: "Graduado", "Empresario"
+    private String activeTitle;                    // Título equipado actualmente
+    private List<String> badges;
 
     private String createdAt;
     private String updatedAt;
