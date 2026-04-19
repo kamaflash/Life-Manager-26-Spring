@@ -300,8 +300,8 @@ public class EventServiceImpl implements EventService {
 
         LocalDateTime now = LocalDateTime.now();
         return eventRepository.findByAutoTriggerTrue().stream()
-                .filter(event -> event.getStatus() == EnumAll.EventStatus.IN_PROGRESS)
-                .filter(event -> isEventAvailableForCharacter(event, character))
+//                .filter(event -> event.getStatus() == EnumAll.EventStatus.IN_PROGRESS)
+//                .filter(event -> isEventAvailableForCharacter(event, character))
                 .map(eventMapper::toDto)
                 .collect(Collectors.toList());
     }

@@ -147,7 +147,7 @@ public class MissionController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<MissionResponseDto> updateMission(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @Valid @RequestBody MissionResponseDto missionDto) {
         log.info("🔄 Updating mission with ID: {}", id);
         MissionResponseDto updatedMission = missionService.updateMission(id, missionDto);
@@ -166,7 +166,7 @@ public class MissionController {
      * GET /api/missions/1
      */
     @GetMapping("/{id}")
-    public ResponseEntity<MissionResponseDto> getMissionById(@PathVariable Long id) {
+    public ResponseEntity<MissionResponseDto> getMissionById(@PathVariable(name = "id") Long id) {
         log.debug("🔍 Fetching mission with ID: {}", id);
         MissionResponseDto mission = missionService.getMissionById(id);
         return ResponseEntity.ok(mission);
@@ -185,7 +185,7 @@ public class MissionController {
      * GET /api/missions/code/MISSION_WORK_001
      */
     @GetMapping("/code/{code}")
-    public ResponseEntity<MissionResponseDto> getMissionByCode(@PathVariable String code) {
+    public ResponseEntity<MissionResponseDto> getMissionByCode(@PathVariable(name = "code") String code) {
         log.debug("🔍 Fetching mission with code: {}", code);
         MissionResponseDto mission = missionService.getMissionByCode(code);
         return ResponseEntity.ok(mission);
@@ -252,7 +252,7 @@ public class MissionController {
      * GET /api/missions/category/WORK
      */
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<MissionResponseDto>> getMissionsByCategory(@PathVariable String category) {
+    public ResponseEntity<List<MissionResponseDto>> getMissionsByCategory(@PathVariable(name = "category") String category) {
         log.debug("🏷️ Fetching missions of category: {}", category);
         List<MissionResponseDto> missions = missionService.getMissionsByCategory(category);
         return ResponseEntity.ok(missions);
@@ -278,7 +278,7 @@ public class MissionController {
      * GET /api/missions/type/DAILY
      */
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<MissionResponseDto>> getMissionsByType(@PathVariable String type) {
+    public ResponseEntity<List<MissionResponseDto>> getMissionsByType(@PathVariable(name = "type") String type) {
         log.debug("🏷️ Fetching missions of type: {}", type);
         List<MissionResponseDto> missions = missionService.getMissionsByType(type);
         return ResponseEntity.ok(missions);
@@ -298,7 +298,7 @@ public class MissionController {
      * DELETE /api/missions/1
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMission(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMission(@PathVariable(name = "id") Long id) {
         log.info("🗑️ Deleting mission with ID: {}", id);
         missionService.deleteMission(id);
         log.info("✅ Mission deleted successfully with ID: {}", id);
@@ -355,7 +355,7 @@ public class MissionController {
      */
     @PutMapping("/chains/{id}")
     public ResponseEntity<MissionChainResponseDto> updateMissionChain(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @Valid @RequestBody MissionChainResponseDto chainDto) {
         log.info("🔄 Updating mission chain with ID: {}", id);
         MissionChainResponseDto updatedChain = missionService.updateMissionChain(id, chainDto);
@@ -377,7 +377,7 @@ public class MissionController {
      * GET /api/missions/chains/1
      */
     @GetMapping("/chains/{id}")
-    public ResponseEntity<MissionChainResponseDto> getMissionChainById(@PathVariable Long id) {
+    public ResponseEntity<MissionChainResponseDto> getMissionChainById(@PathVariable(name = "id") Long id) {
         log.debug("🔍 Fetching mission chain with ID: {}", id);
         MissionChainResponseDto chain = missionService.getMissionChainById(id);
         return ResponseEntity.ok(chain);
@@ -394,7 +394,7 @@ public class MissionController {
      * GET /api/missions/chains/code/CHAIN_ENTREPRENEUR
      */
     @GetMapping("/chains/code/{code}")
-    public ResponseEntity<MissionChainResponseDto> getMissionChainByCode(@PathVariable String code) {
+    public ResponseEntity<MissionChainResponseDto> getMissionChainByCode(@PathVariable(name = "code") String code) {
         log.debug("🔍 Fetching mission chain with code: {}", code);
         MissionChainResponseDto chain = missionService.getMissionChainByCode(code);
         return ResponseEntity.ok(chain);
@@ -429,7 +429,7 @@ public class MissionController {
      * DELETE /api/missions/chains/1
      */
     @DeleteMapping("/chains/{id}")
-    public ResponseEntity<Void> deleteMissionChain(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMissionChain(@PathVariable(name = "id") Long id) {
         log.info("🗑️ Deleting mission chain with ID: {}", id);
         missionService.deleteMissionChain(id);
         log.info("✅ Mission chain deleted successfully with ID: {}", id);
@@ -462,7 +462,7 @@ public class MissionController {
      */
     @GetMapping("/characters/{characterId}/available")
     public ResponseEntity<List<MissionResponseDto>> getAvailableMissionsForCharacter(
-            @PathVariable Long characterId) {
+            @PathVariable(name = "characterId") Long characterId) {
         log.debug("📋 Fetching available missions for character {}", characterId);
         List<MissionResponseDto> missions = missionService.getAvailableMissionsForCharacter(characterId);
         log.debug("📋 Found {} available missions for character {}", missions.size(), characterId);
@@ -549,7 +549,7 @@ public class MissionController {
      * POST /api/missions/records/1/complete
      */
     @PostMapping("/records/{recordId}/complete")
-    public ResponseEntity<CharacterMissionRecordResponseDto> completeMission(@PathVariable Long recordId) {
+    public ResponseEntity<CharacterMissionRecordResponseDto> completeMission(@PathVariable(name = "recordId") Long recordId) {
         log.info("🎉 Completing mission record {}", recordId);
         CharacterMissionRecordResponseDto record = missionService.completeMission(recordId);
         log.info("✅ Mission record {} completed successfully", recordId);
@@ -574,7 +574,7 @@ public class MissionController {
      * POST /api/missions/records/1/fail
      */
     @PostMapping("/records/{recordId}/fail")
-    public ResponseEntity<CharacterMissionRecordResponseDto> failMission(@PathVariable Long recordId) {
+    public ResponseEntity<CharacterMissionRecordResponseDto> failMission(@PathVariable(name = "recordId") Long recordId) {
         log.info("❌ Failing mission record {}", recordId);
         CharacterMissionRecordResponseDto record = missionService.failMission(recordId);
         log.info("✅ Mission record {} marked as failed", recordId);
@@ -595,7 +595,7 @@ public class MissionController {
      * POST /api/missions/records/1/abandon
      */
     @PostMapping("/records/{recordId}/abandon")
-    public ResponseEntity<CharacterMissionRecordResponseDto> abandonMission(@PathVariable Long recordId) {
+    public ResponseEntity<CharacterMissionRecordResponseDto> abandonMission(@PathVariable(name = "recordId") Long recordId) {
         log.info("🚫 Abandoning mission record {}", recordId);
         CharacterMissionRecordResponseDto record = missionService.abandonMission(recordId);
         log.info("✅ Mission record {} abandoned", recordId);
@@ -633,7 +633,7 @@ public class MissionController {
      * POST /api/missions/records/1/claim-rewards
      */
     @PostMapping("/records/{recordId}/claim-rewards")
-    public ResponseEntity<CharacterMissionRecordResponseDto> claimMissionRewards(@PathVariable Long recordId) {
+    public ResponseEntity<CharacterMissionRecordResponseDto> claimMissionRewards(@PathVariable(name = "recordId") Long recordId) {
         log.info("🎁 Claiming rewards for mission record {}", recordId);
         CharacterMissionRecordResponseDto record = missionService.claimMissionRewards(recordId);
         log.info("✅ Rewards claimed successfully for record {}", recordId);
@@ -658,7 +658,7 @@ public class MissionController {
      */
     @GetMapping("/characters/{characterId}/active")
     public ResponseEntity<List<CharacterMissionRecordResponseDto>> getCharacterActiveMissions(
-            @PathVariable Long characterId) {
+            @PathVariable(name = "characterId") Long characterId) {
         log.debug("🎯 Fetching active missions for character {}", characterId);
         List<CharacterMissionRecordResponseDto> missions = missionService.getCharacterActiveMissions(characterId);
         log.debug("🎯 Found {} active missions for character {}", missions.size(), characterId);
@@ -676,7 +676,7 @@ public class MissionController {
      */
     @GetMapping("/characters/{characterId}/completed")
     public ResponseEntity<List<CharacterMissionRecordResponseDto>> getCharacterCompletedMissions(
-            @PathVariable Long characterId) {
+            @PathVariable(name = "characterId") Long characterId) {
         log.debug("🏆 Fetching completed missions for character {}", characterId);
         List<CharacterMissionRecordResponseDto> missions = missionService.getCharacterCompletedMissions(characterId);
         log.debug("🏆 Found {} completed missions for character {}", missions.size(), characterId);
@@ -697,7 +697,7 @@ public class MissionController {
      */
     @GetMapping("/characters/{characterId}/history")
     public ResponseEntity<Page<CharacterMissionRecordResponseDto>> getCharacterMissionHistory(
-            @PathVariable Long characterId,
+            @PathVariable(name = "characterId") Long characterId,
             @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.debug("📜 Fetching mission history for character {} - page: {}", characterId, pageable.getPageNumber());
         Page<CharacterMissionRecordResponseDto> history = missionService.getCharacterMissionHistory(characterId, pageable);
@@ -720,8 +720,8 @@ public class MissionController {
      */
     @GetMapping("/characters/{characterId}/missions/{missionId}/record")
     public ResponseEntity<CharacterMissionRecordResponseDto> getCharacterMissionRecord(
-            @PathVariable Long characterId,
-            @PathVariable Long missionId) {
+            @PathVariable(name = "characterId") Long characterId,
+            @PathVariable(name = "missionId") Long missionId) {
         log.debug("🔍 Fetching mission record for character {} and mission {}", characterId, missionId);
         CharacterMissionRecordResponseDto record = missionService.getCharacterMissionRecord(characterId, missionId);
         return ResponseEntity.ok(record);
@@ -746,7 +746,7 @@ public class MissionController {
      * POST /api/missions/characters/100/check-auto-accept
      */
     @PostMapping("/characters/{characterId}/check-auto-accept")
-    public ResponseEntity<Void> checkAndAutoAcceptMissions(@PathVariable Long characterId) {
+    public ResponseEntity<Void> checkAndAutoAcceptMissions(@PathVariable(name = "characterId") Long characterId) {
         log.info("🤖 Checking auto-accept missions for character {}", characterId);
         missionService.checkAndAutoAcceptMissions(characterId);
         return ResponseEntity.ok().build();
@@ -765,7 +765,7 @@ public class MissionController {
      * POST /api/missions/characters/100/check-expired
      */
     @PostMapping("/characters/{characterId}/check-expired")
-    public ResponseEntity<Void> checkExpiredMissions(@PathVariable Long characterId) {
+    public ResponseEntity<Void> checkExpiredMissions(@PathVariable(name = "characterId") Long characterId) {
         log.info("⏰ Checking expired missions for character {}", characterId);
         missionService.checkExpiredMissions(characterId);
         return ResponseEntity.ok().build();
@@ -785,7 +785,7 @@ public class MissionController {
      */
     @GetMapping("/unlocked-by/{missionCode}")
     public ResponseEntity<List<MissionResponseDto>> getMissionsUnlockedByCompletion(
-            @PathVariable String missionCode) {
+            @PathVariable(name = "missionCode") String missionCode) {
         log.debug("🔓 Fetching missions unlocked by completion of {}", missionCode);
         List<MissionResponseDto> missions = missionService.getMissionsUnlockedByCompletion(missionCode);
         log.debug("🔓 Found {} missions unlocked by {}", missions.size(), missionCode);

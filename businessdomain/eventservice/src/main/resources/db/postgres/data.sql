@@ -1,266 +1,399 @@
 -- =====================================================
--- SCRIPT DE INSERCIÓN CORREGIDO CON VALORES REALES DE EnumAll
+-- EVENTOS REALISTAS 2026 - AUTO_TRIGGER Y RECURRENTES
 -- =====================================================
 
--- Limpiar tablas
-DELETE FROM mission_unlock_codes;
-DELETE FROM cmr_objective_progress;
-DELETE FROM character_mission_records;
-DELETE FROM character_event_records;
-DELETE FROM mission_objectives;
-DELETE FROM rewards;
-DELETE FROM requirements;
-DELETE FROM missions;
-DELETE FROM events;
-DELETE FROM mission_chains;
+-- ENERO - Año Nuevo
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_NEWYEAR_001', '🎆 Año Nuevo', 'Festivo nacional. Celebra el inicio del año con familia y amigos.', 'Un nuevo año trae nuevas oportunidades y propósitos.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-01-01 00:00:00', '2026-01-01 23:59:59', true, '0 0 0 1 1 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/newyear-icon.png', 'https://cdn.example.com/events/newyear-banner.jpg', NOW());
 
--- Resetear secuencias
-ALTER SEQUENCE events_id_seq RESTART WITH 1;
-ALTER SEQUENCE missions_id_seq RESTART WITH 1;
-ALTER SEQUENCE mission_chains_id_seq RESTART WITH 1;
-ALTER SEQUENCE rewards_id_seq RESTART WITH 1;
-ALTER SEQUENCE requirements_id_seq RESTART WITH 1;
-ALTER SEQUENCE mission_objectives_id_seq RESTART WITH 1;
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_NEWYEAR_001'), 'STAT_BOOST', 'happiness', 20, true, NULL, NULL, NULL);
+
+-- ENERO - Reyes Magos
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_KINGS_001', '👑 Día de Reyes', 'Los Reyes Magos traen ilusión y regalos. Tradición familiar.', 'La magia de la infancia nunca se pierde.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-01-06 00:00:00', '2026-01-06 23:59:59', true, '0 0 0 6 1 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/kings-icon.png', 'https://cdn.example.com/events/kings-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_KINGS_001'), 'STAT_BOOST', 'happiness', 15, true, NULL, NULL, NULL);
+
+-- FEBRERO - Día de Andalucía
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_ANDALUCIA_001', '🌸 Día de Andalucía', 'Fiesta autonómica. Celebra la cultura y tradiciones andaluzas.', 'Andalucía tiene un color y un sabor especial.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-02-28 00:00:00', '2026-02-28 23:59:59', true, '0 0 0 28 2 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/andalucia-icon.png', 'https://cdn.example.com/events/andalucia-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_ANDALUCIA_001'), 'XP_JOBS', 'culture', 100, true, NULL, NULL, NULL);
+
+-- MARZO - Día del Padre
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_FATHERS_DAY_001', '👔 Día del Padre', 'Homenaje a los padres. Celebra con tu familia.', 'Un padre es un héroe sin capa.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-03-19 00:00:00', '2026-03-19 23:59:59', true, '0 0 0 19 3 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/fathers-icon.png', 'https://cdn.example.com/events/fathers-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_FATHERS_DAY_001'), 'STAT_BOOST', 'happiness', 10, true, NULL, NULL, NULL);
+
+-- ABRIL - Jueves Santo
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_HOLY_THURSDAY_001', '⛪ Jueves Religioso', 'Inicio de la Semana Santa. Procesiones y tradición.', 'La Semana Santa es cultura, fe y tradición.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-04-02 00:00:00', '2026-04-02 23:59:59', true, '0 0 0 2 4 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/holy-icon.png', 'https://cdn.example.com/events/holy-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_HOLY_THURSDAY_001'), 'XP_JOBS', 'culture', 80, true, NULL, NULL, NULL);
+
+-- ABRIL - Viernes Santo
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_GOOD_FRIDAY_001', '⛪ Viernes Santo', 'Día de recogimiento y tradición.', 'El silencio también habla.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-04-03 00:00:00', '2026-04-03 23:59:59', true, '0 0 0 3 4 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/goodfriday-icon.png', 'https://cdn.example.com/events/goodfriday-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_GOOD_FRIDAY_001'), 'XP_JOBS', 'culture', 80, true, NULL, NULL, NULL);
+
+-- MAYO - Día del Trabajador
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_LABOR_DAY_001', '👷 Día del Trabajador', 'Festivo nacional. Homenaje a todos los trabajadores.', 'El trabajo dignifica, el descanso también es necesario.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-05-01 00:00:00', '2026-05-01 23:59:59', true, '0 0 0 1 5 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/labor-icon.png', 'https://cdn.example.com/events/labor-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_LABOR_DAY_001'), 'XP_JOBS', 'celebration', 150, true, NULL, NULL, NULL);
+
+-- MAYO - Día de la Madre
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_MOTHERS_DAY_001', '💐 Día de la Madre', 'Homenaje a las madres. Celebra con tu familia.', 'Madre solo hay una.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-05-03 00:00:00', '2026-05-03 23:59:59', true, '0 0 0 3 5 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/mothers-icon.png', 'https://cdn.example.com/events/mothers-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_MOTHERS_DAY_001'), 'STAT_BOOST', 'happiness', 15, true, NULL, NULL, NULL);
+
+-- AGOSTO - Asunción de la Virgen
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_ASUNCION_001', '⛪ Asunción de la Virgen', 'Festivo nacional. Tradición y celebración religiosa.', 'El verano está en su punto más álgido.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-08-15 00:00:00', '2026-08-15 23:59:59', true, '0 0 0 15 8 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/asuncion-icon.png', 'https://cdn.example.com/events/asuncion-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_ASUNCION_001'), 'STAT_BOOST', 'happiness', 10, true, NULL, NULL, NULL);
+
+-- OCTUBRE - Día de la Hispanidad
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_HISPANIDAD_001', '🇪🇸 Día de la Hispanidad', 'Fiesta nacional. Desfile militar y celebraciones patrióticas.', 'Orgullo de ser hispano.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-10-12 00:00:00', '2026-10-12 23:59:59', true, '0 0 0 12 10 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/hispanidad-icon.png', 'https://cdn.example.com/events/hispanidad-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_HISPANIDAD_001'), 'XP_JOBS', 'culture', 120, true, NULL, NULL, NULL);
+
+-- NOVIEMBRE - Día de Todos los Santos
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_ALL_SAINTS_001', '🕯️ Día de Todos los Santos', 'Festivo nacional. Recuerda a tus seres queridos.', 'La memoria es el corazón de la tradición.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-11-01 00:00:00', '2026-11-01 23:59:59', true, '0 0 0 1 11 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/allsaints-icon.png', 'https://cdn.example.com/events/allsaints-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_ALL_SAINTS_001'), 'XP_JOBS', 'culture', 80, true, NULL, NULL, NULL);
+
+-- DICIEMBRE - Día de la Constitución
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_CONSTITUTION_001', '📜 Día de la Constitución', 'Festivo nacional. Celebra nuestra Carta Magna.', 'La constitución nos une como nación.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-12-06 00:00:00', '2026-12-06 23:59:59', true, '0 0 0 6 12 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/constitution-icon.png', 'https://cdn.example.com/events/constitution-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_CONSTITUTION_001'), 'XP_JOBS', 'culture', 100, true, NULL, NULL, NULL);
+
+-- DICIEMBRE - Inmaculada Concepción
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_IMMACULATE_001', '⛪ Inmaculada Concepción', 'Festivo nacional. Tradición y recogimiento.', 'La pureza y la fe se celebran.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-12-08 00:00:00', '2026-12-08 23:59:59', true, '0 0 0 8 12 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/immaculate-icon.png', 'https://cdn.example.com/events/immaculate-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_IMMACULATE_001'), 'XP_JOBS', 'culture', 80, true, NULL, NULL, NULL);
+
+-- DICIEMBRE - Nochebuena
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_CHRISTMAS_EVE_001', '🎄 Nochebuena', 'Cena familiar y celebración navideña.', 'La magia de la Navidad comienza en Nochebuena.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-12-24 00:00:00', '2026-12-24 23:59:59', true, '0 0 0 24 12 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/christmaseve-icon.png', 'https://cdn.example.com/events/christmaseve-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_CHRISTMAS_EVE_001'), 'STAT_BOOST', 'happiness', 25, true, NULL, NULL, NULL);
+
+-- DICIEMBRE - Navidad
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_CHRISTMAS_DAY_001', '🎄 Navidad', 'Festivo nacional. Celebra en familia el nacimiento de Jesús.', 'La Navidad es amor, paz y esperanza.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-12-25 00:00:00', '2026-12-25 23:59:59', true, '0 0 0 25 12 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/christmas-icon.png', 'https://cdn.example.com/events/christmas-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_CHRISTMAS_DAY_001'), 'STAT_BOOST', 'happiness', 30, true, NULL, NULL, NULL);
+
+-- DICIEMBRE - Nochevieja
+INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
+VALUES ('EVENT_NEWYEAR_EVE_001', '🎆 Nochevieja', 'Despide el año con las 12 uvas y celebración.', 'El año nuevo está a la vuelta de la esquina.', 'PROJECT_SUCCESS', 'GLOBAL', NULL, '2026-12-31 00:00:00', '2026-12-31 23:59:59', true, '0 0 0 31 12 ? *', 999999, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/newyeareve-icon.png', 'https://cdn.example.com/events/newyeareve-banner.jpg', NOW());
+
+INSERT INTO rewards (event_id, type, target_key, value, is_primary, item_code, title_granted, badge_code)
+VALUES ((SELECT id FROM events WHERE code = 'EVENT_NEWYEAR_EVE_001'), 'STAT_BOOST', 'happiness', 35, true, NULL, NULL, NULL);
 
 -- =====================================================
--- EVENTOS (usando valores reales de EnumAll)
+-- VERIFICACIÓN
 -- =====================================================
-
--- Valores válidos según EnumAll:
--- EventType: BONUS, PROMOTION, DEMOTION, CONFLICT, PROJECT_SUCCESS, PROJECT_FAILURE, BURNOUT, OFFER_FROM_RIVAL, MENTOR_LEAVES, TEAM_RESTRUCTURE, QUARTERLY_REVIEW
--- EventScope: GLOBAL, CITY, PERSONAL
--- EventStatus: SCHEDULED, IN_PROGRESS, COMPLETED, SKIPPED, FAILED, CANCELLED
-
--- EVENTO 1: BONUS - Bono de productividad
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_BONUS_001_PRODUCTIVITY', 'Bono de Productividad', 'Has superado tus objetivos este trimestre. ¡Recibe un bono extra!', 'El trabajo duro siempre tiene recompensa.', 'BONUS', 'PERSONAL', null, NOW(), NOW() + INTERVAL '7 days', false, null, 1, 60, 'SCHEDULED', true, 'https://cdn.example.com/events/bonus-icon.png', 'https://cdn.example.com/events/bonus-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary)
-VALUES (1, 'MONEY', null, 5000, true);
-
--- EVENTO 2: PROMOTION - Ascenso laboral
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_PROMOTION_001_ASCENSO', 'Ascenso Laboral', 'Tu jefe ha reconocido tu talento. ¡Es hora de un ascenso!', 'Los grandes profesionales son recompensados.', 'PROMOTION', 'PERSONAL', null, NOW(), NOW() + INTERVAL '3 days', false, null, 1, 120, 'SCHEDULED', true, 'https://cdn.example.com/events/promotion-icon.png', 'https://cdn.example.com/events/promotion-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary, title_granted)
-VALUES
-(2, 'XP_JOBS', 'promotion', 1000, true, null),
-(2, 'TITLE', null, null, false, 'Senior');
-
--- EVENTO 3: CONFLICT - Conflicto con compañero
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_CONFLICT_001_COWORKER', 'Conflicto con Compañero', 'Un compañero no está colaborando. Debes resolver la situación.', 'Los conflictos laborales son inevitables. Cómo los manejes define tu carácter.', 'CONFLICT', 'PERSONAL', null, NOW(), NOW() + INTERVAL '2 days', false, null, 1, 90, 'IN_PROGRESS', true, 'https://cdn.example.com/events/conflict-icon.png', 'https://cdn.example.com/events/conflict-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary)
-VALUES (3, 'STAT_BOOST', 'charisma', 3, true);
-
--- EVENTO 4: PROJECT_SUCCESS - Éxito de proyecto
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_PROJECT_SUCCESS_001', 'Éxito del Proyecto', 'El proyecto ha sido un éxito rotundo. Celebra con tu equipo.', 'Los proyectos exitosos construyen reputación.', 'PROJECT_SUCCESS', 'CITY', 'Madrid', NOW(), NOW() + INTERVAL '1 day', false, null, 50, 180, 'SCHEDULED', false, 'https://cdn.example.com/events/project-success-icon.png', 'https://cdn.example.com/events/project-success-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary, badge_code)
-VALUES
-(4, 'XP_JOBS', 'project_success', 800, true, null),
-(4, 'BADGE', null, null, false, 'PROJECT_LEADER');
-
--- EVENTO 5: PROJECT_FAILURE - Fracaso de proyecto
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_PROJECT_FAILURE_001', 'Fracaso del Proyecto', 'El proyecto no ha salido como esperabas. Aprende de los errores.', 'El fracaso es el mejor maestro.', 'PROJECT_FAILURE', 'PERSONAL', null, NOW(), NOW() + INTERVAL '5 days', false, null, 1, 60, 'IN_PROGRESS', true, 'https://cdn.example.com/events/project-failure-icon.png', 'https://cdn.example.com/events/project-failure-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary)
-VALUES (5, 'XP_JOBS', 'learning', 300, true);
-
--- EVENTO 6: BURNOUT - Agotamiento
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_BURNOUT_001', 'Señales de Agotamiento', 'Has estado trabajando demasiado. Necesitas descansar.', 'El burnout es real. Escucha a tu cuerpo y mente.', 'BURNOUT', 'PERSONAL', null, NOW(), NOW() + INTERVAL '14 days', false, null, 1, 10080, 'IN_PROGRESS', true, 'https://cdn.example.com/events/burnout-icon.png', 'https://cdn.example.com/events/burnout-banner.jpg', NOW());
-
-INSERT INTO requirements (event_id, type, target_value, fail_message)
-VALUES (6, 'MIN_XP_JOBS', 500, 'Solo afecta a trabajadores con experiencia');
-
--- EVENTO 7: OFFER_FROM_RIVAL - Oferta de la competencia
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_OFFER_RIVAL_001', 'Oferta de la Competencia', 'Una empresa rival te ofrece un puesto. ¿Aceptarás?', 'Las oportunidades llaman a la puerta cuando menos lo esperas.', 'OFFER_FROM_RIVAL', 'PERSONAL', null, NOW(), NOW() + INTERVAL '7 days', false, null, 1, 1440, 'SCHEDULED', true, 'https://cdn.example.com/events/offer-rival-icon.png', 'https://cdn.example.com/events/offer-rival-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary)
-VALUES (7, 'MONEY', null, 15000, true);
-
-INSERT INTO requirements (event_id, type, target_value, fail_message)
-VALUES (7, 'MIN_XP_JOBS', 800, 'Necesitas experiencia para recibir ofertas');
-
--- EVENTO 8: MENTOR_LEAVES - El mentor se va
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_MENTOR_LEAVES_001', 'Tu Mentor se Marcha', 'Tu mentor ha aceptado un puesto en otra empresa. Estarás solo a partir de ahora.', 'Los mentores te guían, pero eventualmente debes caminar solo.', 'MENTOR_LEAVES', 'PERSONAL', null, NOW(), NOW() + INTERVAL '30 days', false, null, 1, 43200, 'SCHEDULED', true, 'https://cdn.example.com/events/mentor-leaves-icon.png', 'https://cdn.example.com/events/mentor-leaves-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary)
-VALUES (8, 'STAT_BOOST', 'independence', 5, true);
-
--- EVENTO 9: TEAM_RESTRUCTURE - Reestructuración de equipo
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_TEAM_RESTRUCTURE_001', 'Reestructuración del Equipo', 'Tu departamento se reorganiza. Nuevos compañeros y responsabilidades.', 'El cambio es constante en el mundo laboral.', 'TEAM_RESTRUCTURE', 'CITY', 'Barcelona', NOW(), NOW() + INTERVAL '14 days', false, null, 30, 2880, 'IN_PROGRESS', false, 'https://cdn.example.com/events/team-restructure-icon.png', 'https://cdn.example.com/events/team-restructure-banner.jpg', NOW());
-
--- EVENTO 10: QUARTERLY_REVIEW - Revisión trimestral
-INSERT INTO events (code, title, description, lore, type, scope, city, start_date, end_date, recurring, cron_expression, max_participants, duration_minutes, status, auto_trigger, icon_url, banner_url, created_at)
-VALUES ('EVENT_QUARTERLY_REVIEW_001', 'Revisión Trimestral', 'Es hora de evaluar tu rendimiento del trimestre.', 'Las revisiones definen tu futuro en la empresa.', 'QUARTERLY_REVIEW', 'PERSONAL', null, NOW(), NOW() + INTERVAL '1 day', true, '0 0 9 1 1,4,7,10 ? *', 1, 120, 'SCHEDULED', true, 'https://cdn.example.com/events/quarterly-review-icon.png', 'https://cdn.example.com/events/quarterly-review-banner.jpg', NOW());
-
-INSERT INTO rewards (event_id, type, target_key, value, is_primary)
-VALUES (10, 'XP_JOBS', 'review', 400, true);
+SELECT 'Eventos GLOBAL: ' || COUNT(*) FROM events WHERE scope = 'GLOBAL';
+SELECT 'Eventos con auto_trigger: ' || COUNT(*) FROM events WHERE auto_trigger = true;
+SELECT 'Eventos recurrentes: ' || COUNT(*) FROM events WHERE recurring = true;
+SELECT 'Total Rewards: ' || COUNT(*) FROM rewards;
 
 -- =====================================================
--- MISIONES (usando valores reales de EnumAll)
--- =====================================================
-
--- Valores válidos según EnumAll:
--- MissionCategory: STUDY, WORK, SOCIAL, ROMANCE, EXPLORATION, TRAINING, PERSONAL, SPECIAL
+-- SISTEMA DE MISIONES PROGRESIVO - CORREGIDO
 -- MissionType: ONE_TIME, DAILY, WEEKLY, MONTHLY, REPEATABLE, STORY
+-- MissionCategory: STUDY, WORK, SOCIAL, ROMANCE, EXPLORATION, TRAINING, PERSONAL, SPECIAL
 -- MissionDifficulty: EASY, MEDIUM, HARD, EPIC
--- MissionStatus: ASSIGNED, ACTIVE, PAUSED, COMPLETED, FAILED, ABANDONED, EXPIRED
+-- =====================================================
+
+-- =====================================================
+-- NIVEL 1: MISIONES PRINCIPIANTES (0-200 XP JOBS)
+-- =====================================================
 
 -- MISIÓN 1: Primer día de trabajo
 INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_WORK_001_FIRST_DAY', 'Primer Día de Trabajo', 'Es tu primer día en el nuevo trabajo. Causa una buena impresión.', 'Todo gran viaje comienza con un primer paso.', 'ONE_TIME', 'WORK', 'EASY', 16, 0, 0, false, null, false, true, null, null, 'https://cdn.example.com/missions/work-first-day-icon.png', 'https://cdn.example.com/missions/work-first-day-banner.jpg', NOW());
+VALUES ('MISSION_FIRST_DAY_WORK', 'Primer Día de Trabajo', 'Es tu primer día en el nuevo trabajo. Causa una buena impresión.', 'Todo gran viaje comienza con un primer paso. La puntualidad y la actitud lo son todo.', 'STORY', 'WORK', 'EASY', 16, 0, 0, false, NULL, false, true, 1, NULL, 'https://cdn.example.com/missions/first-day-icon.png', 'https://cdn.example.com/missions/first-day-banner.jpg', NOW());
 
 INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
 VALUES
-(1, 'Llega puntual a tu primer día', 'COMPLETE_ACTIONS', 'punctual_first_day', 1, 0, false, 1, 'La puntualidad es clave'),
-(1, 'Preséntate a tus compañeros', 'COMPLETE_ACTIONS', 'introduce_yourself', 1, 0, false, 2, 'Sé amable y sonríe'),
-(1, 'Completa la orientación inicial', 'COMPLETE_ACTIONS', 'orientation', 1, 0, false, 3, 'Presta atención a la información');
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'Llega puntual a tu primer día', 'COMPLETE_ACTIONS', 'punctual_first_day', 1, 0, false, 1, 'La puntualidad es clave para causar buena impresión'),
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'Preséntate a tus compañeros', 'COMPLETE_ACTIONS', 'introduce_yourself', 1, 0, false, 2, 'Sé amable y sonríe'),
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'Completa la orientación inicial', 'COMPLETE_ACTIONS', 'orientation', 1, 0, false, 3, 'Presta atención a la información importante');
 
 INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
 VALUES
-(1, 'XP_JOBS', 'first_day', 200, true),
-(1, 'MONEY', null, 500, false);
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'XP_JOBS', 'first_day', 200, true),
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'MONEY', NULL, 500, false);
 
 INSERT INTO requirements (mission_id, type, target_value, fail_message)
-VALUES (1, 'MIN_AGE', 16, 'Debes tener al menos 16 años para trabajar');
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'MIN_AGE', 16, 'Debes tener al menos 16 años para trabajar');
 
 INSERT INTO mission_unlock_codes (mission_id, unlocks_mission_code)
-VALUES (1, 'MISSION_WORK_002_PROBATION');
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_FIRST_DAY_WORK'), 'MISSION_COMPLETE_PROBATION');
 
--- MISIÓN 2: Período de prueba
+-- MISIÓN 2: Completar período de prueba
 INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_WORK_002_PROBATION', 'Período de Prueba', 'Demuestra tu valía durante los primeros 90 días.', 'El período de prueba es tu oportunidad para brillar.', 'ONE_TIME', 'WORK', 'MEDIUM', 16, 50, 0, false, null, false, false, null, null, 'https://cdn.example.com/missions/work-probation-icon.png', 'https://cdn.example.com/missions/work-probation-banner.jpg', NOW());
+VALUES ('MISSION_COMPLETE_PROBATION', 'Completar Período de Prueba', 'Supera tus primeros 90 días en la empresa y consigue la estabilidad.', 'El período de prueba es tu oportunidad para brillar y demostrar tu valía.', 'STORY', 'WORK', 'MEDIUM', 16, 50, 0, false, NULL, false, false, 2, NULL, 'https://cdn.example.com/missions/probation-icon.png', 'https://cdn.example.com/missions/probation-banner.jpg', NOW());
 
 INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
 VALUES
-(2, 'Completa 30 días de trabajo', 'COMPLETE_ACTIONS', 'work_day', 30, 0, false, 1, 'Asiste puntualmente cada día'),
-(2, 'Recibe feedback positivo', 'COMPLETE_ACTIONS', 'positive_feedback', 3, 0, false, 2, 'Haz preguntas y muestra iniciativa');
+((SELECT id FROM missions WHERE code = 'MISSION_COMPLETE_PROBATION'), 'Completa 30 días de trabajo', 'COMPLETE_ACTIONS', 'work_day', 30, 0, false, 1, 'Asiste puntualmente cada día'),
+((SELECT id FROM missions WHERE code = 'MISSION_COMPLETE_PROBATION'), 'Recibe feedback positivo', 'COMPLETE_ACTIONS', 'positive_feedback', 3, 0, false, 2, 'Haz preguntas y muestra iniciativa');
 
 INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted)
 VALUES
-(2, 'XP_JOBS', 'probation', 500, true, null),
-(2, 'TITLE', null, null, false, 'Empleado Fijo');
+((SELECT id FROM missions WHERE code = 'MISSION_COMPLETE_PROBATION'), 'XP_JOBS', 'probation', 500, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_COMPLETE_PROBATION'), 'TITLE', NULL, NULL, false, 'Empleado Fijo');
 
 INSERT INTO requirements (mission_id, type, target_key, fail_message)
-VALUES (2, 'MISSION_COMPLETED', 'MISSION_WORK_001_FIRST_DAY', 'Debes completar el primer día primero');
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_COMPLETE_PROBATION'), 'MISSION_COMPLETED', 'MISSION_FIRST_DAY_WORK', 'Debes completar el primer día primero');
 
 INSERT INTO mission_unlock_codes (mission_id, unlocks_mission_code)
-VALUES (2, 'MISSION_WORK_003_NETWORKING');
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_COMPLETE_PROBATION'), 'MISSION_BUILD_NETWORK');
 
--- MISIÓN 3: Networking profesional
+-- =====================================================
+-- NIVEL 2: MISIONES INTERMEDIAS (200-500 XP JOBS)
+-- =====================================================
+
+-- MISIÓN 3: Construir red de contactos
 INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_WORK_003_NETWORKING', 'Red de Contactos', 'Construye tu red profesional.', 'En los negocios, a quién conoces es tan importante como lo que sabes.', 'REPEATABLE', 'SOCIAL', 'MEDIUM', 18, 200, 0, true, 720, false, false, null, null, 'https://cdn.example.com/missions/networking-icon.png', 'https://cdn.example.com/missions/networking-banner.jpg', NOW());
+VALUES ('MISSION_BUILD_NETWORK', 'Construir Red de Contactos', 'Amplía tu círculo profesional con nuevas conexiones.', 'En los negocios, a quién conoces es tan importante como lo que sabes.', 'REPEATABLE', 'SOCIAL', 'MEDIUM', 18, 200, 0, true, 720, false, false, NULL, NULL, 'https://cdn.example.com/missions/network-icon.png', 'https://cdn.example.com/missions/network-banner.jpg', NOW());
 
 INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
 VALUES
-(3, 'Asiste a 3 eventos de networking', 'ATTEND_EVENT', 'networking_event', 3, 0, false, 1, 'Busca eventos profesionales'),
-(3, 'Añade 10 contactos profesionales', 'COMPLETE_ACTIONS', 'professional_contact', 10, 0, false, 2, 'Conecta en LinkedIn');
-
-INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
-VALUES
-(3, 'XP_JOBS', 'networking', 400, true),
-(3, 'UNLOCK_MISSION', 'MISSION_WORK_004_MENTOR', null, false);
-
--- MISIÓN 4: Encontrar un mentor
-INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_WORK_004_MENTOR', 'Encuentra un Mentor', 'Busca la guía de un profesional experimentado.', 'Un buen mentor acelera tu crecimiento profesional.', 'ONE_TIME', 'WORK', 'HARD', 21, 400, 100, false, null, false, false, null, null, 'https://cdn.example.com/missions/mentor-icon.png', 'https://cdn.example.com/missions/mentor-banner.jpg', NOW());
-
-INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
-VALUES
-(4, 'Identifica 3 mentores potenciales', 'COMPLETE_ACTIONS', 'identify_mentor', 3, 0, false, 1, 'Busca profesionales que admires'),
-(4, 'Solicita una reunión de mentoría', 'COMPLETE_ACTIONS', 'mentor_meeting', 1, 0, false, 2, 'Prepara un buen pitch');
+((SELECT id FROM missions WHERE code = 'MISSION_BUILD_NETWORK'), 'Asiste a 3 eventos de networking', 'ATTEND_EVENT', 'networking_event', 3, 0, false, 1, 'Busca eventos profesionales en tu ciudad'),
+((SELECT id FROM missions WHERE code = 'MISSION_BUILD_NETWORK'), 'Añade 10 contactos profesionales', 'COMPLETE_ACTIONS', 'professional_contact', 10, 0, false, 2, 'Conecta en LinkedIn y redes profesionales'),
+((SELECT id FROM missions WHERE code = 'MISSION_BUILD_NETWORK'), 'Intercambia tarjetas de visita', 'COMPLETE_ACTIONS', 'business_card', 5, 0, false, 3, 'Lleva siempre tus tarjetas contigo');
 
 INSERT INTO rewards (mission_id, type, target_key, value, is_primary, badge_code)
 VALUES
-(4, 'XP_JOBS', 'mentorship', 800, true, null),
-(4, 'BADGE', null, null, false, 'MENTEE');
+((SELECT id FROM missions WHERE code = 'MISSION_BUILD_NETWORK'), 'XP_JOBS', 'networking', 400, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_BUILD_NETWORK'), 'BADGE', NULL, NULL, false, 'NETWORKER');
 
--- MISIÓN 5: Estudio diario
+-- MISIÓN 4: Completar primer proyecto importante
 INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_STUDY_001_DAILY', 'Estudio Diario', 'Dedica tiempo a estudiar cada día.', 'La constancia es la clave del éxito académico.', 'DAILY', 'STUDY', 'EASY', 14, 0, 0, true, 24, false, false, null, null, 'https://cdn.example.com/missions/study-daily-icon.png', 'https://cdn.example.com/missions/study-daily-banner.jpg', NOW());
-
-INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
-VALUES (5, 'Estudia durante 2 horas', 'COMPLETE_ACTIONS', 'study_time', 120, 0, false, 1, 'Encuentra un lugar tranquilo');
-
-INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
-VALUES (5, 'XP_ACADEMY', 'daily_study', 100, true);
-
--- MISIÓN 6: Socializar
-INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_SOCIAL_001_ICE_BREAKER', 'Rompehielos', 'Supera tu timidez y conoce gente nueva.', 'Las mejores amistades comienzan con un simple hola.', 'ONE_TIME', 'SOCIAL', 'EASY', 14, 0, 0, false, null, false, true, null, null, 'https://cdn.example.com/missions/social-icebreaker-icon.png', 'https://cdn.example.com/missions/social-icebreaker-banner.jpg', NOW());
+VALUES ('MISSION_FIRST_BIG_PROJECT', 'Primer Proyecto Importante', 'Lidera o participa en un proyecto de alto impacto.', 'Los grandes proyectos forjan grandes profesionales.', 'STORY', 'WORK', 'HARD', 21, 400, 100, false, NULL, false, false, 3, NULL, 'https://cdn.example.com/missions/project-icon.png', 'https://cdn.example.com/missions/project-banner.jpg', NOW());
 
 INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
 VALUES
-(6, 'Inicia conversación con 5 desconocidos', 'COMPLETE_ACTIONS', 'start_conversation', 5, 0, false, 1, 'Un comentario sobre el tiempo funciona'),
-(6, 'Haz 3 nuevos amigos', 'MAKE_FRIEND', 'new_friend', 3, 0, false, 2, 'Sé auténtico y muestra interés');
-
-INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
-VALUES (6, 'STAT_BOOST', 'charisma', 3, true);
-
--- MISIÓN 7: Romance
-INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_ROMANCE_001_FIRST_DATE', 'Primera Cita', 'Consigue una cita romántica.', 'El amor puede aparecer cuando menos lo esperas.', 'STORY', 'ROMANCE', 'MEDIUM', 16, 0, 0, true, 168, false, false, null, null, 'https://cdn.example.com/missions/romance-date-icon.png', 'https://cdn.example.com/missions/romance-date-banner.jpg', NOW());
-
-INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
-VALUES
-(7, 'Invita a alguien a salir', 'COMPLETE_ACTIONS', 'ask_out', 1, 0, false, 1, 'Sé respetuoso y directo'),
-(7, 'Ten una cita exitosa', 'GET_PARTNER', 'first_date', 1, 0, false, 2, 'Sé tú mismo');
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_BIG_PROJECT'), 'Completa un proyecto con éxito', 'COMPLETE_ACTIONS', 'successful_project', 1, 0, false, 1, 'Aplica todo lo aprendido'),
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_BIG_PROJECT'), 'Recibe reconocimiento del jefe', 'COMPLETE_ACTIONS', 'boss_recognition', 1, 0, false, 2, 'Supera las expectativas');
 
 INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted)
 VALUES
-(7, 'RELATIONSHIP_BONUS', 'romance', 50, true, null),
-(7, 'TITLE', null, null, false, 'Enamorado');
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_BIG_PROJECT'), 'XP_JOBS', 'big_project', 800, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_FIRST_BIG_PROJECT'), 'TITLE', NULL, NULL, false, 'Project Leader');
 
--- MISIÓN 8: Entrenamiento físico
+INSERT INTO requirements (mission_id, type, target_key, fail_message)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_FIRST_BIG_PROJECT'), 'MISSION_COMPLETED', 'MISSION_COMPLETE_PROBATION', 'Debes superar el período de prueba primero');
+
+INSERT INTO mission_unlock_codes (mission_id, unlocks_mission_code)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_FIRST_BIG_PROJECT'), 'MISSION_FIND_MENTOR');
+
+-- =====================================================
+-- NIVEL 3: MISIONES AVANZADAS (500-1000 XP JOBS)
+-- =====================================================
+
+-- MISIÓN 5: Encontrar un mentor
 INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_TRAINING_001_FITNESS', 'Ponte en Forma', 'Mejora tu condición física.', 'Mente sana en cuerpo sano.', 'WEEKLY', 'TRAINING', 'MEDIUM', 15, 0, 0, true, 168, false, false, null, null, 'https://cdn.example.com/missions/fitness-icon.png', 'https://cdn.example.com/missions/fitness-banner.jpg', NOW());
+VALUES ('MISSION_FIND_MENTOR', 'Encontrar un Mentor', 'Busca la guía de un profesional experimentado.', 'Un buen mentor acelera tu crecimiento profesional exponencialmente.', 'STORY', 'WORK', 'HARD', 21, 600, 200, false, NULL, false, false, NULL, NULL, 'https://cdn.example.com/missions/mentor-icon.png', 'https://cdn.example.com/missions/mentor-banner.jpg', NOW());
 
 INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
 VALUES
-(8, 'Haz ejercicio 3 veces', 'COMPLETE_ACTIONS', 'workout', 3, 0, false, 1, '30 minutos cada sesión');
-
-INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
-VALUES (8, 'STAT_BOOST', 'endurance', 2, true);
-
--- MISIÓN 9: Exploración
-INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_EXPLORE_001_NEW_CITY', 'Explora tu Ciudad', 'Descubre lugares nuevos en tu ciudad.', 'A veces lo mejor está justo delante de nosotros.', 'ONE_TIME', 'EXPLORATION', 'EASY', 12, 0, 0, false, null, false, true, null, null, 'https://cdn.example.com/missions/explore-icon.png', 'https://cdn.example.com/missions/explore-banner.jpg', NOW());
-
-INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
-VALUES
-(9, 'Visita 5 lugares nuevos', 'COMPLETE_ACTIONS', 'visit_place', 5, 0, false, 1, 'Usa Google Maps para descubrir sitios');
+((SELECT id FROM missions WHERE code = 'MISSION_FIND_MENTOR'), 'Identifica 3 mentores potenciales', 'COMPLETE_ACTIONS', 'identify_mentor', 3, 0, false, 1, 'Busca profesionales que admires'),
+((SELECT id FROM missions WHERE code = 'MISSION_FIND_MENTOR'), 'Solicita una reunión de mentoría', 'COMPLETE_ACTIONS', 'mentor_meeting', 1, 0, false, 2, 'Prepara un buen pitch'),
+((SELECT id FROM missions WHERE code = 'MISSION_FIND_MENTOR'), 'Establece relación de mentoría', 'COMPLETE_ACTIONS', 'mentorship_established', 1, 0, false, 3, 'Muestra interés genuino en aprender');
 
 INSERT INTO rewards (mission_id, type, target_key, value, is_primary, badge_code)
 VALUES
-(9, 'XP_ACADEMY', 'exploration', 200, true, null),
-(9, 'BADGE', null, null, false, 'EXPLORER');
+((SELECT id FROM missions WHERE code = 'MISSION_FIND_MENTOR'), 'XP_JOBS', 'mentorship', 800, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_FIND_MENTOR'), 'BADGE', NULL, NULL, false, 'MENTEE');
 
--- MISIÓN 10: Especial (Legendaria)
+-- MISIÓN 6: Formación especializada
 INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
-VALUES ('MISSION_SPECIAL_001_LEGEND', 'El Camino del Maestro', 'Alcanza la maestría en tu profesión.', 'Solo unos pocos alcanzan la verdadera maestría.', 'STORY', 'SPECIAL', 'EPIC', 25, 2000, 1000, false, null, true, true, null, null, 'https://cdn.example.com/missions/legend-icon.png', 'https://cdn.example.com/missions/legend-banner.jpg', NOW());
+VALUES ('MISSION_SPECIALIZED_TRAINING', 'Formación Especializada', 'Completa un curso o certificación en tu área.', 'El conocimiento nunca es suficiente. Siempre hay algo nuevo que aprender.', 'REPEATABLE', 'STUDY', 'MEDIUM', 20, 700, 300, true, 2160, false, false, NULL, NULL, 'https://cdn.example.com/missions/training-icon.png', 'https://cdn.example.com/missions/training-banner.jpg', NOW());
 
 INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
 VALUES
-(10, 'Alcanza 3000 XP en Trabajos', 'REACH_XP', 'jobs', 3000, 0, false, 1, 'Años de dedicación'),
-(10, 'Completa 10 proyectos importantes', 'COMPLETE_ACTIONS', 'major_project', 10, 0, false, 2, 'Lidera iniciativas clave'),
-(10, 'Mentora a 5 personas', 'COMPLETE_ACTIONS', 'mentor_others', 5, 0, false, 3, 'Comparte tu conocimiento');
+((SELECT id FROM missions WHERE code = 'MISSION_SPECIALIZED_TRAINING'), 'Completa un curso profesional', 'COMPLETE_ACTIONS', 'professional_course', 1, 0, false, 1, 'Busca cursos en tu área'),
+((SELECT id FROM missions WHERE code = 'MISSION_SPECIALIZED_TRAINING'), 'Obtén una certificación', 'COMPLETE_ACTIONS', 'certification', 1, 0, false, 2, 'Certifica tus conocimientos');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_SPECIALIZED_TRAINING'), 'XP_JOBS', 'training', 600, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_SPECIALIZED_TRAINING'), 'TITLE', NULL, NULL, false, 'Certified Professional');
+
+-- =====================================================
+-- NIVEL 4: MISIONES EXPERTO (1000-2000 XP JOBS)
+-- =====================================================
+
+-- MISIÓN 7: Ser mentor de otros
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_BECOME_MENTOR', 'Convertirse en Mentor', 'Comparte tu conocimiento con profesionales más jóvenes.', 'El conocimiento compartido se multiplica.', 'STORY', 'WORK', 'EPIC', 25, 1200, 500, false, NULL, false, false, 4, NULL, 'https://cdn.example.com/missions/become-mentor-icon.png', 'https://cdn.example.com/missions/become-mentor-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'Mentorea a 3 personas', 'COMPLETE_ACTIONS', 'mentor_others', 3, 0, false, 1, 'Comparte tu experiencia'),
+((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'Ayuda a alguien a ascender', 'COMPLETE_ACTIONS', 'help_promotion', 1, 0, false, 2, 'Guía a otros hacia el éxito'),
+((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'Recibe feedback positivo como mentor', 'COMPLETE_ACTIONS', 'positive_mentor_feedback', 3, 0, false, 3, 'Tus mentorizados te lo agradecerán');
 
 INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted, badge_code)
 VALUES
-(10, 'XP_JOBS', 'mastery', 5000, true, null, null),
-(10, 'TITLE', null, null, false, 'Maestro', null),
-(10, 'BADGE', null, null, false, null, 'LEGENDARY_MASTER');
+((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'XP_JOBS', 'mentor', 1500, true, NULL, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'TITLE', NULL, NULL, false, 'Master Mentor', NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'BADGE', NULL, NULL, false, NULL, 'MENTOR_LEGEND');
 
--- Verificar inserciones
-SELECT 'Events: ' || COUNT(*) FROM events;
-SELECT 'Missions: ' || COUNT(*) FROM missions;
-SELECT 'Rewards: ' || COUNT(*) FROM rewards;
+INSERT INTO requirements (mission_id, type, target_key, fail_message)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_BECOME_MENTOR'), 'MISSION_COMPLETED', 'MISSION_FIND_MENTOR', 'Debes haber tenido un mentor primero');
+
+-- MISIÓN 8: Logro financiero
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_FINANCIAL_GOAL', 'Primer Gran Ahorro', 'Alcanza tu primer objetivo financiero importante.', 'La libertad financiera comienza con pequeños pasos.', 'ONE_TIME', 'PERSONAL', 'HARD', 22, 800, 200, false, NULL, false, false, NULL, NULL, 'https://cdn.example.com/missions/financial-icon.png', 'https://cdn.example.com/missions/financial-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_FINANCIAL_GOAL'), 'Ahorra 5000 monedas', 'COMPLETE_ACTIONS', 'save_money', 5000, 0, false, 1, 'Controla tus gastos'),
+((SELECT id FROM missions WHERE code = 'MISSION_FINANCIAL_GOAL'), 'Invierte en formación', 'COMPLETE_ACTIONS', 'invest_training', 1000, 0, false, 2, 'Invertir en ti es la mejor inversión');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_FINANCIAL_GOAL'), 'XP_JOBS', 'financial', 600, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_FINANCIAL_GOAL'), 'TITLE', NULL, NULL, false, 'Savvy Saver');
+
+-- =====================================================
+-- NIVEL 5: MISIONES ÉLITE (2000+ XP JOBS)
+-- =====================================================
+
+-- MISIÓN 9: Liderazgo de equipo
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_TEAM_LEADER', 'Liderar un Equipo', 'Asume el liderazgo de un equipo de trabajo.', 'Los líderes no nacen, se hacen a base de esfuerzo.', 'STORY', 'WORK', 'EPIC', 28, 2000, 800, false, NULL, false, false, 5, NULL, 'https://cdn.example.com/missions/leader-icon.png', 'https://cdn.example.com/missions/leader-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_TEAM_LEADER'), 'Asume rol de liderazgo', 'COMPLETE_ACTIONS', 'leadership_role', 1, 0, false, 1, 'Demuestra tu capacidad'),
+((SELECT id FROM missions WHERE code = 'MISSION_TEAM_LEADER'), 'Completa 5 proyectos como líder', 'COMPLETE_ACTIONS', 'projects_as_leader', 5, 0, false, 2, 'Lidera con el ejemplo'),
+((SELECT id FROM missions WHERE code = 'MISSION_TEAM_LEADER'), 'Mejora la moral del equipo', 'COMPLETE_ACTIONS', 'team_morale', 80, 0, false, 3, 'Un equipo feliz es productivo');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted, badge_code)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_TEAM_LEADER'), 'XP_JOBS', 'leadership', 3000, true, NULL, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_TEAM_LEADER'), 'TITLE', NULL, NULL, false, 'Team Leader', NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_TEAM_LEADER'), 'BADGE', NULL, NULL, false, NULL, 'BORN_LEADER');
+
+-- MISIÓN 10: Reconocimiento internacional
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_INTERNATIONAL_RECOGNITION', 'Reconocimiento Internacional', 'Tu trabajo trasciende fronteras y es reconocido globalmente.', 'El éxito no tiene fronteras.', 'STORY', 'WORK', 'EPIC', 30, 3000, 1000, false, NULL, true, false, 6, NULL, 'https://cdn.example.com/missions/international-icon.png', 'https://cdn.example.com/missions/international-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_INTERNATIONAL_RECOGNITION'), 'Participa en conferencia internacional', 'COMPLETE_ACTIONS', 'international_conference', 1, 0, false, 1, 'Comparte tu conocimiento globalmente'),
+((SELECT id FROM missions WHERE code = 'MISSION_INTERNATIONAL_RECOGNITION'), 'Recibe premio internacional', 'COMPLETE_ACTIONS', 'international_award', 1, 0, false, 2, 'El reconocimiento llega con excelencia'),
+((SELECT id FROM missions WHERE code = 'MISSION_INTERNATIONAL_RECOGNITION'), 'Colabora con equipo internacional', 'COMPLETE_ACTIONS', 'international_collaboration', 3, 0, false, 3, 'Trabaja más allá de fronteras');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary, title_granted, badge_code)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_INTERNATIONAL_RECOGNITION'), 'XP_JOBS', 'international', 5000, true, NULL, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_INTERNATIONAL_RECOGNITION'), 'TITLE', NULL, NULL, false, 'Global Expert', NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_INTERNATIONAL_RECOGNITION'), 'BADGE', NULL, NULL, false, NULL, 'WORLD_CLASS');
+
+-- =====================================================
+-- MISIONES DIARIAS Y REPETIBLES
+-- =====================================================
+
+-- MISIÓN DIARIA: Estudiar
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_DAILY_STUDY', 'Estudio Diario', 'Dedica tiempo a estudiar cada día.', 'La constancia es la clave del éxito académico.', 'DAILY', 'STUDY', 'EASY', 14, 0, 0, true, 24, false, true, NULL, NULL, 'https://cdn.example.com/missions/study-daily-icon.png', 'https://cdn.example.com/missions/study-daily-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_DAILY_STUDY'), 'Estudia durante 2 horas', 'COMPLETE_ACTIONS', 'study_time', 120, 0, false, 1, 'Encuentra un lugar tranquilo');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_DAILY_STUDY'), 'XP_ACADEMY', 'daily_study', 100, true);
+
+-- MISIÓN DIARIA: Ejercicio
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_DAILY_EXERCISE', 'Ejercicio Diario', 'Mantén tu cuerpo activo con ejercicio regular.', 'Mente sana en cuerpo sano.', 'DAILY', 'TRAINING', 'EASY', 14, 0, 0, true, 24, false, true, NULL, NULL, 'https://cdn.example.com/missions/exercise-icon.png', 'https://cdn.example.com/missions/exercise-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_DAILY_EXERCISE'), 'Haz ejercicio 30 minutos', 'COMPLETE_ACTIONS', 'exercise_time', 30, 0, false, 1, 'Camina, corre o ve al gimnasio');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_DAILY_EXERCISE'), 'STAT_BOOST', 'endurance', 2, true);
+
+-- MISIÓN DIARIA: Socializar
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_DAILY_SOCIALIZE', 'Socializar Diario', 'Conecta con otras personas cada día.', 'Las relaciones son el tejido de la vida.', 'DAILY', 'SOCIAL', 'EASY', 14, 0, 0, true, 24, false, true, NULL, NULL, 'https://cdn.example.com/missions/social-icon.png', 'https://cdn.example.com/missions/social-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_DAILY_SOCIALIZE'), 'Conversa con 5 personas', 'COMPLETE_ACTIONS', 'conversations', 5, 0, false, 1, 'Saluda a tus compañeros');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_DAILY_SOCIALIZE'), 'STAT_BOOST', 'charisma', 2, true);
+
+-- =====================================================
+-- MISIÓN SEMANAL
+-- =====================================================
+
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_WEEKLY_NETWORKING', 'Networking Semanal', 'Mantén activa tu red de contactos profesionales.', 'Las relaciones profesionales necesitan mantenimiento constante.', 'WEEKLY', 'SOCIAL', 'MEDIUM', 18, 300, 0, true, 168, false, true, NULL, NULL, 'https://cdn.example.com/missions/weekly-network-icon.png', 'https://cdn.example.com/missions/weekly-network-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_WEEKLY_NETWORKING'), 'Contacta con 5 profesionales', 'COMPLETE_ACTIONS', 'professional_contact', 5, 0, false, 1, 'Mantén vivo tu network'),
+((SELECT id FROM missions WHERE code = 'MISSION_WEEKLY_NETWORKING'), 'Asiste a 1 evento de networking', 'ATTEND_EVENT', 'networking_event', 1, 0, false, 2, 'Amplía tu círculo');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary)
+VALUES ((SELECT id FROM missions WHERE code = 'MISSION_WEEKLY_NETWORKING'), 'XP_JOBS', 'weekly_networking', 300, true);
+
+-- =====================================================
+-- MISIÓN OCULTA
+-- =====================================================
+
+INSERT INTO missions (code, title, description, lore, type, category, difficulty, min_age, required_xp_jobs, required_xp_academy, repeatable, cooldown_hours, hidden, auto_accept, order_in_chain, chain_id, icon_url, banner_url, created_at)
+VALUES ('MISSION_SECRET_ACHIEVEMENT', '🏆 Logro Secreto', 'Has descubierto una misión oculta. Completa objetivos especiales.', 'Los verdaderos héroes buscan desafíos donde nadie mira.', 'ONE_TIME', 'SPECIAL', 'EPIC', 18, 500, 200, false, NULL, true, false, NULL, NULL, 'https://cdn.example.com/missions/secret-icon.png', 'https://cdn.example.com/missions/secret-banner.jpg', NOW());
+
+INSERT INTO mission_objectives (mission_id, description, type, target_key, target_value, current_default, optional, order_index, hint)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_SECRET_ACHIEVEMENT'), 'Completa 10 misiones diarias seguidas', 'COMPLETE_ACTIONS', 'daily_streak', 10, 0, false, 1, 'La constancia tiene recompensas ocultas'),
+((SELECT id FROM missions WHERE code = 'MISSION_SECRET_ACHIEVEMENT'), 'Asiste a 5 eventos diferentes', 'ATTEND_EVENT', 'unique_events', 5, 0, false, 2, 'Explora diferentes actividades');
+
+INSERT INTO rewards (mission_id, type, target_key, value, is_primary, badge_code)
+VALUES
+((SELECT id FROM missions WHERE code = 'MISSION_SECRET_ACHIEVEMENT'), 'XP_JOBS', 'secret', 1000, true, NULL),
+((SELECT id FROM missions WHERE code = 'MISSION_SECRET_ACHIEVEMENT'), 'BADGE', NULL, NULL, false, 'SECRET_SEEKER');
+
+-- =====================================================
+-- VERIFICACIÓN
+-- =====================================================
+SELECT 'Misiones totales: ' || COUNT(*) FROM missions;
+SELECT 'Misiones por tipo: ' || type || ': ' || COUNT(*) FROM missions GROUP BY type;
+SELECT 'Misiones por categoría: ' || category || ': ' || COUNT(*) FROM missions GROUP BY category;
+SELECT 'Misiones por dificultad: ' || difficulty || ': ' || COUNT(*) FROM missions GROUP BY difficulty;
+SELECT 'Mission Objectives totales: ' || COUNT(*) FROM mission_objectives;
+SELECT 'Rewards totales: ' || COUNT(*) FROM rewards;
