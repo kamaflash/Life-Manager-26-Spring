@@ -1,9 +1,12 @@
 package com.pet.businessdomain.jobservice.repository;
 
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
+import com.pet.businessdomain.jobservice.specifications.JobVacancySpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Long> {
+public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Long>, JpaSpecificationExecutor<JobVacancyEntity> {
 
     // ===== BÚSQUEDAS BÁSICAS CON JOIN FETCH =====
 
@@ -102,64 +105,37 @@ public interface JobVacancyRepository extends JpaRepository<JobVacancyEntity, Lo
             @Param("minSalary") BigDecimal minSalary
     );
 
-    @Query("""
-    SELECT DISTINCT jv FROM JobVacancyEntity jv
-    LEFT JOIN FETCH jv.position p
-    LEFT JOIN FETCH p.company c
-    WHERE jv.active = true
-    AND jv.availableSlots > 0
-    AND (
-        :keyword IS NULL OR :keyword = '' OR 
-        LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    )
-    AND (
-        :positionTitles IS NULL OR :positionTitles = '' OR
-        LOWER(p.title) LIKE LOWER(CONCAT('%', :positionTitles, '%'))
-    )
-    AND (
-        :companyNames IS NULL OR :companyNames = '' OR
-        LOWER(c.name) LIKE LOWER(CONCAT('%', :companyNames, '%'))
-    )
-    AND (
-        :categories IS NULL OR :categories = '' OR
-        LOWER(p.category) LIKE LOWER(CONCAT('%', :categories, '%'))
-        OR LOWER(p.category) = 'other'
-    )
-    AND (
-        :contractTypes IS NULL OR :contractTypes = '' OR
-        LOWER(jv.contractType) LIKE LOWER(CONCAT('%', :contractTypes, '%'))
-    )
-    AND (
-        :workModalities IS NULL OR :workModalities = '' OR
-        LOWER(jv.workModality) LIKE LOWER(CONCAT('%', :workModalities, '%'))
-    )
-    AND (
-        :weeklyHours IS NULL OR :weeklyHours = '' OR
-        CAST(jv.weeklyHours AS string) LIKE CONCAT('%', :weeklyHours, '%')
-    )
-    AND (
-        :schedule IS NULL OR :schedule = '' OR 
-        CONCAT(jv.startTime, ' - ', jv.endTime) LIKE CONCAT('%', :schedule, '%')
-    )
-    AND (:minAvailableSlots IS NULL OR jv.availableSlots >= :minAvailableSlots)
-    AND (:minSalary IS NULL OR jv.minSalary >= :minSalary)
-    AND (:maxSalary IS NULL OR jv.maxSalary <= :maxSalary)
-    """)
-    Page<JobVacancyEntity> searchVacanciesPage(
-            @Param("keyword") String keyword,
-            @Param("positionTitles") String positionTitles,
-            @Param("companyNames") String companyNames,
-            @Param("categories") String categories,
-            @Param("contractTypes") String contractTypes,
-            @Param("workModalities") String workModalities,
-            @Param("weeklyHours") String weeklyHours,
-            @Param("schedule") String schedule,
-            @Param("minAvailableSlots") Integer minAvailableSlots,
-            @Param("minSalary") BigDecimal minSalary,
-            @Param("maxSalary") BigDecimal maxSalary,
-            Pageable pageable
-    );
+    default Page<JobVacancyEntity> searchVacanciesPage(
+            String keyword,
+            String positionTitles,
+            String companyNames,
+            String categories,
+            String contractTypes,
+            String workModalities,
+            String weeklyHours,
+            String schedule,
+            Integer minAvailableSlots,
+            BigDecimal minSalary,
+            BigDecimal maxSalary,
+            Pageable pageable) {
+
+        Specification<JobVacancyEntity> spec = Specification
+                .where(JobVacancySpecifications.isActive())
+                .and(JobVacancySpecifications.hasAvailableSlots())
+                .and(JobVacancySpecifications.keywordSearch(keyword))
+                .and(JobVacancySpecifications.positionTitles(positionTitles))
+                .and(JobVacancySpecifications.companyNames(companyNames))
+                .and(JobVacancySpecifications.categories(categories))
+                .and(JobVacancySpecifications.contractTypes(contractTypes))
+                .and(JobVacancySpecifications.workModalities(workModalities))
+                .and(JobVacancySpecifications.weeklyHours(weeklyHours))
+                .and(JobVacancySpecifications.schedule(schedule))
+                .and(JobVacancySpecifications.minAvailableSlots(minAvailableSlots))
+                .and(JobVacancySpecifications.minSalary(minSalary))
+                .and(JobVacancySpecifications.maxSalary(maxSalary));
+
+        return findAll(spec, pageable);
+    }
 
     // ===== CONTADOR DE POSTULANTES =====
     @Query("SELECT v.id, COUNT(a) FROM JobVacancyEntity v " +

@@ -32,6 +32,7 @@ public class CharacterEntity {
     private String residentialCity;
     private Integer xpAcademy;
     private Integer xpJobs;
+    private Integer level = 1;
 
     @Embedded
     private CharacterStats stats;

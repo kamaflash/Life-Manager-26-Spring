@@ -11,78 +11,6 @@ ALTER SEQUENCE IF EXISTS job_vacancies_id_seq RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS job_requirements_id_seq RESTART WITH 1;
 
 -- ============================================
--- 7. JOB CONTRACTS
--- ============================================
-CREATE TABLE IF NOT EXISTS job_contracts (
-    id BIGSERIAL PRIMARY KEY,
-    contract_number VARCHAR(255) NOT NULL,
-    issued_at TIMESTAMP NOT NULL,
-    valid_until TIMESTAMP NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    contract_url VARCHAR(255),
-    character_id BIGINT NOT NULL,
-    character_name VARCHAR(255),
-    character_email VARCHAR(255),
-    character_phone VARCHAR(255),
-    character_address VARCHAR(255),
-    character_dni VARCHAR(255),
-    character_age INTEGER,
-    character_birth_date DATE,
-    company_id BIGINT NOT NULL,
-    company_name VARCHAR(255) NOT NULL,
-    company_tax_id VARCHAR(255),
-    company_address VARCHAR(255),
-    company_phone VARCHAR(255),
-    company_email VARCHAR(255),
-    company_website VARCHAR(255),
-    position_id BIGINT NOT NULL,
-    position_title VARCHAR(255) NOT NULL,
-    position_level VARCHAR(50),
-    position_category VARCHAR(50),
-    position_description TEXT,
-    base_salary DECIMAL(19,2) NOT NULL,
-    monthly_salary DECIMAL(19,2) NOT NULL,
-    extra_payments DECIMAL(19,2),
-    salary_currency VARCHAR(10) NOT NULL,
-    variable_bonus DECIMAL(19,2),
-    salary_period VARCHAR(20) NOT NULL,
-    match_score INTEGER,
-    min_salary_range DECIMAL(19,2),
-    max_salary_range DECIMAL(19,2),
-    salary_calculation_note TEXT,
-    contract_type VARCHAR(50) NOT NULL,
-    work_modality VARCHAR(50) NOT NULL,
-    weekly_hours INTEGER,
-    start_time TIME,
-    end_time TIME,
-    working_days TEXT[],
-    schedule_note TEXT,
-    vacation_days INTEGER,
-    benefits TEXT[],
-    visa_sponsorship BOOLEAN,
-    training_plan TEXT,
-    probation_period VARCHAR(100),
-    termination_notice VARCHAR(100),
-    confidentiality_clause TEXT,
-    exclusivity_clause TEXT,
-    intellectual_property TEXT,
-    special_conditions TEXT[],
-    application_id BIGINT NOT NULL,
-    interview_date TIMESTAMP,
-    contract_generated_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP,
-    accepted_at TIMESTAMP,
-    rejected_at TIMESTAMP,
-    FOREIGN KEY (character_id) REFERENCES characters(id),
-    FOREIGN KEY (company_id) REFERENCES companies(id),
-    FOREIGN KEY (position_id) REFERENCES job_positions(id),
-    FOREIGN KEY (application_id) REFERENCES job_applications(id)
-);
-
-ALTER SEQUENCE IF EXISTS job_contracts_id_seq RESTART WITH 1;
-
--- ============================================
 -- 1. COMPANIES
 -- ============================================
 INSERT INTO companies (id, name, category, description, location, website, logo_url, contact_email, phone, active, employees_count, founded_year, remote_friendly, internship_available) VALUES
@@ -163,6 +91,7 @@ INSERT INTO job_positions (id, title, level, description, category, company_id, 
 (40, 'Limpiador', 'JUNIOR', 'Limpieza de instalaciones', 'OTHER', 27, true, 'BUSINESS'),
 (41, 'Mozo de Almacén', 'JUNIOR', 'Preparación de pedidos y organización de almacén', 'OTHER', 29, true, 'BUSINESS'),
 (42, 'Camarero de Eventos', 'JUNIOR', 'Servicio en eventos y banquetes', 'HOSPITALITY', 18, true, 'BUSINESS');
+
 -- ============================================
 -- 3. JOB VACANCIES
 -- ============================================
@@ -198,17 +127,57 @@ INSERT INTO job_vacancies (id, position_id, min_salary, max_salary, contract_typ
 (29, 29, 22000, 30000, 'FULL_TIME', 'REMOTE', 3, 40, true, false, CURRENT_DATE, '09:00:00', '18:00:00', 'Técnico de Selección para procesos de selección de media jornada.'),
 (30, 30, 24000, 32000, 'FULL_TIME', 'REMOTE', 2, 40, true, false, CURRENT_DATE, '09:00:00', '18:00:00', 'Community Manager para gestión de redes sociales y contenido digital.'),
 (31, 31, 24000, 32000, 'FULL_TIME', 'HYBRID', 2, 40, true, false, CURRENT_DATE, '09:00:00', '18:00:00', 'Gestor de Prácticas para coordinación de programas de prácticas profesionales.'),
-(32, 32, 18000, 24000, 'PART_TIME', 'ONSITE', 4, 20, true, false, CURRENT_DATE, '18:00:00', '22:00:00', 'Ayudante de Cocina para apoyo en cocina en horario de tarde/noche.'),
-(33, 33, 19000, 25000, 'PART_TIME', 'ONSITE', 5, 20, true, false, CURRENT_DATE, '16:00:00', '20:00:00', 'Dependiente para atención al cliente en tienda. Horario de tardes.'),
-(34, 34, 20000, 28000, 'PART_TIME', 'REMOTE', 3, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Asistente Virtual para soporte administrativo remoto en horario de mañana.'),
-(35, 35, 18000, 24000, 'INTERNSHIP', 'HYBRID', 4, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Becario Universitario para prácticas en administración y gestión. Convenio con universidad.'),
-(36, 36, 18000, 24000, 'PART_TIME', 'ONSITE', 8, 20, true, false, CURRENT_DATE, '17:00:00', '22:00:00', 'Repartidor para entregas en zona centro. Se requiere movilidad propia (bici o moto). Sin experiencia necesaria. Horario flexible de tardes.'),
-(37, 37, 18000, 22000, 'PART_TIME', 'ONSITE', 6, 20, true, false, CURRENT_DATE, '20:00:00', '00:00:00', 'Fregaplatos para restaurante. No se requiere experiencia. Turno de noche. Comida incluida.'),
-(38, 38, 16000, 20000, 'PART_TIME', 'ONSITE', 10, 15, true, false, CURRENT_DATE, '16:00:00', '20:00:00', 'Reparto de publicidad y folletos por domicilios. Sin experiencia. Horario de tardes. Ideal para estudiantes.'),
-(39, 39, 18000, 23000, 'PART_TIME', 'ONSITE', 5, 20, true, false, CURRENT_DATE, '18:00:00', '22:00:00', 'Ayudante de reparto para carga y descarga de mercancía. No requiere experiencia. Horario de tardes.'),
-(40, 40, 17000, 21000, 'PART_TIME', 'ONSITE', 4, 20, true, false, CURRENT_DATE, '22:00:00', '02:00:00', 'Limpieza de oficinas por la noche. Sin experiencia. Horario nocturno. Se ofrece formación.'),
-(41, 41, 18000, 25000, 'PART_TIME', 'ONSITE', 6, 20, true, false, CURRENT_DATE, '16:00:00', '21:00:00', 'Mozo de almacén para preparación de pedidos. Sin experiencia. Horario de tardes. Contrato flexible.'),
-(42, 42, 18000, 24000, 'PART_TIME', 'ONSITE', 8, 16, true, false, CURRENT_DATE, '19:00:00', '23:00:00', 'Camarero para eventos y banquetes. Sin experiencia. Horario de fines de semana y tardes. Formación incluida.');
+(32, 32, 18000, 24000, 'PART_TIME', 'ONSITE', 4, 20, true, false, CURRENT_DATE, '18:00:00', '22:00:00', 'Ayudante de Cocina para apoyo en cocina en horario de tarde/noche. SOLO FINES DE SEMANA.'),
+(33, 33, 19000, 25000, 'PART_TIME', 'ONSITE', 5, 20, true, false, CURRENT_DATE, '16:00:00', '20:00:00', 'Dependiente para atención al cliente en tienda. Horario de tardes. SOLO SÁBADOS Y DOMINGOS.'),
+(34, 34, 20000, 28000, 'PART_TIME', 'REMOTE', 3, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Asistente Virtual para soporte administrativo remoto en horario de mañana. EXCLUSIVO FINES DE SEMANA.'),
+(35, 35, 18000, 24000, 'INTERNSHIP', 'HYBRID', 4, 20, true, false, CURRENT_DATE, '09:00:00', '14:00:00', 'Becario Universitario para prácticas en administración y gestión. Convenio con universidad. SOLO SÁBADOS Y DOMINGOS.'),
+(36, 36, 18000, 24000, 'PART_TIME', 'ONSITE', 8, 20, true, false, CURRENT_DATE, '17:00:00', '22:00:00', 'Repartidor para entregas en zona centro. Se requiere movilidad propia (bici o moto). Sin experiencia. Horario flexible fines de semana.'),
+(37, 37, 18000, 22000, 'PART_TIME', 'ONSITE', 6, 20, true, false, CURRENT_DATE, '20:00:00', '00:00:00', 'Fregaplatos para restaurante. No se requiere experiencia. Turno de noche. Comida incluida. SOLO SÁBADOS Y DOMINGOS.'),
+(38, 38, 16000, 20000, 'PART_TIME', 'ONSITE', 10, 15, true, false, CURRENT_DATE, '16:00:00', '20:00:00', 'Reparto de publicidad y folletos por domicilios. Sin experiencia. Ideal para estudiantes. SOLO FINES DE SEMANA.'),
+(39, 39, 18000, 23000, 'PART_TIME', 'ONSITE', 5, 20, true, false, CURRENT_DATE, '18:00:00', '22:00:00', 'Ayudante de reparto para carga y descarga de mercancía. No requiere experiencia. Horario de tardes. EXCLUSIVO SÁBADOS Y DOMINGOS.'),
+(40, 40, 17000, 21000, 'PART_TIME', 'ONSITE', 4, 20, true, false, CURRENT_DATE, '22:00:00', '02:00:00', 'Limpieza de oficinas por la noche. Sin experiencia. Horario nocturno. Se ofrece formación. SOLO FINES DE SEMANA.'),
+(41, 41, 18000, 25000, 'PART_TIME', 'ONSITE', 6, 20, true, false, CURRENT_DATE, '16:00:00', '21:00:00', 'Mozo de almacén para preparación de pedidos. Sin experiencia. Horario flexible. Contrato temporal. SOLO SÁBADOS Y DOMINGOS.'),
+(42, 42, 18000, 24000, 'PART_TIME', 'ONSITE', 8, 16, true, false, CURRENT_DATE, '19:00:00', '23:00:00', 'Camarero para eventos y banquetes. Sin experiencia. Horario de fines de semana. Formación incluida.');
+
+-- ============================================
+-- CREAR TABLA PARA working_days (ElementCollection)
+-- ============================================
+CREATE TABLE IF NOT EXISTS job_vacancies_working_days (
+    job_vacancy_id BIGINT NOT NULL,
+    working_days VARCHAR(50),
+    FOREIGN KEY (job_vacancy_id) REFERENCES job_vacancies(id) ON DELETE CASCADE
+);
+
+-- Crear índice para mejor rendimiento
+CREATE INDEX IF NOT EXISTS idx_job_vacancies_working_days_vacancy_id ON job_vacancies_working_days(job_vacancy_id);
+
+-- ============================================
+-- INSERT PARA working_days (para los registros 32-42)
+-- ============================================
+INSERT INTO job_vacancies_working_days (job_vacancy_id, working_days) VALUES
+(32, 'SATURDAY'),
+(32, 'SUNDAY'),
+(33, 'SATURDAY'),
+(33, 'SUNDAY'),
+(34, 'SATURDAY'),
+(34, 'SUNDAY'),
+(35, 'SATURDAY'),
+(35, 'SUNDAY'),
+(36, 'SATURDAY'),
+(36, 'SUNDAY'),
+(37, 'SATURDAY'),
+(37, 'SUNDAY'),
+(38, 'SATURDAY'),
+(38, 'SUNDAY'),
+(39, 'SATURDAY'),
+(39, 'SUNDAY'),
+(40, 'SATURDAY'),
+(40, 'SUNDAY'),
+(41, 'SATURDAY'),
+(41, 'SUNDAY'),
+(42, 'SATURDAY'),
+(42, 'SUNDAY');
+
 -- ============================================
 -- 4. JOB REQUIREMENTS
 -- ============================================
@@ -296,4 +265,3 @@ INSERT INTO job_requirements (vacancy_id, type, skill_key, min_value, mandatory)
 (34, 'SKILL', 'communication', 2, true),
 (35, 'SKILL', 'office', 1, false),
 (35, 'EDUCATION', 'high_school', 1, false);
-

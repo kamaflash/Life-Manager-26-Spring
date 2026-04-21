@@ -1,10 +1,12 @@
 package com.pet.businessdomain.formationservice.services;
 
 import com.pet.businessdomain.formationservice.entities.*;
+import com.pet.businessdomain.formationservice.mapper.FormationMapper;
 import com.pet.businessdomain.formationservice.mapper.ICharacterTrainingMapper;
 import com.pet.businessdomain.formationservice.repository.ICharacterTrainingRepository;
 import com.pet.businessdomain.formationservice.repository.FormationExamRepository;
 import com.pet.businessdomain.formationservice.repository.FormationRepository;
+import com.pet.businessdomain.formationservice.specifications.FormationSpecifications;
 import com.pet.businessdomain.formationservice.transactions.BusinessTransactions;
 import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
@@ -14,11 +16,14 @@ import com.pet.businessdomain.shareddto.enumentities.NotificationEventType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationResourceType;
 import com.pet.businessdomain.shareddto.enumentities.NotificationType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,6 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CharacterTrainingServiceImp implements ICharacterTrainingService {
     @Autowired
     private ICharacterTrainingRepository characterTrainingRepository;
@@ -38,6 +44,8 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
     private ICharacterTrainingMapper characterTrainingMapper;
     @Autowired
     private BusinessTransactions businessTransactions;
+    @Autowired
+    private FormationMapper formationMapper;
 
     // =========================
     // Consultas básicas
@@ -141,10 +149,46 @@ public class CharacterTrainingServiceImp implements ICharacterTrainingService {
 
     @Override
     public Page<Formation> getAvailableCoursesForCharacter(Long characterId, Pageable pageable) {
-        List<Formation> list = getAvailableCoursesForCharacter(characterId);
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), list.size());
-        return new PageImpl<>(list.subList(start, end), pageable, list.size());
+        return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FormationDto> getAvailableCoursesForCharacter(
+            Long characterId,
+            Pageable pageable,
+            String searchTerm,
+            String category,
+            String level,
+            Integer minDuration,
+            Integer maxDuration,
+            BigDecimal minPrice,
+            BigDecimal maxPrice) {
+
+        log.info("Buscando cursos disponibles para characterId: {}", characterId);
+
+        // Obtener IDs de cursos en progreso
+        Set<Long> excludedCourseIds = characterTrainingRepository
+                .findByCharacterIdAndStatus(characterId, EnumAll.TrainingStatus.IN_PROGRESS)
+                .stream()
+                .map(CharacterTraining::getTrainingId)
+                .collect(Collectors.toSet());
+
+        // 🔥 Construir Specification con FETCH de colecciones
+        Specification<Formation> spec = Specification
+                .where(FormationSpecifications.isActive())
+                .and(FormationSpecifications.notInIds(excludedCourseIds))
+                .and(FormationSpecifications.searchByTerm(searchTerm))
+                .and(FormationSpecifications.hasCategory(category))
+                .and(FormationSpecifications.hasLevel(level))
+                .and(FormationSpecifications.durationBetween(minDuration, maxDuration))
+                .and(FormationSpecifications.priceBetween(minPrice, maxPrice))
+                .and(FormationSpecifications.withWorkingDays()); // 🔥 AÑADIDO
+
+        // Ejecutar consulta
+        Page<Formation> formationPage = formationRepository.findAll(spec, pageable);
+
+        return formationPage.map(formationMapper::toDto);
     }
 
     // =========================

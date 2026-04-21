@@ -27,6 +27,7 @@ public class CharacterDto {
     private StatsDto stats;
     private Integer xpAcademy;
     private Integer xpJobs;
+    private Integer level;
     private Map<String, SkillStateDto> skills;
 
     private List<CharacterTrainingDto> education;

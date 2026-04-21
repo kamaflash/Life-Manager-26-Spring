@@ -2,17 +2,21 @@ package com.pet.businessdomain.jobservice.services;
 
 import com.pet.businessdomain.jobservice.entities.JobPositionEntity;
 import com.pet.businessdomain.jobservice.entities.JobVacancyEntity;
+import com.pet.businessdomain.jobservice.entities.RequirementEntity;
 import com.pet.businessdomain.jobservice.mapper.JobVacancyMapper;
 import com.pet.businessdomain.jobservice.repository.JobPositionRepository;
 import com.pet.businessdomain.jobservice.repository.JobVacancyRepository;
 import com.pet.businessdomain.jobservice.services.JobVacancyService;
 import com.pet.businessdomain.shareddto.dto.JobSearchFiltersDTO;
 import com.pet.businessdomain.shareddto.dto.JobVacancyDTO;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.JobCategory;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,6 +37,7 @@ public class JobVacancyServiceImpl implements JobVacancyService {
     private final JobVacancyRepository jobVacancyRepository;
     private final JobPositionRepository jobPositionRepository;
     private final JobVacancyMapper jobVacancyMapper;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
@@ -172,7 +180,7 @@ public class JobVacancyServiceImpl implements JobVacancyService {
         // Keyword
         String keyword = filters.getKeywordAsString();
 
-        // 🔥 Convertir listas a Strings con separador '|' para búsqueda OR
+        // Convertir listas a Strings con separador '|' para búsqueda OR
         String positionTitles = null;
         if (filters.getPositionTitles() != null && !filters.getPositionTitles().isEmpty()) {
             positionTitles = String.join("|", filters.getPositionTitles());
@@ -209,14 +217,17 @@ public class JobVacancyServiceImpl implements JobVacancyService {
             schedule = filters.getSchedule();
         }
 
-        Integer minAvailableSlots = filters.getAvailableSlots() != null
-                ? filters.getAvailableSlots() : null;
+        Integer minAvailableSlots = filters.getAvailableSlots() != null ? filters.getAvailableSlots() : null;
 
-        BigDecimal minSalary = filters.getMinSalary() != null
-                ? filters.getMinSalary() : null;
-        BigDecimal maxSalary = filters.getMaxSalary() != null
-                ? filters.getMaxSalary() : null;
+        BigDecimal minSalary = filters.getMinSalary() != null ? filters.getMinSalary() : null;
+        BigDecimal maxSalary = filters.getMaxSalary() != null ? filters.getMaxSalary() : null;
 
+        // 🔥 Usar el flag enviado desde el frontend
+        boolean onlyWeekendJobs = filters.getOnlyWeekendJobs() != null && filters.getOnlyWeekendJobs();
+
+        log.info("Only weekend jobs filter: {}", onlyWeekendJobs);
+
+        // Usar Specifications
         Page<JobVacancyEntity> entityPage = jobVacancyRepository.searchVacanciesPage(
                 keyword,
                 positionTitles,
@@ -232,7 +243,127 @@ public class JobVacancyServiceImpl implements JobVacancyService {
                 pageable
         );
 
+        // 🔥 Cargar las colecciones en consultas separadas
+        if (!entityPage.getContent().isEmpty()) {
+            List<Long> vacancyIds = entityPage.getContent().stream()
+                    .map(JobVacancyEntity::getId)
+                    .collect(Collectors.toList());
+
+            // Cargar workingDays
+            Map<Long, List<EnumAll.WorkingDay>> workingDaysMap = loadWorkingDays(vacancyIds);
+
+            // Cargar benefits
+            Map<Long, List<String>> benefitsMap = loadBenefits(vacancyIds);
+
+            // Cargar requirements
+            Map<Long, List<RequirementEntity>> requirementsMap = loadRequirements(vacancyIds);
+
+            // Actualizar colecciones
+            for (JobVacancyEntity vacancy : entityPage.getContent()) {
+                if (workingDaysMap.containsKey(vacancy.getId())) {
+                    vacancy.getWorkingDays().clear();
+                    vacancy.getWorkingDays().addAll(workingDaysMap.get(vacancy.getId()));
+                }
+                if (benefitsMap.containsKey(vacancy.getId())) {
+                    vacancy.getBenefits().clear();
+                    vacancy.getBenefits().addAll(benefitsMap.get(vacancy.getId()));
+                }
+                if (requirementsMap.containsKey(vacancy.getId())) {
+                    vacancy.getRequirements().clear();
+                    for (RequirementEntity req : requirementsMap.get(vacancy.getId())) {
+                        vacancy.addRequirement(req);
+                    }
+                }
+            }
+
+            // 🔥 Filtrar trabajos según el flag onlyWeekendJobs
+            if (onlyWeekendJobs) {
+                List<JobVacancyEntity> filteredContent = entityPage.getContent().stream()
+                        .filter(vacancy -> isWeekendOnlyJob(vacancy))
+                        .collect(Collectors.toList());
+
+                log.info("Filtered to {} weekend-only jobs out of {}", filteredContent.size(), entityPage.getContent().size());
+
+                entityPage = new PageImpl<>(filteredContent, pageable, filteredContent.size());
+            }
+        }
+
         return entityPage.map(jobVacancyMapper::toDto);
+    }
+
+    /**
+     * Verifica si un trabajo es solo de fin de semana
+     */
+    private boolean isWeekendOnlyJob(JobVacancyEntity vacancy) {
+        if (vacancy.getWorkingDays() == null || vacancy.getWorkingDays().isEmpty()) {
+            // Si no tiene workingDays definidos, asumimos que es de lunes a viernes
+            return false;
+        }
+
+        // Verificar que SOLO tenga sábado y domingo (y no otros días)
+        boolean hasSaturday = vacancy.getWorkingDays().contains(EnumAll.WorkingDay.SATURDAY);
+        boolean hasSunday = vacancy.getWorkingDays().contains(EnumAll.WorkingDay.SUNDAY);
+        boolean hasOtherDays = vacancy.getWorkingDays().stream()
+                .anyMatch(day -> day != EnumAll.WorkingDay.SATURDAY && day != EnumAll.WorkingDay.SUNDAY);
+
+        return hasSaturday && hasSunday && !hasOtherDays;
+    }
+
+    private Map<Long, List<EnumAll.WorkingDay>> loadWorkingDays(List<Long> vacancyIds) {
+        if (vacancyIds == null || vacancyIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Object[]> results = entityManager.createQuery(
+                "SELECT v.id, wd FROM JobVacancyEntity v JOIN v.workingDays wd WHERE v.id IN :ids",
+                Object[].class
+        ).setParameter("ids", vacancyIds).getResultList();
+
+        Map<Long, List<EnumAll.WorkingDay>> map = new HashMap<>();
+        for (Object[] result : results) {
+            Long id = (Long) result[0];
+            EnumAll.WorkingDay day = (EnumAll.WorkingDay) result[1];
+            map.computeIfAbsent(id, k -> new ArrayList<>()).add(day);
+        }
+        return map;
+    }
+
+    private Map<Long, List<String>> loadBenefits(List<Long> vacancyIds) {
+        if (vacancyIds == null || vacancyIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Object[]> results = entityManager.createQuery(
+                "SELECT v.id, b FROM JobVacancyEntity v JOIN v.benefits b WHERE v.id IN :ids",
+                Object[].class
+        ).setParameter("ids", vacancyIds).getResultList();
+
+        Map<Long, List<String>> map = new HashMap<>();
+        for (Object[] result : results) {
+            Long id = (Long) result[0];
+            String benefit = (String) result[1];
+            map.computeIfAbsent(id, k -> new ArrayList<>()).add(benefit);
+        }
+        return map;
+    }
+
+    private Map<Long, List<RequirementEntity>> loadRequirements(List<Long> vacancyIds) {
+        if (vacancyIds == null || vacancyIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Object[]> results = entityManager.createQuery(
+                "SELECT v.id, r FROM JobVacancyEntity v JOIN v.requirements r WHERE v.id IN :ids",
+                Object[].class
+        ).setParameter("ids", vacancyIds).getResultList();
+
+        Map<Long, List<RequirementEntity>> map = new HashMap<>();
+        for (Object[] result : results) {
+            Long id = (Long) result[0];
+            RequirementEntity requirement = (RequirementEntity) result[1];
+            map.computeIfAbsent(id, k -> new ArrayList<>()).add(requirement);
+        }
+        return map;
     }
 
     @Override

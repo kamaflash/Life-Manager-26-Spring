@@ -17,16 +17,15 @@ import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -177,45 +176,64 @@ public class CharacterTrainingController {
      * - Aplica paginación manual.
      * - Devuelve lista de cursos y metadatos de paginación.
      */
-    @GetMapping("/available/{characterId}")
+    @PostMapping("/available/{characterId}/search")
     public ResponseEntity<Map<String, Object>> getAvailableCourses(
             @PathVariable(name = "characterId") Long characterId,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) int size) {
-        log.info("Obteniendo cursos disponibles para personaje: {}", characterId);
+            @RequestBody CourseSearchFiltersDTO filters) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Formation> availableCourses = characterTrainingService.getAvailableCoursesForCharacter(characterId, pageable);
+        log.info("Obteniendo cursos disponibles para personaje: {} con filtros: {}", characterId, filters);
 
-        List<CharacterTraining> dtoList = characterTrainingService.getByCharacterIdAndStatus(characterId, EnumAll.TrainingStatus.IN_PROGRESS);
-// Obtener IDs en progreso
-        Set<Long> trainingIdsInProgress = dtoList.stream()
-                .map(CharacterTraining::getTrainingId)
-                .collect(Collectors.toSet());
+        // 🔥 Mapear campos de ordenamiento
+        String sortByEntity = mapCourseSortField(filters.getSortBy() != null ? filters.getSortBy() : "name");
 
-// Filtrar contenido
-        List<Formation> filteredList = availableCourses.getContent().stream()
-                .filter(course -> !trainingIdsInProgress.contains(course.getId()))
-                .toList();
+        // 🔥 Crear Sort y Pageable
+        Sort sort = Sort.by(filters.getSortDir() != null && filters.getSortDir().equalsIgnoreCase("desc") ?
+                Sort.Direction.DESC : Sort.Direction.ASC, sortByEntity);
+        Pageable pageable = PageRequest.of(
+                filters.getPage() != null ? filters.getPage() : 0,
+                filters.getSize() != null ? filters.getSize() : DEFAULT_PAGE_SIZE,
+                sort);
 
-// Reconstruir Page
-        Page<Formation> filteredPage = new PageImpl<>(
-                filteredList,
-                availableCourses.getPageable(),
-                filteredList.size()
+        // 🔥 Llamar al service con todos los filtros
+        Page<FormationDto> coursesPage = characterTrainingService.getAvailableCoursesForCharacter(
+                characterId,
+                pageable,
+                filters.getSearchTerm(),
+                filters.getCategory(),
+                filters.getLevel(),
+                filters.getMinDuration(),
+                filters.getMaxDuration(),
+                filters.getMinPrice(),
+                filters.getMaxPrice()
         );
 
-        if (filteredPage.isEmpty()) {
+        if (coursesPage.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
+
+        // 🔥 Construir respuesta
         Map<String, Object> response = new HashMap<>();
-        response.put("courses", formationMapper.toDtoList(filteredPage.getContent()));
-        response.put("currentPage", filteredPage.getNumber());
-        response.put("totalItems", filteredPage.getTotalElements());
-        response.put("totalPages", filteredPage.getTotalPages());
-        response.put("pageSize", filteredPage.getSize());
+        response.put("courses", coursesPage.getContent());
+        response.put("currentPage", coursesPage.getNumber());
+        response.put("totalItems", coursesPage.getTotalElements());
+        response.put("totalPages", coursesPage.getTotalPages());
+        response.put("pageSize", coursesPage.getSize());
 
         return ResponseEntity.ok(response);
+    }
+
+    // 🔥 Método para mapear campos de ordenamiento de cursos
+    private String mapCourseSortField(String sortBy) {
+        if (sortBy == null || sortBy.isEmpty()) return "name";
+
+        return switch (sortBy) {
+            case "name" -> "name";
+            case "category" -> "category";
+            case "level" -> "level";
+            case "duration" -> "duration";
+            case "price" -> "price";
+            default -> sortBy;
+        };
     }
 
 // ======================== SUSCRIPCIÓN ========================

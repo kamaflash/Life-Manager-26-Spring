@@ -307,13 +307,16 @@ public class JobVacancyController {
      * @example POST /api/job-vacancies/search
      * @example Body: { "category": "TECHNOLOGY", "location": "Madrid", "minSalary": 40000 }
      */
-    @PostMapping("/search")
-    public ResponseEntity<Map<String, Object>> search(@RequestBody JobSearchFiltersDTO filters) {
-        log.info("POST /api/job-vacancies/search - Search vacancies");
+    @PostMapping("/search/character/{characterId}")
+    public ResponseEntity<Map<String, Object>> searchForCharacter(
+            @PathVariable(name = "characterId") Long characterId,
+            @RequestBody JobSearchFiltersDTO filters) {
 
-        // 🔥 Mapear nombres de ordenamiento de DTO a Entity
+        log.info("POST /api/job-vacancies/search/character/{} - Search vacancies", characterId);
+
+        filters.setCharacterId(characterId);
+
         String sortByEntity = mapSortField(filters.getSortBy());
-
         Sort sort = Sort.by(filters.getSortDir().equalsIgnoreCase("desc") ?
                 Sort.Direction.DESC : Sort.Direction.ASC, sortByEntity);
         Pageable pageable = PageRequest.of(filters.getPage(), filters.getSize(), sort);

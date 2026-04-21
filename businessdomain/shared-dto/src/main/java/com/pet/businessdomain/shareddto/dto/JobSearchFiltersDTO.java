@@ -9,7 +9,8 @@ public class JobSearchFiltersDTO {
 
     // ===== BÚSQUEDA GLOBAL =====
     private Object keyword;  // Puede ser String o List<String>
-
+    private Long characterId;
+    private Boolean onlyWeekendJobs;
     // ===== FILTROS POR TEXTO EXACTO (LISTAS) =====
     private List<String> positionTitles;   // Títulos de puesto
     private List<String> companyNames;     // Nombres de empresa

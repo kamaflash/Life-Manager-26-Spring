@@ -41,6 +41,11 @@ public class JobVacancyEntity {
     private LocalTime endTime;
 
     @ElementCollection
+    @CollectionTable(
+            name = "job_vacancies_working_days",  // 🔥 Nombre exacto de la tabla
+            joinColumns = @JoinColumn(name = "job_vacancy_id")  // 🔥 Nombre de la columna FK
+    )
+    @Column(name = "working_days")  // 🔥 Nombre de la columna en la tabla
     @Enumerated(EnumType.STRING)
     private List<EnumAll.WorkingDay> workingDays;
 
