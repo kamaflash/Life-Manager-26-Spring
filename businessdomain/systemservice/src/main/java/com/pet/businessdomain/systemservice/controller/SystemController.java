@@ -5,21 +5,21 @@
 package com.pet.businessdomain.systemservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pet.businessdomain.shareddto.dto.CharacterDto;
-import com.pet.businessdomain.shareddto.dto.JobApplicationDTO;
-import com.pet.businessdomain.shareddto.dto.JobContractDTO;
-import com.pet.businessdomain.shareddto.dto.SystemDto;
+import com.pet.businessdomain.shareddto.dto.*;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.EnumSystems;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.pet.businessdomain.systemservice.services.TimeAdvanceService;
 import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
 import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +54,8 @@ public class SystemController {
     @Autowired
     private BusinessTransactions businessTransactions;
 
+    @Autowired
+    private TimeAdvanceService timeAdvanceService;
     @GetMapping
     public ResponseEntity<?> getAllSystems(
             @RequestParam(name = "page",defaultValue = "0") int page) {
@@ -101,116 +103,116 @@ public class SystemController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(systemDto);
     }
-    @PostMapping("/cero_advance")
-    public LocalTime ceroAdvance(@RequestParam(name = "characterId") Long characterId)
-            throws BusinessRuleException, UnknownHostException, MessagingException {
-
-        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
-        SystemEntity system = systemMapper.fromOptional(optSystem);
-        SystemDto systemDto = systemMapper.toDto(system);
-
-        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
-        LocalTime time = systemService.getEducationEndTime(characterDto, false);
-        LocalTime newTime = time.minusMinutes(30);
-
-        // CORRECCIÓN: Obtener solo la hora del LocalDateTime
-        LocalDateTime actualityDateTime = systemDto.getActualityAt();
-        LocalTime actualityAt = actualityDateTime.toLocalTime();
-
-        // Calcular diferencia en minutos considerando el cambio de día
-        long minutesDifference;
-        if (newTime.isBefore(actualityAt)) {
-            minutesDifference = Duration.between(actualityAt, LocalTime.MIDNIGHT).toMinutes()
-                    + Duration.between(LocalTime.MIDNIGHT, newTime).toMinutes();
-        } else {
-            minutesDifference = Duration.between(actualityAt, newTime).toMinutes();
-        }
-
-        long hoursDifference = minutesDifference / 60;
-        long result = hoursDifference * 10;
-        long resultStress = hoursDifference * 2;
-        int absoluteResult = Math.toIntExact(Math.abs(result));
-        int absoluteResultStress = Math.toIntExact(Math.abs(resultStress));
-
-        // Actualizar estadísticas
-        characterDto.getStats().setEnergy(Math.min(100, characterDto.getStats().getEnergy() + absoluteResult));
-        characterDto.getStats().setStress(Math.max(0, characterDto.getStats().getStress() - absoluteResultStress));
-
-        characterDto = businessTransactions.updatePerson(characterDto);
-
-        return newTime;
-    }
-
-    @PostMapping("/firts_advance")
-    public LocalTime firtsAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
-        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
-        SystemEntity system = systemMapper.fromOptional(optSystem);
-        SystemDto systemDto = systemMapper.toDto(system);
-
-        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
-        LocalTime time = systemService.getEducationEndTime(characterDto,false);
-        log.info("systemDto: "+systemDto);
-
-        return time;
-    }
-    @PostMapping("/seconds_advance")
-    public LocalTime secondsAdvance(@RequestParam(name = "characterId") Long characterId, @RequestParam(name = "slim") LocalDateTime slim) throws BusinessRuleException, UnknownHostException, MessagingException {
-        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
-        SystemEntity system = systemMapper.fromOptional(optSystem);
-        SystemDto systemDto = systemMapper.toDto(system);
-
-        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
-        LocalTime time = systemService.getEducationEndTime(characterDto,true);
-        characterDto = systemService.setTimeSlim(characterDto, slim);
-        systemService.updateCharacter(characterDto);
-        system = systemService.plusSystems(characterDto,time);
-        system.setPa(5);
-        systemRepository.save(system);
-        return time;
-    }
-
-    @PostMapping("/weeckend")
-    public void weeckendAdvance(@RequestParam(name = "characterId") Long characterId, @RequestParam(name = "slim") LocalDateTime slim) throws BusinessRuleException, UnknownHostException, MessagingException {
-        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
-        SystemEntity system = systemMapper.fromOptional(optSystem);
-        SystemDto systemDto = systemMapper.toDto(system);
-
-        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
-        LocalDateTime actuality = system.getActualityAt();
-        LocalTime at8 = LocalTime.from(LocalDateTime.of(actuality.toLocalDate(), LocalTime.of(10, 0)));
-        system = systemService.plusSystems(characterDto,at8);
-        system.setPa(5);
-        systemRepository.save(system);
-
-        LocalDateTime actualityDateTime = systemDto.getActualityAt();
-        LocalTime actualityAt = actualityDateTime.toLocalTime();
-
-        // Calcular diferencia en minutos considerando el cambio de día
-        long minutesDifference;
-        if (at8.isBefore(actualityAt)) {
-            minutesDifference = Duration.between(actualityAt, LocalTime.MIDNIGHT).toMinutes()
-                    + Duration.between(LocalTime.MIDNIGHT, at8).toMinutes();
-        } else {
-            minutesDifference = Duration.between(actualityAt, at8).toMinutes();
-        }
-
-        long hoursDifference = minutesDifference / 60;
-        long result = hoursDifference * 10;
-        long resultStress = hoursDifference * 2;
-        int absoluteResult = Math.toIntExact(Math.abs(result));
-        int absoluteResultStress = Math.toIntExact(Math.abs(resultStress));
-
-        // Actualizar estadísticas
-        characterDto.getStats().setEnergy(Math.min(100, characterDto.getStats().getEnergy() + absoluteResult));
-        if(characterDto.getStats().getStress() > 60){
-            characterDto.getStats().setStress(50);
-        } else {
-            characterDto.getStats().setStress(20);
-        }
-
-        characterDto = businessTransactions.updatePerson(characterDto);
-
-    }
+//    @PostMapping("/cero_advance")
+//    public LocalTime ceroAdvance(@RequestParam(name = "characterId") Long characterId)
+//            throws BusinessRuleException, UnknownHostException, MessagingException {
+//
+//        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+//        SystemEntity system = systemMapper.fromOptional(optSystem);
+//        SystemDto systemDto = systemMapper.toDto(system);
+//
+//        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+//        LocalTime time = systemService.getEducationEndTime(characterDto, false);
+//        LocalTime newTime = time.minusMinutes(30);
+//
+//        // CORRECCIÓN: Obtener solo la hora del LocalDateTime
+//        LocalDateTime actualityDateTime = systemDto.getActualityAt();
+//        LocalTime actualityAt = actualityDateTime.toLocalTime();
+//
+//        // Calcular diferencia en minutos considerando el cambio de día
+//        long minutesDifference;
+//        if (newTime.isBefore(actualityAt)) {
+//            minutesDifference = Duration.between(actualityAt, LocalTime.MIDNIGHT).toMinutes()
+//                    + Duration.between(LocalTime.MIDNIGHT, newTime).toMinutes();
+//        } else {
+//            minutesDifference = Duration.between(actualityAt, newTime).toMinutes();
+//        }
+//
+//        long hoursDifference = minutesDifference / 60;
+//        long result = hoursDifference * 10;
+//        long resultStress = hoursDifference * 2;
+//        int absoluteResult = Math.toIntExact(Math.abs(result));
+//        int absoluteResultStress = Math.toIntExact(Math.abs(resultStress));
+//
+//        // Actualizar estadísticas
+//        characterDto.getStats().setEnergy(Math.min(100, characterDto.getStats().getEnergy() + absoluteResult));
+//        characterDto.getStats().setStress(Math.max(0, characterDto.getStats().getStress() - absoluteResultStress));
+//
+//        characterDto = businessTransactions.updatePerson(characterDto);
+//
+//        return newTime;
+//    }
+//
+//    @PostMapping("/firts_advance")
+//    public LocalTime firtsAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
+//        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+//        SystemEntity system = systemMapper.fromOptional(optSystem);
+//        SystemDto systemDto = systemMapper.toDto(system);
+//
+//        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+//        LocalTime time = systemService.getEducationEndTime(characterDto,false);
+//        log.info("systemDto: "+systemDto);
+//
+//        return time;
+//    }
+//    @PostMapping("/seconds_advance")
+//    public LocalTime secondsAdvance(@RequestParam(name = "characterId") Long characterId, @RequestParam(name = "slim") LocalDateTime slim) throws BusinessRuleException, UnknownHostException, MessagingException {
+//        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+//        SystemEntity system = systemMapper.fromOptional(optSystem);
+//        SystemDto systemDto = systemMapper.toDto(system);
+//
+//        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+//        LocalTime time = systemService.getEducationEndTime(characterDto,true);
+//        characterDto = systemService.setTimeSlim(characterDto, slim);
+//        systemService.updateCharacter(characterDto);
+//        system = systemService.plusSystems(characterDto,time);
+//        system.setPa(5);
+//        systemRepository.save(system);
+//        return time;
+//    }
+//
+//    @PostMapping("/weeckend")
+//    public void weeckendAdvance(@RequestParam(name = "characterId") Long characterId, @RequestParam(name = "slim") LocalDateTime slim) throws BusinessRuleException, UnknownHostException, MessagingException {
+//        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+//        SystemEntity system = systemMapper.fromOptional(optSystem);
+//        SystemDto systemDto = systemMapper.toDto(system);
+//
+//        CharacterDto characterDto = businessTransactions.getPerson(systemDto.getUid());
+//        LocalDateTime actuality = system.getActualityAt();
+//        LocalTime at8 = LocalTime.from(LocalDateTime.of(actuality.toLocalDate(), LocalTime.of(10, 0)));
+//        system = systemService.plusSystems(characterDto,at8);
+//        system.setPa(5);
+//        systemRepository.save(system);
+//
+//        LocalDateTime actualityDateTime = systemDto.getActualityAt();
+//        LocalTime actualityAt = actualityDateTime.toLocalTime();
+//
+//        // Calcular diferencia en minutos considerando el cambio de día
+//        long minutesDifference;
+//        if (at8.isBefore(actualityAt)) {
+//            minutesDifference = Duration.between(actualityAt, LocalTime.MIDNIGHT).toMinutes()
+//                    + Duration.between(LocalTime.MIDNIGHT, at8).toMinutes();
+//        } else {
+//            minutesDifference = Duration.between(actualityAt, at8).toMinutes();
+//        }
+//
+//        long hoursDifference = minutesDifference / 60;
+//        long result = hoursDifference * 10;
+//        long resultStress = hoursDifference * 2;
+//        int absoluteResult = Math.toIntExact(Math.abs(result));
+//        int absoluteResultStress = Math.toIntExact(Math.abs(resultStress));
+//
+//        // Actualizar estadísticas
+//        characterDto.getStats().setEnergy(Math.min(100, characterDto.getStats().getEnergy() + absoluteResult));
+//        if(characterDto.getStats().getStress() > 60){
+//            characterDto.getStats().setStress(50);
+//        } else {
+//            characterDto.getStats().setStress(20);
+//        }
+//
+//        characterDto = businessTransactions.updatePerson(characterDto);
+//
+//    }
     @GetMapping("/processed-data")
     public void processedAdvance(@RequestParam(name = "characterId") Long characterId) throws BusinessRuleException, UnknownHostException, MessagingException {
         Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
@@ -277,6 +279,88 @@ public class SystemController {
         }
     }
 
+    /**
+     * Endpoint unificado para avanzar el tiempo
+     * POST /api/systems/advance
+     */
+    @PostMapping("/advance")
+    public ResponseEntity<TimeAdvanceResponseDTO> advance(@RequestBody TimeAdvanceRequestDTO request) {
+        log.info("POST /api/systems/advance - Tipo: {} - Personaje: {}",
+                request.getAdvanceType(), request.getCharacterId());
 
+        TimeAdvanceResponseDTO response = timeAdvanceService.advance(request);
+        return ResponseEntity.ok(response);
+    }
 
+    /**
+     * Endpoint legacy - mantener por compatibilidad
+     */
+    @PostMapping("/cero_advance")
+    public LocalTime ceroAdvancea(@RequestParam(name = "characterId") Long characterId) {
+        TimeAdvanceRequestDTO request = new TimeAdvanceRequestDTO();
+        request.setCharacterId(characterId);
+        request.setAdvanceType(EnumSystems.AdvanceType.NORMAL_DAY);
+        TimeAdvanceResponseDTO response = timeAdvanceService.advance(request);
+
+        return response.getNewActualityAt().toLocalTime();
+    }
+
+    @PostMapping("/weeckend")
+    public void weeckendAdvance(@RequestParam(name = "characterId") Long characterId) {
+        TimeAdvanceRequestDTO request = new TimeAdvanceRequestDTO();
+        request.setCharacterId(characterId);
+        request.setAdvanceType(EnumSystems.AdvanceType.WEEKEND);
+        timeAdvanceService.advance(request);
+    }
+    /**
+     * Obtiene información del día actual para un personaje
+     * GET /api/systems/day-info/{characterId}
+     */
+    @GetMapping("/day-info/{characterId}")
+    public ResponseEntity<DayInfoDTO> getDayInfo(@PathVariable(name = "characterId") Long characterId) {
+        log.info("GET /api/systems/day-info/{} - Obteniendo información del día", characterId);
+
+        // Obtener el sistema del personaje
+        Optional<SystemEntity> optSystem = systemService.getSystemById(characterId);
+        if (optSystem.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        SystemEntity system = optSystem.get();
+        LocalDateTime actualityAt = system.getActualityAt();
+        LocalDate currentDate = actualityAt.toLocalDate();
+
+        // 🔥 Determinar el día de la semana
+        java.time.DayOfWeek dayOfWeek = currentDate.getDayOfWeek();
+        int dayOfWeekNumber = dayOfWeek.getValue(); // 1=Lunes, 7=Domingo
+
+        // 🔥 CORRECCIÓN: Viernes (5), Sábado (6), Domingo (7) son fin de semana
+        boolean isWeekend = dayOfWeekNumber == 5 || dayOfWeekNumber == 6 || dayOfWeekNumber == 7;
+
+        // Obtener nombre del día en español
+        String dayName = systemService.getDayNameInSpanish(dayOfWeekNumber);
+
+        // Verificar si es vacaciones (ejemplo: del 25 junio al 10 septiembre)
+        boolean isVacation = systemService.isVacationPeriod(currentDate);
+
+        // Determinar la estación del año
+        String season = systemService.getSeason(currentDate);
+
+        // Determinar el clima (opcional, puedes poner uno fijo o aleatorio)
+        String weather = systemService.getRandomWeather();
+
+        DayInfoDTO dayInfo = DayInfoDTO.builder()
+                .dayName(dayName)
+                .dayOfWeek(dayOfWeekNumber)
+                .isWeekend(isWeekend)
+                .isVacation(isVacation)
+                .isHoliday(false) // Puedes implementar festivos si quieres
+                .season(season)
+                .weather(weather)
+                .build();
+
+        log.info("📅 Información del día: {} - ¿Fin de semana? {}", dayName, isWeekend);
+
+        return ResponseEntity.ok(dayInfo);
+    }
 }

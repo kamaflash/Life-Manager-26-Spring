@@ -10,11 +10,13 @@ import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
@@ -183,9 +185,6 @@ public class SystemServiceImpl implements SystemService {
 
         int hourPart = (int) hours; // Parte entera de las horas
         int minutePart = (int) ((hours - hourPart) * 60); // Convertimos la fracción a minutos
-
-
-
 
         return LocalTime.of(hourPart, minutePart);
     }
@@ -504,5 +503,82 @@ public class SystemServiceImpl implements SystemService {
         notification.setRead(false);
 
         businessTransactions.setNotifications(notification);
+    }
+
+    /**
+     * Obtiene el nombre del día en español
+     */
+    @Override
+    public String getDayNameInSpanish(int dayOfWeekNumber) {
+        switch (dayOfWeekNumber) {
+            case 1: return "Lunes";
+            case 2: return "Martes";
+            case 3: return "Miércoles";
+            case 4: return "Jueves";
+            case 5: return "Viernes";
+            case 6: return "Sábado";
+            case 7: return "Domingo";
+            default: return "Desconocido";
+        }
+    }
+
+    /**
+     * Verifica si la fecha está en periodo de vacaciones
+     * Vacaciones de verano: del 25 de junio al 10 de septiembre
+     */
+    @Override
+    public boolean isVacationPeriod(LocalDate date) {
+        int month = date.getMonthValue();
+        int day = date.getDayOfMonth();
+
+        // Verano: 25 junio (mes 6) hasta 10 septiembre (mes 9)
+        if ((month == 6 && day >= 25) ||
+                (month == 7) ||
+                (month == 8) ||
+                (month == 9 && day <= 9)) {
+            return true;
+        }
+
+        // Navidad: 20 diciembre al 7 enero
+        if ((month == 12 && day >= 20) ||
+                (month == 1 && day <= 7)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determina la estación del año según la fecha
+     */
+    @Override
+    public String getSeason(LocalDate date) {
+        int month = date.getMonthValue();
+        int day = date.getDayOfMonth();
+
+        // Primavera: 21 marzo - 20 junio
+        if ((month == 3 && day >= 21) || month == 4 || month == 5 || (month == 6 && day <= 20)) {
+            return "Primavera";
+        }
+        // Verano: 21 junio - 20 septiembre
+        if ((month == 6 && day >= 21) || month == 7 || month == 8 || (month == 9 && day <= 20)) {
+            return "Verano";
+        }
+        // Otoño: 21 septiembre - 20 diciembre
+        if ((month == 9 && day >= 21) || month == 10 || month == 11 || (month == 12 && day <= 20)) {
+            return "Otoño";
+        }
+        // Invierno: 21 diciembre - 20 marzo
+        return "Invierno";
+    }
+
+    /**
+     * Genera un clima aleatorio (opcional)
+     */
+    @Override
+    public String getRandomWeather() {
+        String[] weathers = {"☀️ Soleado", "⛅ Parcialmente nublado", "☁️ Nublado", "🌧️ Lluvioso", "⛈️ Tormenta", "🌫️ Niebla"};
+        Random random = new Random();
+        return weathers[random.nextInt(weathers.length)];
     }
 }

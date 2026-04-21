@@ -9,6 +9,7 @@ import com.pet.businessdomain.shareddto.dto.SystemDto;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.exceptions.BusinessRuleException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -34,4 +35,8 @@ public interface SystemService {
     void updateCharacter(CharacterDto character);
     SystemEntity plusSystems(CharacterDto character, LocalTime hours);
     CharacterDto setTimeSlim(CharacterDto character, LocalDateTime slim);
+    public String getRandomWeather();
+    String getSeason(LocalDate date);
+    boolean isVacationPeriod(LocalDate date);
+    String getDayNameInSpanish(int dayOfWeekNumber);
 }
