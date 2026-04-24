@@ -335,7 +335,7 @@ public class SystemController {
         int dayOfWeekNumber = dayOfWeek.getValue(); // 1=Lunes, 7=Domingo
 
         // 🔥 CORRECCIÓN: Viernes (5), Sábado (6), Domingo (7) son fin de semana
-        boolean isWeekend = dayOfWeekNumber == 5 || dayOfWeekNumber == 6 || dayOfWeekNumber == 7;
+        boolean isWeekend = dayOfWeekNumber == 5 || dayOfWeekNumber == 6;
 
         // Obtener nombre del día en español
         String dayName = systemService.getDayNameInSpanish(dayOfWeekNumber);
@@ -349,6 +349,22 @@ public class SystemController {
         // Determinar el clima (opcional, puedes poner uno fijo o aleatorio)
         String weather = systemService.getRandomWeather();
 
+        // ✨ NUEVA LÓGICA: Información de fin de mes
+        int currentDay = currentDate.getDayOfMonth();
+        int daysInMonth = currentDate.lengthOfMonth();
+        boolean isLastDayOfMonth = currentDay == daysInMonth;
+        boolean isLastWeekOfMonth = currentDay >= (daysInMonth - 6);
+        int daysUntilEndOfMonth = daysInMonth - currentDay;
+
+        // ✨ Para los últimos 3 días del mes (más específico)
+        boolean isLastThreeDays = currentDay >= (daysInMonth - 2);
+
+        // ✨ Porcentaje del mes completado
+        double monthProgress = (double) currentDay / daysInMonth * 100;
+
+        log.info("📅 Información del día: {} - ¿Fin de semana? {} - Día {}/{} - Restan {} días para fin de mes",
+                dayName, isWeekend, currentDay, daysInMonth, daysUntilEndOfMonth);
+
         DayInfoDTO dayInfo = DayInfoDTO.builder()
                 .dayName(dayName)
                 .dayOfWeek(dayOfWeekNumber)
@@ -357,9 +373,17 @@ public class SystemController {
                 .isHoliday(false) // Puedes implementar festivos si quieres
                 .season(season)
                 .weather(weather)
+                // ✨ Añadir nuevos campos
+                .currentDay(currentDay)
+                .currentMonth(currentDate.getMonthValue())
+                .currentYear(currentDate.getYear())
+                .daysInMonth(daysInMonth)
+                .isLastDayOfMonth(isLastDayOfMonth)
+                .isLastWeekOfMonth(isLastWeekOfMonth)
+                .isLastThreeDays(isLastThreeDays)
+                .daysUntilEndOfMonth(daysUntilEndOfMonth)
+                .monthProgress(monthProgress)
                 .build();
-
-        log.info("📅 Información del día: {} - ¿Fin de semana? {}", dayName, isWeekend);
 
         return ResponseEntity.ok(dayInfo);
     }

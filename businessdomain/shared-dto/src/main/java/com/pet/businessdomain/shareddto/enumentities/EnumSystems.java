@@ -9,8 +9,8 @@ public class EnumSystems {
         WORK_SHIFT("Avance turno de trabajo - próximamente"),
         STUDY_SESSION("Avance sesión de estudio - próximamente"),
         SLEEP("Avance dormir - próximamente"),
-        FAST_TRAVEL("Avance rápido - próximamente");
-
+        FAST_TRAVEL("Avance rápido - próximamente"),
+        MONTH_END("Fin de mes");
         private final String description;
 
         AdvanceType(String description) { this.description = description; }

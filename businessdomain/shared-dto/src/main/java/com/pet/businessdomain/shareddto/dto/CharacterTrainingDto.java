@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class CharacterTrainingDto {
+public class  CharacterTrainingDto {
 
     private Long id;
 

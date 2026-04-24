@@ -39,4 +39,5 @@ public interface SystemService {
     String getSeason(LocalDate date);
     boolean isVacationPeriod(LocalDate date);
     String getDayNameInSpanish(int dayOfWeekNumber);
+    void revisedData(CharacterDto character);
 }

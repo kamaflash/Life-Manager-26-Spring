@@ -119,9 +119,6 @@ public class EnumAll {
         EDUCATION,
         HEALTH,
         LEISURE,
-        OTHER
-    }
-    public enum IncomeCategory {
         SALARY,
         BUSINESS,
         INVESTMENT,

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 public class UpdateIncomeRequestDto {
     private String concept;
     private BigDecimal amount;
-    private EnumAll.IncomeCategory category;
+    private EnumAll.ExpenseCategory category;
     private EnumAll.Frequency frequency;
     private LocalDate endDate;
     private boolean active;

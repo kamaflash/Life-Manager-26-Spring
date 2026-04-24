@@ -120,14 +120,14 @@ public class TimeCalculator {
             Long productId = item.getProductId();
 
             switch (productId.intValue()) {
-                case 6:   // Coche
-                    return 20;
-                case 7:   // Moto
-                    return 15;
-                case 8:   // Bicicleta
+                case 6:   // Bicicleta
                     return 30;
-                case 9:   // Transporte público
+                case 7:   // Transporte público
                     return 45;
+                case 8:   // Moto
+                    return 15;
+                case 9:   // Coche
+                    return 20;
                 case 10:  // Caminando
                     return 60;
                 default:

@@ -281,8 +281,8 @@ public class SystemServiceImpl implements SystemService {
 
         return (int) Math.round((invested / durationHours) * 100);
     }
-
-    private void revisedData(CharacterDto character) {
+    @Override
+    public void revisedData(CharacterDto character) {
         // 1. Obtener todas las solicitudes de becas del personaje
         List<ScholarshipApplicationDto> applications = businessTransactions.getBecas(character.getId());
 
@@ -456,7 +456,7 @@ public class SystemServiceImpl implements SystemService {
             incomeDto.setExternalRefId(character.getId());
             incomeDto.setExternalRefType("SCHOLARSHIP");
             incomeDto.setActive(true);
-            incomeDto.setCategory(EnumAll.ExpenseCategory.EDUCATION);
+            incomeDto.setCategory(EnumAll.ExpenseCategory.SCHOLARSHIP);
             incomeDto.setAmount(scholarship.getAmount());
             incomeDto.setFrequency(EnumAll.Frequency.OTHER);
             incomeDto.setSource("Beca: " + scholarship.getTitle());

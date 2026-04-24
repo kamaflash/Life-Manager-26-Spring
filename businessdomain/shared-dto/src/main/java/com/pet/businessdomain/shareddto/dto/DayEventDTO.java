@@ -26,4 +26,5 @@ public class DayEventDTO {
 
     // Metadata adicional
     private java.util.Map<String, Object> metadata;
+    private int xpEarned;
 }

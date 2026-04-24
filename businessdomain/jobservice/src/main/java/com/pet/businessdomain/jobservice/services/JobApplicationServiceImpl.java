@@ -79,6 +79,10 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         result.setRecommendations(new ArrayList<>());
         CharacterDto characterDto = businessTransactions.getCharacter(saved.getCharacterId());
         setNotification(characterDto, saved, false);
+        SystemDto systemDto = businessTransactions.getSystem(characterDto.getId());
+        systemDto.setPa(systemDto.getPa()-2);
+        systemDto.setActualityAt(systemDto.getActualityAt().plusHours(2));
+        systemDto = businessTransactions.updateSystem(systemDto.getUid(),systemDto.getActualityAt(),2);
         return result;
     }
 
@@ -366,6 +370,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 log.info("Interview PASSED for application {} - Health: {}, Stress: {}",
                         application.getId(), characterDto.getStats().getHealth(), characterDto.getStats().getStress());
                 sendInterviewResultNotification(characterDto, application, true);
+                generateContract(application.getId());
             } else {
                 application.setStatus(EnumAll.ApplicationStatus.REJECTED);
                 application.setStage(EnumAll.ApplicationStage.APPLICATION);
@@ -696,10 +701,12 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         int requiredXp = getRequiredExperience(vacancy);
         if (characterXp >= requiredXp) {
             totalScore += 30;
+            if (requiredXp == 0) {
+                totalScore += 40;
+            }
         } else if (characterXp >= requiredXp * 0.7) {
             totalScore += 15;
         }
-
         maxScore += 20;
         StatsDto stats = character.getStats();
         if (stats != null) {

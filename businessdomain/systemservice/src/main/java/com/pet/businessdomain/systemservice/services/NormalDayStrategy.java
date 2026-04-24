@@ -1,6 +1,8 @@
 package com.pet.businessdomain.systemservice.services;
 
 import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.enumentities.EnumAll;
+import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import com.pet.businessdomain.shareddto.enumentities.EnumSystems;
 import com.pet.businessdomain.systemservice.entities.SystemEntity;
 import com.pet.businessdomain.systemservice.mapper.SystemMapper;
@@ -9,17 +11,21 @@ import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class NormalDayStrategy implements AdvanceStrategy {
-    public static final LocalTime SCHOOL_START_TIME = LocalTime.of(8, 0);  // 08:00 - Inicio de clases
-    public static final LocalTime SCHOOL_END_TIME = LocalTime.of(14, 0);   // 14:00 - Fin de clases
-    public static final int BASE_HOURS_PER_DAY = 6;
+    public static final int PA = 8;
+
     private final SystemRepository systemRepository;
     private final SystemMapper systemMapper;
     private final SystemService systemService;
@@ -33,8 +39,6 @@ public class NormalDayStrategy implements AdvanceStrategy {
         log.info("=== INICIANDO AVANCE DE DÍA NORMAL ===");
         log.info("Personaje ID: {}", request.getCharacterId());
 
-        List<DayEventDTO> events = new ArrayList<>();
-
         // 1. Obtener sistema y personaje
         SystemEntity system = systemRepository.findById(request.getCharacterId())
                 .orElseThrow(() -> new RuntimeException("System not found"));
@@ -44,72 +48,111 @@ public class NormalDayStrategy implements AdvanceStrategy {
         LocalDateTime currentDateTime = systemDto.getActualityAt();
         log.info("📅 Fecha/Hora actual: {}", currentDateTime);
 
-        // 2. Calcular horas de descanso (desde ahora hasta inicio de clases)
+        // 2. Verificar si tiene educación COMPLETADA (ids 104 o 105)
+        boolean hasCompletedEducation = checkCompletedEducation(character);
+
+        TimeAdvanceResponseDTO response;
+
+        if (hasCompletedEducation) {
+            log.info("🎓 Personaje tiene educación completada. Ejecutando lógica de TRABAJO.");
+            response = executeJobDay(request, system, character, currentDateTime);
+        } else {
+            log.info("📚 Personaje NO tiene educación completada. Ejecutando lógica de EDUCACIÓN.");
+            response = executeEducationDay(request, system, character, currentDateTime);
+        }
+
+        // 3. Procesar datos pendientes (esto incluye procesar aplicaciones de trabajo)
+        processPendingData(character);
+
+        return response;
+    }
+
+    /**
+     * Verifica si el personaje tiene educación completada con ids 104 o 105
+     */
+    private boolean checkCompletedEducation(CharacterDto character) {
+        if (character.getEducation() == null || character.getEducation().isEmpty()) {
+            return false;
+        }
+
+        List<Long> educationIds = List.of(104L, 105L);
+
+        return character.getEducation().stream()
+                .anyMatch(edu -> educationIds.contains(edu.getTrainingId())
+                        && edu.getStatus() != null
+                        && edu.getStatus().toString().equals("COMPLETED"));
+    }
+
+    /**
+     * Lógica para días de EDUCACIÓN
+     */
+    private TimeAdvanceResponseDTO executeEducationDay(TimeAdvanceRequestDTO request,
+                                                       SystemEntity system,
+                                                       CharacterDto character,
+                                                       LocalDateTime currentDateTime) {
+        List<DayEventDTO> events = new ArrayList<>();
+
+        // Calcular horas de descanso (desde ahora hasta inicio de clases)
         long restHours = timeCalculator.calculateRestHours(currentDateTime);
-        log.info("😴 Horas de descanso hasta inicio de clases: {} horas", restHours);
+        log.info("Horas de descanso hasta inicio de clases: {} horas", restHours);
 
-        // 3. Obtener minutos de viaje según vehículo
+        // Obtener minutos de viaje según vehículo
         int travelMinutes = timeCalculator.getTravelTimeMinutes(character);
-        log.info("🚗 Tiempo de viaje: {} minutos", travelMinutes);
+        log.info("Tiempo de viaje: {} minutos", travelMinutes);
 
-        // 4. Calcular hora de salida y llegada según vehículo
+        // Calcular hora de salida y llegada según vehículo
         LocalTime departureTime = timeCalculator.calculateDepartureTime(travelMinutes);
         LocalTime arrivalTime = timeCalculator.calculateArrivalTime(travelMinutes);
-        log.info("🚌 Salida de casa: {}, Llegada a casa: {}", departureTime, arrivalTime);
+        log.info("Salida de casa: {}, Llegada a casa: {}", departureTime, arrivalTime);
 
-        // 5. Calcular horas de estudio base
+        // Calcular horas de estudio base
         long studyHours = timeCalculator.getStudyHours();
-        log.info("📚 Horas de estudio base: {} horas", studyHours);
+        log.info("Horas de estudio base: {} horas", studyHours);
 
-        // ============================================================
-        // 🔥 NUEVO: Actualizar el progreso de la educación
-        // ============================================================
+        // Actualizar el progreso de la educación
         if (character.getEducation() != null && !character.getEducation().isEmpty()) {
             CharacterTrainingDto education = character.getEducation().get(0);
 
-            // Horas invertidas actuales + horas de estudio del día
             int currentInvestedHours = education.getInvestedHours() != null ? education.getInvestedHours() : 0;
             int newInvestedHours = currentInvestedHours + (int) studyHours;
             education.setInvestedHours(newInvestedHours);
-
-            // Calcular nuevo progreso basado en duración total del curso
-            int totalDuration = education.getInvestedHours() != null ? education.getInvestedHours() : 0;
+            FormationDto formationDto = businessTransactions.getFormation(education.getTrainingId());
+            int totalDuration = formationDto.getDurationHours() != null ? formationDto.getDurationHours() : 0;
             int newProgress = calculateProgress(totalDuration, newInvestedHours);
             education.setProgress(newProgress);
 
-            // Actualizar la educación
             businessTransactions.updateAppTrainning(education);
 
-            log.info("📚 Educación actualizada - Horas invertidas: {} → {}, Progreso: {}%",
+            log.info("Educación actualizada - Horas invertidas: {} → {}, Progreso: {}%",
                     currentInvestedHours, newInvestedHours, newProgress);
-
-            events.add(DayEventDTO.builder()
-                    .type("education")
-                    .title("📖 Progreso académico")
-                    .description(String.format("Has estudiado %d horas. Progreso: %d%%", studyHours, newProgress))
-                    .xpGained((int) (studyHours * 10)) // Ejemplo: 10 XP por hora
-                    .build());
         }
 
-        // 6. Calcular ganancias/pérdidas basadas en descanso y estudio
+        // Calcular ganancias/pérdidas basadas en descanso y estudio
         int energyGainFromRest = energyCalculator.calculateForRest(restHours);
         int energyCostFromStudy = energyCalculator.calculateForStudy(studyHours);
-        int totalEnergyChange = energyGainFromRest + energyCostFromStudy;
-
         int stressReductionFromRest = stressCalculator.calculateForRest(restHours);
         int stressIncreaseFromStudy = stressCalculator.calculateForStudy(studyHours);
-        int totalStressChange = stressReductionFromRest - stressIncreaseFromStudy;
 
-        log.info("⚡ Energía: +{} por descanso, {} por estudio = {} total",
-                energyGainFromRest, energyCostFromStudy, totalEnergyChange);
-        log.info("😰 Estrés: -{} por descanso, +{} por estudio = {} total",
-                stressReductionFromRest, stressIncreaseFromStudy, totalStressChange);
+        int currentEnergy = character.getStats().getEnergy();
+        int currentStress = character.getStats().getStress();
+
+        int energyAfterRest = Math.min(100, currentEnergy + energyGainFromRest);
+        int newEnergy = Math.max(0, energyAfterRest - Math.abs(energyCostFromStudy));
+        int stressAfterRest = Math.max(0, currentStress - stressReductionFromRest);
+        int newStress = Math.min(100, stressAfterRest + stressIncreaseFromStudy);
+        int totalEnergyChange = newEnergy - currentEnergy;
+        int totalStressChange = newStress - currentStress;
+
+        log.info("Energía: {} + {} descanso - {} estudio = {} ({}→{})",
+                currentEnergy, energyGainFromRest, Math.abs(energyCostFromStudy), newEnergy, currentEnergy, newEnergy);
+        log.info("Estrés: {} - {} descanso + {} estudio = {} ({}→{})",
+                currentStress, stressReductionFromRest, stressIncreaseFromStudy, newStress, currentStress, newStress);
 
         // Evento: Descanso nocturno
         if (restHours > 0) {
             events.add(DayEventDTO.builder()
                     .type("rest")
-                    .title("😴 Descanso nocturno")
+                    .title("Descanso nocturno")
                     .description(String.format("Has descansado %d horas", restHours))
                     .energyGain(energyGainFromRest)
                     .stressReduction(stressReductionFromRest)
@@ -126,7 +169,7 @@ public class NormalDayStrategy implements AdvanceStrategy {
         // Evento: Jornada de estudio
         events.add(DayEventDTO.builder()
                 .type("study")
-                .title("📚 Jornada de estudio")
+                .title("Jornada de estudio")
                 .description(String.format("Has estudiado %d horas (de %s a %s)",
                         studyHours, TimeCalculator.SCHOOL_START_TIME, TimeCalculator.SCHOOL_END_TIME))
                 .energyGain(energyCostFromStudy)
@@ -136,81 +179,262 @@ public class NormalDayStrategy implements AdvanceStrategy {
         // Evento: Desplazamiento a casa
         events.add(DayEventDTO.builder()
                 .type("travel")
-                .title("🏠 Regreso a casa")
+                .title("Regreso a casa")
                 .description(String.format("Llegas a casa a las %s", arrivalTime))
                 .build());
-
-        // 7. Actualizar estadísticas del personaje
-        int currentEnergy = character.getStats().getEnergy();
-        int currentStress = character.getStats().getStress();
-
-        int newEnergy = Math.min(100, Math.max(0, currentEnergy + totalEnergyChange));
-        int newStress = Math.min(100, Math.max(0, currentStress + totalStressChange));
 
         character.getStats().setEnergy(newEnergy);
         character.getStats().setStress(newStress);
         businessTransactions.updatePerson(character);
 
-        events.add(DayEventDTO.builder()
-                .type("stats")
-                .title("📊 Estadísticas actualizadas")
-                .description(String.format("Energía: %d%% → %d%% | Estrés: %d%% → %d%%",
-                        currentEnergy, newEnergy, currentStress, newStress))
-                .energyGain(totalEnergyChange)
-                .stressReduction(-totalStressChange)
-                .build());
-
-        // 8. ACTUALIZAR SISTEMA - Avanzar al siguiente día
-        LocalDateTime nextDaySchoolStart = currentDateTime
+        // Avanzar al siguiente día
+        LocalDateTime newActuality = currentDateTime
                 .plusDays(1)
-                .withHour(TimeCalculator.SCHOOL_START_TIME.getHour())
-                .withMinute(TimeCalculator.SCHOOL_START_TIME.getMinute())
-                .withSecond(0)
-                .withNano(0);
-
-        log.info("📆 Avanzando al inicio de clases: {}", nextDaySchoolStart);
-
-        LocalDateTime newActuality = nextDaySchoolStart
                 .withHour(arrivalTime.getHour())
                 .withMinute(arrivalTime.getMinute())
                 .withSecond(0)
                 .withNano(0);
 
-        log.info("📆 Nueva fecha/hora después de la jornada: {}", newActuality);
-
         // Actualizar sistema
         system.setActualityAt(newActuality);
         system.setUpdateAt(LocalDateTime.now());
         system.setVeces(system.getVeces() + 1);
-
-        // Restar 1 PA (NO resetear a 5)
-        int newPa = system.getPa() - 1;
-        system.setPa(Math.max(0, newPa));
-
+        system.setPa(PA);
         systemRepository.save(system);
 
         log.info("✅ Sistema actualizado - Nueva fecha: {}, PA restantes: {}", newActuality, system.getPa());
-        log.info("=== AVANCE COMPLETADO ===");
 
         events.add(DayEventDTO.builder()
                 .type("system")
-                .title("⏰ Tiempo avanzado")
+                .title("Tiempo avanzado")
                 .description(String.format("Has completado la jornada. Ahora son las %s del día %s",
                         arrivalTime, newActuality.toLocalDate()))
                 .build());
 
-        // 9. Procesar datos pendientes
-        processPendingData(character);
-
         return TimeAdvanceResponseDTO.builder()
                 .success(true)
-                .message(String.format("Jornada completada. Estudiado %d horas. Descansado %d horas.", studyHours, restHours))
+                .message(String.format("Jornada de estudio completada. Estudiado %d horas. Descansado %d horas.", studyHours, restHours))
                 .newActualityAt(newActuality)
                 .paRemaining(system.getPa())
                 .energyChange(totalEnergyChange)
                 .stressChange(totalStressChange)
                 .events(events)
                 .build();
+    }
+
+    /**
+     * Lógica para días de TRABAJO (COMPLETADA)
+     */
+    private TimeAdvanceResponseDTO executeJobDay(TimeAdvanceRequestDTO request,
+                                                 SystemEntity system,
+                                                 CharacterDto character,
+                                                 LocalDateTime currentDateTime) {
+        List<DayEventDTO> events = new ArrayList<>();
+
+        log.info("💼 EJECUTANDO LÓGICA DE TRABAJO");
+
+        // Obtener el trabajo activo del personaje
+        CharacterJobDTO activeJob = null;
+        if (character.getJobs() != null && !character.getJobs().isEmpty()) {
+            activeJob = character.getJobs().stream()
+                    .filter(job -> job.getActive() != null && job.getActive())
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        // Si no tiene trabajo activo, mostrar mensaje y avanzar
+        if (activeJob == null || activeJob.getVacancy() == null) {
+            log.warn("⚠️ Personaje sin trabajo activo válido");
+            events.add(DayEventDTO.builder()
+                    .type("warning")
+                    .title("⚠️ Sin trabajo activo")
+                    .description("No tienes un trabajo activo. Busca empleo para ganar dinero.")
+                    .build());
+
+            // Avanzar tiempo sin trabajar
+            LocalDateTime newActuality = currentDateTime.plusDays(1)
+                    .withHour(10)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+
+            system.setActualityAt(newActuality);
+            system.setUpdateAt(LocalDateTime.now());
+            system.setVeces(system.getVeces() + 1);
+            system.setPa(PA);
+            systemRepository.save(system);
+
+            return TimeAdvanceResponseDTO.builder()
+                    .success(true)
+                    .message("Día completado. No tienes trabajo activo.")
+                    .newActualityAt(newActuality)
+                    .paRemaining(system.getPa())
+                    .energyChange(0)
+                    .stressChange(0)
+                    .events(events)
+                    .build();
+        }
+
+        JobVacancyDTO vacancy = activeJob.getVacancy();
+        String jobTitle = activeJob.getPositionTitle();
+        String companyName = activeJob.getCompanyName();
+
+        // Obtener horario de trabajo de la vacante
+        LocalTime jobStartTime = vacancy.getStartTime() != null ? vacancy.getStartTime() : LocalTime.of(9, 0);
+        LocalTime jobEndTime = vacancy.getEndTime() != null ? vacancy.getEndTime() : LocalTime.of(17, 0);
+
+        // Calcular horas de trabajo
+        long workHours = java.time.Duration.between(jobStartTime, jobEndTime).toHours();
+        if (workHours <= 0) workHours = 8;
+
+        log.info("📊 Horario laboral: {} - {} ({} horas)", jobStartTime, jobEndTime, workHours);
+
+        // Calcular horas de descanso hasta el trabajo
+        LocalDateTime jobStartDateTime = currentDateTime.plusDays(1)
+                .withHour(jobStartTime.getHour())
+                .withMinute(jobStartTime.getMinute())
+                .withSecond(0)
+                .withNano(0);
+        long restHours = Math.max(0, java.time.Duration.between(currentDateTime, jobStartDateTime).toMinutes() / 60);
+
+        // Calcular cambios de energía y estrés
+        int energyGainFromRest = energyCalculator.calculateForRest(restHours);
+        int stressReductionFromRest = stressCalculator.calculateForRest(restHours);
+        int energyCostFromWork = energyCalculator.calculateForWork(workHours);
+        int stressIncreaseFromWork = stressCalculator.calculateForWork(workHours);
+
+        // Calcular ganancias diarias
+        int dailyEarnings = calculateDailyJobEarnings(activeJob, vacancy, workHours);
+
+        // Actualizar estadísticas
+        int currentEnergy = character.getStats().getEnergy();
+        int currentStress = character.getStats().getStress();
+
+        int energyAfterRest = Math.min(100, currentEnergy + energyGainFromRest);
+        int newEnergy = Math.max(0, energyAfterRest - Math.abs(energyCostFromWork));
+        int stressAfterRest = Math.max(0, currentStress - stressReductionFromRest);
+        int newStress = Math.min(100, stressAfterRest + stressIncreaseFromWork);
+
+        int totalEnergyChange = newEnergy - currentEnergy;
+        int totalStressChange = newStress - currentStress;
+
+        character.getStats().setEnergy(newEnergy);
+        character.getStats().setStress(newStress);
+
+        // Ingresar ganancias diarias
+        if (dailyEarnings > 0 && character.getAccounts() != null && !character.getAccounts().isEmpty()) {
+            SFinanceAccountResponseDto primaryAccount = character.getAccounts().get(0);
+            primaryAccount.setBalance(primaryAccount.getBalance().add(BigDecimal.valueOf(dailyEarnings)));
+            log.info("💰 Ganancia diaria añadida: {}€", dailyEarnings);
+        }
+
+        // Actualizar estadísticas del trabajo
+        if (activeJob.getPerformance() != null && activeJob.getPerformance() < 100) {
+            activeJob.setPerformance(Math.min(100, activeJob.getPerformance() + 1));
+        }
+        if (activeJob.getStressLevel() != null && activeJob.getStressLevel() > 0) {
+            activeJob.setStressLevel(Math.max(0, activeJob.getStressLevel() - 2));
+        }
+
+        businessTransactions.updatePerson(character);
+
+        // Avanzar tiempo al final del trabajo
+        LocalDateTime newActuality = currentDateTime.plusDays(1)
+                .withHour(jobEndTime.getHour())
+                .withMinute(jobEndTime.getMinute())
+                .withSecond(0)
+                .withNano(0);
+
+        system.setActualityAt(newActuality);
+        system.setUpdateAt(LocalDateTime.now());
+        system.setVeces(system.getVeces() + 1);
+        system.setPa(PA);
+        systemRepository.save(system);
+
+        // Crear eventos
+        if (restHours > 0) {
+            events.add(DayEventDTO.builder()
+                    .type("rest")
+                    .title("Descanso nocturno")
+                    .description(String.format("Has descansado %d horas antes de trabajar", restHours))
+                    .energyGain(energyGainFromRest)
+                    .stressReduction(stressReductionFromRest)
+                    .build());
+        }
+
+        events.add(DayEventDTO.builder()
+                .type("work_start")
+                .title("💼 Comenzando jornada laboral")
+                .description(String.format("Te diriges a trabajar como %s en %s a las %s",
+                        jobTitle, companyName, jobStartTime))
+                .build());
+
+        events.add(DayEventDTO.builder()
+                .type("work")
+                .title("💼 Jornada laboral completada")
+                .description(String.format("Has trabajado %d horas como %s en %s de %s a %s",
+                        workHours, jobTitle, companyName, jobStartTime, jobEndTime))
+                .energyGain(energyCostFromWork)
+                .stressReduction(-stressIncreaseFromWork)
+                .moneyEarned(dailyEarnings)
+                .build());
+
+        events.add(DayEventDTO.builder()
+                .type("system")
+                .title("⏰ Tiempo avanzado")
+                .description(String.format("Has completado tu jornada laboral. Ahora son las %s del día %s",
+                        jobEndTime, newActuality.toLocalDate()))
+                .build());
+
+        String message = String.format("Jornada laboral completada. Has ganado %d€ trabajando %d horas.",
+                dailyEarnings, workHours);
+
+        log.info("✅ Jornada laboral completada - Ganancia: {}€, Energía: {}→{}, Estrés: {}→{}",
+                dailyEarnings, currentEnergy, newEnergy, currentStress, newStress);
+
+        return TimeAdvanceResponseDTO.builder()
+                .success(true)
+                .message(message)
+                .newActualityAt(newActuality)
+                .paRemaining(system.getPa())
+                .energyChange(totalEnergyChange)
+                .stressChange(totalStressChange)
+                .events(events)
+                .build();
+    }
+
+    /**
+     * Calcula las ganancias diarias del trabajo
+     */
+    private int calculateDailyJobEarnings(CharacterJobDTO job, JobVacancyDTO vacancy, long workHours) {
+        BigDecimal annualSalary = job.getCurrentSalary();
+
+        if (annualSalary == null && vacancy != null) {
+            BigDecimal minSalary = vacancy.getMinSalary();
+            BigDecimal maxSalary = vacancy.getMaxSalary();
+            if (maxSalary != null && minSalary != null) {
+                annualSalary = minSalary.add(maxSalary).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+            } else if (minSalary != null) {
+                annualSalary = minSalary;
+            }
+        }
+
+        if (annualSalary == null) {
+            log.warn("No se pudo determinar salario, usando valor por defecto de 10€/hora");
+            return (int) (workHours * 10);
+        }
+
+        // Calcular días laborables por semana
+        List<EnumAll.WorkingDay> workingDays = vacancy.getWorkingDays();
+        int workingDaysCount = (workingDays != null && !workingDays.isEmpty()) ? workingDays.size() : 5;
+
+        // Salario diario = anual / 52 semanas / días por semana
+        BigDecimal weeklySalary = annualSalary.divide(BigDecimal.valueOf(52), 2, RoundingMode.HALF_UP);
+        BigDecimal dailySalary = weeklySalary.divide(BigDecimal.valueOf(workingDaysCount), 2, RoundingMode.HALF_UP);
+
+        log.info("💰 Salario diario calculado: {}€", dailySalary.intValue());
+
+        return dailySalary.intValue();
     }
 
     /**
@@ -222,16 +446,29 @@ public class NormalDayStrategy implements AdvanceStrategy {
         }
         int invested = investedHours != null ? investedHours : 0;
         int progress = (int) Math.round(((double) invested / totalDuration) * 100);
-        return Math.min(100, progress); // No superar 100%
+        return Math.min(100, progress);
     }
 
+    /**
+     * Procesa datos pendientes (aplicaciones, entrevistas, etc.)
+     * ✅ Usa los métodos existentes de BusinessTransactions
+     */
     private void processPendingData(CharacterDto character) {
         try {
-            log.info("📋 Procesando datos pendientes para personaje: {}", character.getId());
+            log.info("🔄 Procesando datos pendientes para personaje: {}", character.getId());
+
+            // Procesar entrevistas pendientes (método existente)
             businessTransactions.processPendingInterviews(character.getId());
+
+            // Procesar aplicaciones de trabajo (método existente - processedAdvance)
+            // Esto procesa automáticamente las aplicaciones con minMatchScore=70
             businessTransactions.processedAdvance(character.getId(), 70);
+
+            // Revisar datos del personaje
+            systemService.revisedData(character);
+
         } catch (Exception e) {
-            log.error("Error procesando datos pendientes: {}", e.getMessage());
+            log.error("Error procesando datos pendientes: {}", e.getMessage(), e);
         }
     }
 

@@ -108,6 +108,32 @@ public class BusinessTransactions {
             return null;
         }
     }
+    public FormationDto getFormation(Long formationId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-FORMATIONSERVICE/api/formations")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/{id}", formationId)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(FormationDto.class)
+                    .block(); // devuelve UserDto directamente
+
+        } catch (Exception e) {
+            System.err.println("Error fetching user: " + e.getMessage());
+            return null; // o lanza excepción, según tu diseño
+        }
+    }
     public CharacterTrainingDto getTrainning(Long id, Long trainingId) {
         try {
             WebClient webClient = webClientBuilder
@@ -354,5 +380,60 @@ public class BusinessTransactions {
                 .bodyToFlux(JobApplicationDTO.class)
                 .collectList()
                 .block();
+    }
+    public PayrollDTO createPayroll(PayrollDTO payrollDTO) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/payrolls")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/create")
+                    .bodyValue(payrollDTO)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from Systems service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(PayrollDTO.class)
+                    .block();
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    /**
+     * Marca una nómina como pagada
+     */
+    public PayrollDTO markPayrollAsPaid(Long payrollId, Long accountId) {
+        try {
+
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSSERVICE/api/payrolls")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/{id}/pay?accountId={accountId}", payrollId, accountId)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from Systems service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(PayrollDTO.class)
+                    .block();
+
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

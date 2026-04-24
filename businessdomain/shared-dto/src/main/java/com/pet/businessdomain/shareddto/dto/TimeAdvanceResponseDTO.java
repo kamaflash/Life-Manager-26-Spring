@@ -17,5 +17,6 @@ public class TimeAdvanceResponseDTO {
     private int stressChange;
     private Map<String, Integer> statChanges;
     private List<DayEventDTO> events;
+    private int xpEarned;
     private DayInfoDTO dayInfo;
 }
