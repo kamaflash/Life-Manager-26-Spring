@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import com.pet.businessdomain.systemservice.repository.SystemRepository;
 
+@Slf4j
 @Service
 public class BusinessTransactions {
     @Autowired
@@ -404,7 +406,11 @@ public class BusinessTransactions {
                     .block();
 
         } catch (Exception e) {
-            return null;
+            log.error("Error calling BUSINESSDOMAIN-JOBSERVICE /api/payrolls/create for payroll characterId={} jobId={}: {}",
+                    payrollDTO != null ? payrollDTO.getCharacterId() : null,
+                    payrollDTO != null ? payrollDTO.getJobId() : null,
+                    e.getMessage(), e);
+            throw e;
         }
     }
     /**
@@ -415,7 +421,7 @@ public class BusinessTransactions {
 
             WebClient webClient = webClientBuilder
                     .clientConnector(new ReactorClientHttpConnector(client))
-                    .baseUrl("http://BUSINESSDOMAIN-JOBSSERVICE/api/payrolls")
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/payrolls")
                     .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .build();
 
