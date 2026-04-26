@@ -1,6 +1,7 @@
 package com.pet.businessdomain.systemservice.services;
 
 import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.dto.IRPF.TaxDashboardDTO;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import com.pet.businessdomain.shareddto.enumentities.EnumSystems;
@@ -63,21 +64,21 @@ public class NormalDayStrategy implements AdvanceStrategy {
         }
 
         // 3. Procesar datos pendientes y obtener sus eventos
-        List<DayEventDTO> pendingEvents = new ArrayList<>();
-        processPendingData(character, pendingEvents);
+        List<DayEventDTO> pendingEvents = processPendingData(character);
 
-        // 4. COMBINAR los eventos de la respuesta con los eventos de datos pendientes
+        // 4. Procesar IRPF
+        processIRPFIfNeeded(character, currentDateTime, pendingEvents);
+
+        // 5. COMBINAR los eventos de la respuesta con los eventos de datos pendientes
         if (response.getEvents() != null) {
             response.getEvents().addAll(pendingEvents);
         } else {
-            // Si response no tiene eventos, crear una nueva lista
             List<DayEventDTO> allEvents = new ArrayList<>();
             if (response.getEvents() != null) {
                 allEvents.addAll(response.getEvents());
             }
             allEvents.addAll(pendingEvents);
 
-            // Reconstruir la respuesta con los eventos combinados
             response = TimeAdvanceResponseDTO.builder()
                     .success(response.isSuccess())
                     .message(response.getMessage())
@@ -205,12 +206,12 @@ public class NormalDayStrategy implements AdvanceStrategy {
         events.add(DayEventDTO.builder()
                 .type("study")
                 .title("Saliendo de clase")
-                .description(String.format("Has estudiado %d horas ",
-                        studyHours))
+                .description(String.format("Has estudiado %d horas ", studyHours))
                 .energyGain(energyCostFromStudy)
                 .stressReduction(-stressIncreaseFromStudy)
                 .date(String.format("%s", TimeCalculator.SCHOOL_END_TIME))
                 .build());
+
         // Evento: Desplazamiento a casa
         events.add(DayEventDTO.builder()
                 .type("travel")
@@ -221,6 +222,23 @@ public class NormalDayStrategy implements AdvanceStrategy {
 
         character.getStats().setEnergy(newEnergy);
         character.getStats().setStress(newStress);
+        character.getStats().setHappiness(character.getStats().getHappiness()-2);
+        character.getStats().setHealth(character.getStats().getHealth()-2);
+        character.setXpAcademy(character.getXpAcademy() + 1);
+
+        Integer levelObj = character.getLevel();
+        int level = levelObj != null ? levelObj : 1;
+        int xp = character.getXpAcademy() + character.getXpJobs();
+        if (xp >= level * 100) {
+            character.setLevel(level + 1);
+            events.add(DayEventDTO.builder()
+                    .type("level_up")
+                    .title("¡Subida de nivel!")
+                    .description(String.format("Has subido al nivel (%d)", character.getLevel()))
+                    .date(String.format("%s", arrivalTime))
+                    .build());
+        }
+
         businessTransactions.updatePerson(character);
 
         // Avanzar al siguiente día
@@ -239,14 +257,6 @@ public class NormalDayStrategy implements AdvanceStrategy {
         systemRepository.save(system);
 
         log.info("✅ Sistema actualizado - Nueva fecha: {}, PA restantes: {}", newActuality, system.getPa());
-
-//        events.add(DayEventDTO.builder()
-//                .type("system")
-//                .title("Tiempo avanzado")
-//                .description(String.format("Has completado la jornada. Ahora son las %s del día %s",
-//                        arrivalTime, newActuality.toLocalDate()))
-//                .date(String.format("%s", departureTime))
-//                .build());
 
         return TimeAdvanceResponseDTO.builder()
                 .success(true)
@@ -406,7 +416,6 @@ public class NormalDayStrategy implements AdvanceStrategy {
                 .description(String.format("Te diriges a trabajar como %s en %s a las %s",
                         jobTitle, companyName, jobStartTime))
                 .date(jobStartTime.toString())
-
                 .build());
 
         events.add(DayEventDTO.builder()
@@ -418,7 +427,6 @@ public class NormalDayStrategy implements AdvanceStrategy {
                 .stressReduction(-stressIncreaseFromWork)
                 .moneyEarned(dailyEarnings)
                 .date(jobEndTime.toString())
-
                 .build());
 
         events.add(DayEventDTO.builder()
@@ -427,7 +435,6 @@ public class NormalDayStrategy implements AdvanceStrategy {
                 .description(String.format("Has completado tu jornada laboral. Ahora son las %s del día %s",
                         jobEndTime, newActuality.toLocalDate()))
                 .date(jobEndTime.toString())
-
                 .build());
 
         String message = String.format("Jornada laboral completada. Has ganado %d€ trabajando %d horas.",
@@ -494,74 +501,283 @@ public class NormalDayStrategy implements AdvanceStrategy {
     }
 
     /**
-     * Procesa datos pendientes (aplicaciones, entrevistas, etc.)
-     * ✅ Usa los métodos existentes de BusinessTransactions
+     * Procesa datos pendientes y retorna eventos
      */
-    private void processPendingData(CharacterDto character, List<DayEventDTO> events) {
+    private List<DayEventDTO> processPendingData(CharacterDto character) {
+        List<DayEventDTO> events = new ArrayList<>();
+
         try {
             log.info("🔄 Procesando datos pendientes para personaje: {}", character.getId());
 
             // 1. Procesar entrevistas pendientes
-            Map<String, Object> interviewResp = businessTransactions.processPendingInterviews(character.getId());
-            log.info("Respuesta entrevistas: {}", interviewResp);
-
-            if (interviewResp != null && interviewResp.containsKey("interviews")) {
-                List<Map<String, Object>> interviews = (List<Map<String, Object>>) interviewResp.get("interviews");
-                if (interviews != null && !interviews.isEmpty()) {
-                    events.add(DayEventDTO.builder()
-                            .type("interview")
-                            .title("📅 ¡Nuevas entrevistas programadas!")
-                            .description(String.format("Tienes %d entrevista(s) pendiente(s). Revisa tu calendario.", interviews.size()))
-                            .build());
-                }
+            Map<String, Object> interviewResult = businessTransactions.processPendingInterviews(character.getId());
+            if (interviewResult != null && !interviewResult.isEmpty()) {
+                addInterviewEvents(events, interviewResult);
             }
 
-            // 2. Procesar aplicaciones de trabajo
-            Map<String, Object> advanceResp = businessTransactions.processedAdvance(character.getId(), 70);
-            log.info("Respuesta avance: {}", advanceResp);
-
-            if (advanceResp != null && advanceResp.containsKey("applications")) {
-                List<Map<String, Object>> applications = (List<Map<String, Object>>) advanceResp.get("applications");
-
-                if (applications != null && !applications.isEmpty()) {
-                    int acceptedCount = 0;
-                    int rejectedCount = 0;
-
-                    for (Map<String, Object> app : applications) {
-                        String status = (String) app.get("status");
-                        String jobTitle = (String) app.get("jobTitle");
-
-                        if ("ACCEPTED".equals(status)) {
-                            acceptedCount++;
-                            events.add(DayEventDTO.builder()
-                                    .type("job_application")
-                                    .title("🎯 ¡Postulación avanzada!")
-                                    .description(String.format("Tu postulación para '%s' ha pasado a la fase de entrevista.", jobTitle))
-                                    .build());
-                        } else if ("REJECTED".equals(status)) {
-                            rejectedCount++;
-                        }
-                    }
-
-                    if (acceptedCount > 0) {
-                        log.info("✅ {} postulaciones aceptadas", acceptedCount);
-                    }
-                    if (rejectedCount > 0) {
-                        log.info("❌ {} postulaciones rechazadas", rejectedCount);
-                    }
-                }
+            // 2. Procesar avance de aplicaciones
+            Map<String, Object> advanceResult = businessTransactions.processedAdvance(character.getId(), 70);
+            if (advanceResult != null && !advanceResult.isEmpty()) {
+                addAdvanceEvents(events, advanceResult);
             }
 
-            // 3. Revisar datos del personaje
+            // 3. Procesar contratos pendientes
+            Map<String, Object> contractResult = businessTransactions.processPendingContracts(character.getId());
+            if (contractResult != null && !contractResult.isEmpty()) {
+                addContractEvents(events, contractResult);
+            }
+
+            // 4. Revisar datos del personaje
             systemService.revisedData(character);
 
         } catch (Exception e) {
             log.error("Error procesando datos pendientes: {}", e.getMessage(), e);
+            events.add(DayEventDTO.builder()
+                    .type("error")
+                    .title("⚠️ Error en procesamiento")
+                    .description("Ha ocurrido un error al procesar datos pendientes: " + e.getMessage())
+                    .build());
+        }
+
+        return events;
+    }
+
+    /**
+     * Añade eventos basados en resultados de entrevistas
+     */
+    private void addInterviewEvents(List<DayEventDTO> events, Map<String, Object> interviewResult) {
+        int totalProcessed = (int) interviewResult.getOrDefault("totalProcessed", 0);
+        int passed = (int) interviewResult.getOrDefault("passed", 0);
+        int failed = (int) interviewResult.getOrDefault("failed", 0);
+
+        if (totalProcessed > 0) {
+            if (passed > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("interview_passed")
+                        .title("🎉 ¡Entrevista superada!")
+                        .description(String.format("Has superado %d entrevista(s). ¡Pronto recibirás las ofertas!", passed))
+                        .build());
+            }
+
+            if (failed > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("interview_failed")
+                        .title("😔 Entrevista no superada")
+                        .description(String.format("No has superado %d entrevista(s). Sigue preparándote para las próximas.", failed))
+                        .build());
+            }
+
+            events.add(DayEventDTO.builder()
+                    .type("interview_summary")
+                    .title("📊 Resumen de entrevistas")
+                    .description(String.format("Entrevistas procesadas: %d | Aprobadas: %d | Rechazadas: %d",
+                            totalProcessed, passed, failed))
+                    .build());
+        }
+    }
+
+    /**
+     * Añade eventos basados en resultados de avance de aplicaciones
+     */
+    private void addAdvanceEvents(List<DayEventDTO> events, Map<String, Object> advanceResult) {
+        int totalProcessed = (int) advanceResult.getOrDefault("totalProcessed", 0);
+        int accepted = (int) advanceResult.getOrDefault("accepted", 0);
+        int rejected = (int) advanceResult.getOrDefault("rejected", 0);
+
+        if (totalProcessed > 0) {
+            if (accepted > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("application_accepted")
+                        .title("📝 ¡Postulación avanzada!")
+                        .description(String.format("%d de tus postulaciones han pasado a la siguiente fase.", accepted))
+                        .build());
+            }
+
+            if (rejected > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("application_rejected")
+                        .title("📝 Postulación no seleccionada")
+                        .description(String.format("%d de tus postulaciones no cumplen los requisitos mínimos.", rejected))
+                        .build());
+            }
+        }
+    }
+
+    /**
+     * Añade eventos basados en resultados de generación de contratos
+     */
+    private void addContractEvents(List<DayEventDTO> events, Map<String, Object> contractResult) {
+        int totalProcessed = (int) contractResult.getOrDefault("totalProcessed", 0);
+        int contractsGenerated = (int) contractResult.getOrDefault("contractsGenerated", 0);
+
+        if (contractsGenerated > 0) {
+            events.add(DayEventDTO.builder()
+                    .type("contract_generated")
+                    .title("📄 ¡Nuevo contrato recibido!")
+                    .description(String.format("Se ha generado %d contrato(s). ¡Revisa tus ofertas y acepta el que más te guste!", contractsGenerated))
+                    .build());
+        }
+
+        if (totalProcessed > 0 && contractsGenerated == 0) {
+            int alreadyHaveContract = (int) contractResult.getOrDefault("alreadyHaveContract", 0);
+            if (alreadyHaveContract > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("contract_info")
+                        .title("ℹ️ Contratos actualizados")
+                        .description("Tus contratos ya están actualizados. Revisa el estado en tu panel.")
+                        .build());
+            }
         }
     }
 
     @Override
     public EnumSystems.AdvanceType getType() {
         return EnumSystems.AdvanceType.NORMAL_DAY;
+    }
+
+    /**
+     * Verifica y procesa la declaración de IRPF si corresponde
+     */
+    private void processIRPFIfNeeded(CharacterDto character, LocalDateTime currentDateTime, List<DayEventDTO> events) {
+        try {
+            int currentYear = currentDateTime.getYear();
+            int previousYear = currentYear - 1;
+
+            log.info("💰 Verificando declaración IRPF para año: {}", previousYear);
+
+            Boolean isTaxPeriodActive = businessTransactions.isTaxPeriodActive();
+            if (isTaxPeriodActive == null || !isTaxPeriodActive) {
+                log.info("No hay período fiscal activo para presentar declaración");
+                return;
+            }
+
+            TaxDashboardDTO dashboard = businessTransactions.getTaxDashboard(character.getId(), previousYear);
+            if (dashboard == null) {
+                log.info("No se pudo obtener información fiscal para el personaje");
+                return;
+            }
+
+            if (dashboard.getEstimatedResult() != null) {
+                log.info("El personaje ya tiene información fiscal para el año {}", previousYear);
+                return;
+            }
+
+            Map<String, Object> filing = businessTransactions.createOrUpdateTaxFilingDraft(character.getId(), previousYear);
+            if (filing == null) {
+                log.warn("No se pudo obtener/crear borrador de declaración");
+                return;
+            }
+
+            Long filingId = extractLongFromMap(filing, "id");
+            String resultType = extractStringFromMap(filing, "resultType");
+            BigDecimal amount = extractBigDecimalFromMap(filing, "amountToPay");
+
+            if ("TO_RECEIVE".equals(resultType)) {
+                amount = extractBigDecimalFromMap(filing, "amountToReceive");
+            }
+
+            if (filingId == null) {
+                log.warn("No se pudo obtener filingId del borrador");
+                return;
+            }
+
+            if (character.getAccounts() != null && !character.getAccounts().isEmpty()) {
+                Long accountId = character.getAccounts().get(0).getId();
+
+                Map<String, Object> submittedFiling = businessTransactions.submitTaxFiling(filingId, character.getId());
+
+                if (submittedFiling != null) {
+                    boolean processed = false;
+
+                    if ("TO_PAY".equals(resultType) && amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+                        Map<String, Object> paymentResult = businessTransactions.processTaxPayment(filingId, accountId, true);
+                        processed = paymentResult != null;
+                        if (processed) {
+                            SFinanceAccountResponseDto primaryAccount = character.getAccounts().get(0);
+                            primaryAccount.setBalance(primaryAccount.getBalance().subtract(amount));
+                            addTaxEvent(events, "TO_PAY", amount, previousYear);
+                            log.info("✅ IRPF: Pago de {}€ procesado", amount);
+                        }
+                    } else if ("TO_RECEIVE".equals(resultType) && amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+                        Map<String, Object> refundResult = businessTransactions.processTaxRefund(filingId, accountId);
+                        processed = refundResult != null;
+                        if (processed) {
+                            SFinanceAccountResponseDto primaryAccount = character.getAccounts().get(0);
+                            primaryAccount.setBalance(primaryAccount.getBalance().add(amount));
+                            addTaxEvent(events, "TO_RECEIVE", amount, previousYear);
+                            log.info("✅ IRPF: Devolución de {}€ recibida", amount);
+                        }
+                    } else if ("NEUTRAL".equals(resultType)) {
+                        addTaxEvent(events, "NEUTRAL", BigDecimal.ZERO, previousYear);
+                        processed = true;
+                    }
+
+                    if (processed) {
+                        businessTransactions.updatePerson(character);
+                    }
+                }
+            } else {
+                if ("TO_PAY".equals(resultType) && amount != null) {
+                    events.add(DayEventDTO.builder()
+                            .type("tax_warning")
+                            .title("⚠️ Declaración de la Renta Pendiente")
+                            .description(String.format("Tienes un pago pendiente de %,.2f € de la renta del año %d. Configura una cuenta bancaria.", amount, previousYear))
+                            .build());
+                } else if ("TO_RECEIVE".equals(resultType) && amount != null) {
+                    events.add(DayEventDTO.builder()
+                            .type("tax_warning")
+                            .title("💰 Devolución de la Renta Disponible")
+                            .description(String.format("Tienes %,.2f € por devolver de la renta del año %d. Configura una cuenta bancaria.", amount, previousYear))
+                            .build());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error procesando IRPF: {}", e.getMessage(), e);
+        }
+    }
+
+    private void addTaxEvent(List<DayEventDTO> events, String resultType, BigDecimal amount, int year) {
+        if ("TO_PAY".equals(resultType)) {
+            events.add(DayEventDTO.builder()
+                    .type("tax_payment")
+                    .title("💰 Declaración de la Renta - Pago Realizado")
+                    .description(String.format("Has pagado %,.2f € de IRPF del año %d.", amount, year))
+                    .moneyEarned(amount != null ? amount.intValue() : 0)
+                    .build());
+        } else if ("TO_RECEIVE".equals(resultType)) {
+            events.add(DayEventDTO.builder()
+                    .type("tax_refund")
+                    .title("🎉 Declaración de la Renta - Devolución Recibida")
+                    .description(String.format("Has recibido %,.2f € de devolución del IRPF del año %d.", amount, year))
+                    .moneyEarned(amount != null ? amount.intValue() : 0)
+                    .build());
+        } else {
+            events.add(DayEventDTO.builder()
+                    .type("tax_neutral")
+                    .title("📄 Declaración de la Renta - Regularizada")
+                    .description(String.format("Tu declaración del año %d ha sido regularizada sin deuda ni devolución.", year))
+                    .build());
+        }
+    }
+
+    private Long extractLongFromMap(Map<String, Object> map, String key) {
+        if (map == null || !map.containsKey(key)) return null;
+        Object value = map.get(key);
+        if (value instanceof Number) return ((Number) value).longValue();
+        return null;
+    }
+
+    private String extractStringFromMap(Map<String, Object> map, String key) {
+        if (map == null || !map.containsKey(key)) return null;
+        Object value = map.get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    private BigDecimal extractBigDecimalFromMap(Map<String, Object> map, String key) {
+        if (map == null || !map.containsKey(key)) return null;
+        Object value = map.get(key);
+        if (value instanceof BigDecimal) return (BigDecimal) value;
+        if (value instanceof Number) return BigDecimal.valueOf(((Number) value).doubleValue());
+        return null;
     }
 }

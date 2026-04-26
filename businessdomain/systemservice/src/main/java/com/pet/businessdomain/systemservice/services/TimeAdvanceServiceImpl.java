@@ -22,97 +22,94 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TimeAdvanceServiceImpl implements TimeAdvanceService {
 
     private Map<EnumSystems.AdvanceType, AdvanceStrategy> strategies;
+
     private final SystemRepository systemRepository;
     private final SystemMapper systemMapper;
     private final MonthEndStrategy monthEndStrategy;
     private final WeekendStrategy weekendStrategy;
     private final NormalDayStrategy normalDayStrategy;
-    private final List<AdvanceStrategy> strategyList;  // ← Para inyectar todas las estrategias
-
-    // Constructor con todas las dependencias
-    public TimeAdvanceServiceImpl(SystemRepository systemRepository,
-                                  SystemMapper systemMapper,
-                                  MonthEndStrategy monthEndStrategy,
-                                  WeekendStrategy weekendStrategy,
-                                  NormalDayStrategy normalDayStrategy,
-                                  List<AdvanceStrategy> strategyList) {
-        this.systemRepository = systemRepository;
-        this.systemMapper = systemMapper;
-        this.monthEndStrategy = monthEndStrategy;
-        this.weekendStrategy = weekendStrategy;
-        this.normalDayStrategy = normalDayStrategy;
-        this.strategyList = strategyList;
-    }
+    private final List<AdvanceStrategy> strategyList;
 
     @PostConstruct
     public void init() {
-        // Inicializar el mapa de estrategias después de que Spring inyecte todo
         strategies = new EnumMap<>(EnumSystems.AdvanceType.class);
         for (AdvanceStrategy strategy : strategyList) {
             strategies.put(strategy.getType(), strategy);
         }
         log.info("Estrategias cargadas: {}", strategies.keySet());
     }
+
     @Override
     public TimeAdvanceResponseDTO advance(TimeAdvanceRequestDTO request) {
         log.info("Avanzando tiempo - Tipo: {} - Personaje: {}",
                 request.getAdvanceType(), request.getCharacterId());
 
-        // Verificar si es fin de mes y el tipo es NORMAL_DAY
-        if (request.getAdvanceType() == EnumSystems.AdvanceType.NORMAL_DAY && isLastDayOfMonth(request)) {
-            log.info("📅 Es fin de mes, ejecutando estrategia compuesta...");
+        // Verificar si es fin de mes (último día del mes actual)
+        if (isLastDayOfMonth(request)) {
+            log.info("📅 Es el último día del mes, ejecutando estrategia compuesta...");
             return executeMonthEndComposite(request);
         }
 
-        // Comportamiento normal
+        // Comportamiento normal (no es fin de mes)
         AdvanceStrategy strategy = strategies.get(request.getAdvanceType());
         if (strategy == null) {
-            throw new IllegalArgumentException("No strategy found for type: " + request.getAdvanceType());
+            log.warn("No se encontró estrategia para tipo: {}, usando NORMAL_DAY", request.getAdvanceType());
+            strategy = normalDayStrategy;
         }
 
         return strategy.execute(request);
     }
 
     /**
-     * Ejecuta la estrategia compuesta: primero fin de mes, luego el día correspondiente
+     * Ejecuta la estrategia compuesta cuando es el último día del mes
      */
     private TimeAdvanceResponseDTO executeMonthEndComposite(TimeAdvanceRequestDTO request) {
-        log.info("=== EJECUTANDO ESTRATEGIA COMPUESTA: FIN DE MES + DÍA SIGUIENTE ===");
+        log.info("=== EJECUTANDO ESTRATEGIA COMPUESTA DE FIN DE MES ===");
 
-        // 1. Ejecutar estrategia de fin de mes
+        // Obtener la fecha actual para saber qué tipo de día es (normal o fin de semana)
+        SystemEntity system = systemRepository.findById(request.getCharacterId())
+                .orElseThrow(() -> new RuntimeException("System not found"));
+        SystemDto systemDto = systemMapper.toDto(system);
+        LocalDateTime currentDateTime = systemDto.getActualityAt();
+
+        boolean isWeekend = isWeekend(currentDateTime);
+
+        log.info("📅 Fecha actual (último día del mes): {} - {}",
+                currentDateTime.toLocalDate(),
+                isWeekend ? "FIN DE SEMANA" : "DÍA NORMAL");
+
+        // 1. Primero ejecutar la estrategia de fin de mes (cierre, nóminas, etc.)
+        log.info("📊 1. Ejecutando cierre de mes...");
         TimeAdvanceResponseDTO monthEndResponse = monthEndStrategy.execute(request);
 
         if (!monthEndResponse.isSuccess()) {
-            log.error("❌ Falló la ejecución del fin de mes");
+            log.error("❌ Falló el cierre de mes");
             return monthEndResponse;
         }
 
-        log.info("✅ Fin de mes completado. Nueva fecha: {}", monthEndResponse.getNewActualityAt());
+        // 2. Luego ejecutar la estrategia del día actual (NormalDay o Weekend) para avanzar al día siguiente
+        log.info("➡️ 2. Ejecutando estrategia del día actual para avanzar...");
 
-        // 2. Determinar qué tipo de día es después del fin de mes
-        LocalDateTime afterMonthEnd = monthEndResponse.getNewActualityAt();
-        boolean isWeekend = isWeekend(afterMonthEnd);
+        TimeAdvanceRequestDTO dayRequest = TimeAdvanceRequestDTO.builder()
+                .characterId(request.getCharacterId())
+                .advanceType(isWeekend ? EnumSystems.AdvanceType.WEEKEND : EnumSystems.AdvanceType.NORMAL_DAY)
+                .forceAdvance(false)
+                .build();
 
-        log.info("📅 Después del fin de mes es {} - {}",
-                afterMonthEnd.toLocalDate(),
-                isWeekend ? "FIN DE SEMANA" : "DÍA NORMAL");
+        AdvanceStrategy dayStrategy = isWeekend ? weekendStrategy : normalDayStrategy;
+        TimeAdvanceResponseDTO dayResponse = dayStrategy.execute(dayRequest);
 
-        // 3. Crear nuevo request para el día siguiente
-        TimeAdvanceRequestDTO nextDayRequest = new TimeAdvanceRequestDTO();
-        nextDayRequest.setCharacterId(request.getCharacterId());
-        nextDayRequest.setAdvanceType(isWeekend ?
-                EnumSystems.AdvanceType.WEEKEND : EnumSystems.AdvanceType.NORMAL_DAY);
-        nextDayRequest.setForceAdvance(false);
+        // 3. Combinar resultados
+        TimeAdvanceResponseDTO combined = combineResponses(monthEndResponse, dayResponse);
 
-        // 4. Ejecutar la estrategia correspondiente
-        AdvanceStrategy nextDayStrategy = isWeekend ? weekendStrategy : normalDayStrategy;
-        TimeAdvanceResponseDTO dayResponse = nextDayStrategy.execute(nextDayRequest);
+        log.info("=== ESTRATEGIA COMPUESTA DE FIN DE MES COMPLETADA ===");
+        log.info("Nueva fecha: {}", combined.getNewActualityAt());
 
-        // 5. Combinar resultados
-        return combineResponses(monthEndResponse, dayResponse);
+        return combined;
     }
 
     /**
@@ -127,7 +124,6 @@ public class TimeAdvanceServiceImpl implements TimeAdvanceService {
             SystemDto systemDto = systemMapper.toDto(system);
             LocalDateTime currentDateTime = systemDto.getActualityAt();
 
-            // Verificar si es el último día del mes
             boolean isLastDay = currentDateTime.getDayOfMonth() ==
                     currentDateTime.toLocalDate().lengthOfMonth();
 
@@ -144,18 +140,12 @@ public class TimeAdvanceServiceImpl implements TimeAdvanceService {
         }
     }
 
-    /**
-     * Verifica si una fecha es fin de semana
-     */
     private boolean isWeekend(LocalDateTime date) {
         if (date == null) return false;
         DayOfWeek dayOfWeek = date.getDayOfWeek();
         return dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY;
     }
 
-    /**
-     * Combina las respuestas de dos estrategias
-     */
     private TimeAdvanceResponseDTO combineResponses(TimeAdvanceResponseDTO monthEnd,
                                                     TimeAdvanceResponseDTO day) {
         List<DayEventDTO> allEvents = new ArrayList<>();
@@ -170,26 +160,18 @@ public class TimeAdvanceServiceImpl implements TimeAdvanceService {
         // Agregar evento de transición
         allEvents.add(DayEventDTO.builder()
                 .type("system")
-                .title("🔄 Cierre de mes completado")
-                .description(String.format("Se ha procesado el cierre del mes y se ha avanzado al %s",
-                        day.getNewActualityAt().toLocalDate()))
+                .title("📆 Cierre de mes completado")
+                .description("Se ha procesado el cierre del mes y se ha avanzado al siguiente día.")
                 .build());
-
-        int totalEnergyChange = monthEnd.getEnergyChange() + day.getEnergyChange();
-        int totalStressChange = monthEnd.getStressChange() + day.getStressChange();
-        int totalXpEarned = monthEnd.getXpEarned() + day.getXpEarned();
-
-        String combinedMessage = String.format("%s | %s",
-                monthEnd.getMessage(), day.getMessage());
 
         return TimeAdvanceResponseDTO.builder()
                 .success(monthEnd.isSuccess() && day.isSuccess())
-                .message(combinedMessage)
+                .message(monthEnd.getMessage() + " | " + day.getMessage())
                 .newActualityAt(day.getNewActualityAt())
                 .paRemaining(day.getPaRemaining())
-                .energyChange(totalEnergyChange)
-                .stressChange(totalStressChange)
-                .xpEarned(totalXpEarned)
+                .energyChange(monthEnd.getEnergyChange() + day.getEnergyChange())
+                .stressChange(monthEnd.getStressChange() + day.getStressChange())
+                .xpEarned(monthEnd.getXpEarned() + day.getXpEarned())
                 .events(allEvents)
                 .build();
     }

@@ -38,7 +38,7 @@ public class CharacterJobServiceImpl implements CharacterJobService {
         JobApplicationEntity application = jobApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found with id: " + applicationId));
 
-        if (!EnumAll.ApplicationStatus.OFFERED.equals(application.getStatus())) {
+        if (!EnumAll.ApplicationStatus.CONTRACTED.equals(application.getStatus())) {
             throw new RuntimeException("Cannot start job: application not in OFFERED status");
         }
 

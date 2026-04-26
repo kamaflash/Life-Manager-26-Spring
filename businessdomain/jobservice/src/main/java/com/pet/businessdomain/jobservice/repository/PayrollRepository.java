@@ -53,5 +53,21 @@ public interface PayrollRepository extends JpaRepository<PayrollEntity, Long>,
     // JPQL: Nóminas pendientes de pago
     @Query("SELECT p FROM PayrollEntity p WHERE p.status = 'PENDING' AND p.paymentDate IS NULL ORDER BY p.year DESC, p.month DESC")
     List<PayrollEntity> findPendingPayrolls();
-}
 
+    @Query("SELECT p FROM PayrollEntity p WHERE p.characterId = :characterId AND p.year = :year AND p.status = 'PAID'")
+    List<PayrollEntity> findPaidByCharacterAndYear(@Param("characterId") Long characterId, @Param("year") Integer year);
+
+    @Query("SELECT SUM(p.baseSalary) FROM PayrollEntity p WHERE p.characterId = :characterId AND p.year = :year AND p.status = 'PAID'")
+    BigDecimal sumBaseSalaryByCharacterAndYear(@Param("characterId") Long characterId, @Param("year") Integer year);
+
+    @Query("SELECT DISTINCT p.characterId FROM PayrollEntity p WHERE p.year = :year AND p.status = 'PAID'")
+    List<Long> findDistinctCharacterIdsByYear(@Param("year") Integer year);
+
+    // CORREGIDO: Usar :status como parámetro en lugar de un valor fijo
+    @Query("SELECT p FROM PayrollEntity p WHERE p.year = :year AND p.status = :status")
+    List<PayrollEntity> findByYearAndStatus(@Param("year") Integer year, @Param("status") String status);
+
+    // Método adicional útil: nóminas pagadas por año (sin parámetro status)
+    @Query("SELECT p FROM PayrollEntity p WHERE p.year = :year AND p.status = 'PAID'")
+    List<PayrollEntity> findPaidByYear(@Param("year") Integer year);
+}

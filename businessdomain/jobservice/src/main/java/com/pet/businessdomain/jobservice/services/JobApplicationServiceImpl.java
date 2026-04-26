@@ -23,6 +23,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,7 +79,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         result.setMissingRequirements(new ArrayList<>());
         result.setRecommendations(new ArrayList<>());
         CharacterDto characterDto = businessTransactions.getCharacter(saved.getCharacterId());
-        setNotification(characterDto, saved, false);
+        setNotification(characterDto, saved, false,false);
         SystemDto systemDto = businessTransactions.getSystem(characterDto.getId());
         systemDto.setPa(systemDto.getPa()-2);
         systemDto.setActualityAt(systemDto.getActualityAt().plusHours(2));
@@ -283,7 +284,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 rejected++;
                 log.info("Application {} REJECTED with match score: {}", application.getId(), matchScore);
             }
-            setNotification(characterDto, application, true);
+            setNotification(characterDto, application, true, false);
             jobApplicationRepository.save(application);
             processedApplications.add(jobApplicationMapper.toDto(application));
         }
@@ -370,7 +371,6 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                 log.info("Interview PASSED for application {} - Health: {}, Stress: {}",
                         application.getId(), characterDto.getStats().getHealth(), characterDto.getStats().getStress());
                 sendInterviewResultNotification(characterDto, application, true);
-                generateContract(application.getId());
             } else {
                 application.setStatus(EnumAll.ApplicationStatus.REJECTED);
                 application.setStage(EnumAll.ApplicationStage.APPLICATION);
@@ -408,7 +408,275 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
         return result;
     }
+    /**
+     * Procesa entrevistas que fueron aprobadas (OFFERED) y tienen al menos 2 días de antigüedad
+     * para generarles el contrato automáticamente
+     */
+    public Map<String, Object> processPassedInterviewsToContract(Long characterId) {
+        log.info("Processing passed interviews to generate contracts for character: {}", characterId);
 
+        SystemDto systemDto = businessTransactions.getSystem(characterId);
+        LocalDate currentDate = systemDto.getActualityAt().toLocalDate();
+        LocalDate deadlineDate = currentDate.minusDays(2); // Hace 2 días o más
+
+        // Buscar aplicaciones con estado OFFERED y fecha de entrevista anterior a hace 2 días
+        List<JobApplicationEntity> passedApplications = jobApplicationRepository
+                .findByCharacterIdAndStatusAndInterviewDateBefore(
+                        characterId,
+                        EnumAll.ApplicationStatus.OFFERED,
+                        deadlineDate.atStartOfDay()
+                );
+
+        if (passedApplications.isEmpty()) {
+            log.info("No passed interviews found with interview date before: {}", deadlineDate);
+            Map<String, Object> result = new HashMap<>();
+            result.put("totalProcessed", 0);
+            result.put("message", "No hay entrevistas aprobadas con al menos 2 días de antigüedad para la fecha: " + currentDate);
+            return result;
+        }
+
+        CharacterDto characterDto = businessTransactions.getCharacter(characterId);
+        int contractsGenerated = 0;
+        int alreadyHaveContract = 0;
+        List<JobApplicationDTO> processedApplications = new ArrayList<>();
+
+        for (JobApplicationEntity application : passedApplications) {
+            log.info("Processing passed interview for application: {}", application.getId());
+
+            // Verificar si ya tiene un contrato generado (para evitar duplicados)
+            JobContractEntity existingContract = jobContractRepository
+                    .findByApplicationId(application.getId())
+                    .orElse(null);
+
+            if (existingContract != null) {
+                log.info("Application {} already has contract generated, skipping", application.getId());
+                alreadyHaveContract++;
+                processedApplications.add(jobApplicationMapper.toDto(application));
+                continue;
+            }
+
+            // Generar contrato
+            JobContractEntity contract = generateContractEntity(application, characterDto);
+
+            if (contract != null) {
+                jobContractRepository.save(contract);
+
+                // Actualizar estado de la aplicación a CONTRACTED
+                application.setStatus(EnumAll.ApplicationStatus.CONTRACTED);
+                application.setStage(EnumAll.ApplicationStage.CONTRACTED);
+                application.setInterviewNotes(application.getInterviewNotes() +
+                        " | Contrato generado automáticamente el " + LocalDateTime.now().toLocalDate());
+                jobApplicationRepository.save(application);
+
+                contractsGenerated++;
+                log.info("Contract generated for application {} - Contract ID: {}",
+                        application.getId(), contract.getId());
+
+                // Enviar notificación de contrato generado
+                sendContractGeneratedNotification(characterDto, application, contract);
+            }
+
+            processedApplications.add(jobApplicationMapper.toDto(application));
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalProcessed", passedApplications.size());
+        result.put("contractsGenerated", contractsGenerated);
+        result.put("alreadyHaveContract", alreadyHaveContract);
+        result.put("currentDate", currentDate);
+        result.put("deadlineDate", deadlineDate);
+        result.put("characterId", characterId);
+        result.put("applications", processedApplications);
+
+        log.info("Contracts processed - Total: {}, Generated: {}, Already have: {}",
+                passedApplications.size(), contractsGenerated, alreadyHaveContract);
+
+        return result;
+    }
+
+    /**
+     * Genera la entidad de contrato sin guardar
+     */
+    private JobContractEntity generateContractEntity(JobApplicationEntity application, CharacterDto character) {
+        try {
+            JobVacancyEntity vacancy = application.getVacancy();
+            if (vacancy == null) {
+                log.error("Vacancy not found for application: {}", application.getId());
+                return null;
+            }
+
+            JobPositionEntity position = vacancy.getPosition();
+            if (position == null) {
+                log.error("Position not found for vacancy: {}", vacancy.getId());
+                return null;
+            }
+
+            CompanyEntity company = position.getCompany();
+            if (company == null) {
+                log.error("Company not found for position: {}", position.getId());
+                return null;
+            }
+
+            // Calcular salario si no está definido
+            BigDecimal salary = application.getOfferedSalary();
+            BigDecimal minSalary = vacancy.getMinSalary();
+            BigDecimal maxSalary = vacancy.getMaxSalary();
+
+            if (salary == null && maxSalary != null && minSalary != null) {
+                salary = minSalary.add(maxSalary).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+            } else if (salary == null && minSalary != null) {
+                salary = minSalary;
+            } else if (salary == null) {
+                salary = BigDecimal.valueOf(24000);
+            }
+
+            BigDecimal monthlySalary = salary.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
+
+            // Fechas del contrato
+            LocalDate startDate = LocalDate.now().plusDays(7); // Empieza en 7 días
+            LocalDate endDate = vacancy.getContractType() == EnumAll.ContractType.INTERNSHIP
+                    ? startDate.plusMonths(6)
+                    : startDate.plusYears(1);
+
+            JobContractEntity contract = new JobContractEntity();
+
+            // Datos del contrato
+            contract.setContractNumber("CTR-" + System.currentTimeMillis() + "-" + application.getId());
+            contract.setIssuedAt(LocalDateTime.now());
+            contract.setValidUntil(LocalDateTime.now().plusDays(7));
+            contract.setStatus("PENDING");
+
+            // Datos del empleado
+            contract.setCharacterId(character.getId());
+            contract.setCharacterName(character.getName());
+            contract.setCharacterAge(character.getAge());
+
+            // Datos de la empresa
+            contract.setCompanyId(company.getId());
+            contract.setCompanyName(company.getName());
+            contract.setCompanyAddress(company.getLocation());
+            contract.setCompanyPhone(company.getPhone());
+            contract.setCompanyEmail(company.getContactEmail());
+            contract.setCompanyWebsite(company.getWebsite());
+
+            // Datos del puesto
+            contract.setPositionId(position.getId());
+            contract.setPositionTitle(position.getTitle());
+            contract.setPositionLevel(position.getLevel() != null ? position.getLevel().name() : null);
+            contract.setPositionCategory(position.getCategory());
+            contract.setPositionDescription(position.getDescription());
+
+            // Datos económicos
+            contract.setBaseSalary(salary);
+            contract.setMonthlySalary(monthlySalary);
+            contract.setExtraPayments(BigDecimal.valueOf(2)); // 2 pagas extra
+            contract.setSalaryCurrency("EUR");
+            contract.setVariableBonus(BigDecimal.ZERO);
+            contract.setSalaryPeriod("MONTHLY");
+
+            // Match score
+            contract.setMinSalaryRange(minSalary);
+            contract.setMaxSalaryRange(maxSalary);
+            contract.setSalaryCalculationNote("Salario calculado basado en la oferta de empleo y negociación");
+
+            // Jornada laboral
+            contract.setContractType(vacancy.getContractType() != null ? vacancy.getContractType().name() : null);
+            contract.setWorkModality(vacancy.getWorkModality() != null ? vacancy.getWorkModality().name() : null);
+            contract.setWeeklyHours(vacancy.getWeeklyHours());
+            contract.setStartTime(vacancy.getStartTime());
+            contract.setEndTime(vacancy.getEndTime());
+
+            // Días laborables
+            if (vacancy.getWorkingDays() != null) {
+                List<String> workingDays = new ArrayList<>();
+                for (EnumAll.WorkingDay day : vacancy.getWorkingDays()) {
+                    workingDays.add(day.name());
+                }
+                contract.setWorkingDays(workingDays);
+            }
+
+            // Beneficios
+            if (vacancy.getBenefits() != null) {
+                contract.setBenefits(new ArrayList<>(vacancy.getBenefits()));
+            }
+
+            // Condiciones laborales
+            contract.setStartDate(startDate);
+            contract.setEndDate(endDate);
+            contract.setProbationPeriod("3 meses");
+            contract.setTerminationNotice("15 días");
+
+            // Clausulas
+            contract.setConfidentialityClause("El empleado se compromete a mantener la confidencialidad de la información de la empresa durante y después de la relación laboral.");
+            contract.setExclusivityClause("El empleado no podrá trabajar para competidores directos durante la vigencia del contrato.");
+            contract.setIntellectualProperty("Toda la propiedad intelectual generada durante la relación laboral pertenecerá a la empresa.");
+
+            // Datos de la aplicación
+            contract.setApplicationId(application.getId());
+            contract.setInterviewDate(application.getInterviewDate());
+            contract.setContractGeneratedAt(LocalDateTime.now());
+
+            // Timestamps
+            contract.setCreatedAt(LocalDateTime.now());
+
+            log.info("Contract entity created for application: {}", application.getId());
+            return contract;
+
+        } catch (Exception e) {
+            log.error("Error creating contract entity for application {}: {}",
+                    application.getId(), e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Envía notificación de contrato generado
+     */
+    private void sendContractGeneratedNotification(CharacterDto character,
+                                                   JobApplicationEntity application, JobContractEntity contract) {
+        try {
+            NotificationDTO notification = new NotificationDTO();
+            notification.setUserId(character.getId());
+            notification.setFromUserId(character.getUid());
+            notification.setType(NotificationType.SYSTEM);
+            notification.setTitle("¡Contrato Generado! 📄");
+            notification.setSubTitle("Tu oferta de " + application.getVacancy().getPosition().getTitle() + " en " +
+                    application.getVacancy().getPosition().getCompany().getName());
+            notification.setMessage(String.format(
+                    "¡Felicidades! Te hacemos llegar el contrato para el puesto de %s en %s.\n\n" +
+                            "Salario: %.0f €/año\n" +
+                            "Jornada: %d horas/semana\n" +
+                            "Inicio: %s\n\n" +
+                            "Por favor, revisa los detalles y acepta el contrato para formalizar tu incorporación.",
+                    application.getVacancy().getPosition().getTitle(),
+                    application.getVacancy().getPosition().getCompany().getName(),
+                    contract.getBaseSalary(),
+                    contract.getWeeklyHours(),
+                    contract.getStartDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            ));
+            notification.setEventType(NotificationEventType.CONTRACT_GENERATED);
+            notification.setResourceType(NotificationResourceType.JOBS);
+            notification.setResourceId(contract.getId());
+            notification.setActionUrl("/jobs/contracts/" + contract.getId());
+            notification.setRead(false);
+            notification.setCreatedAt(LocalDateTime.now());
+
+            // Metadata adicional
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("contractId", contract.getId());
+            metadata.put("applicationId", application.getId());
+            metadata.put("companyName", application.getVacancy().getPosition().getCompany().getName());
+            metadata.put("positionTitle", application.getVacancy().getPosition().getTitle());
+            metadata.put("startDate", contract.getStartDate().toString());
+            metadata.put("salary", contract.getBaseSalary());
+
+            businessTransactions.setNotifications(notification);
+            log.info("Contract generated notification sent to character: {}", character.getId());
+
+        } catch (Exception e) {
+            log.error("Error sending contract notification: {}", e.getMessage(), e);
+        }
+    }
     @Override
     @Transactional
     public JobContractDTO generateContract(Long applicationId) {
@@ -556,7 +824,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     // ==================== MÉTODOS PRIVADOS ====================
 
-    private void setNotification(CharacterDto dto, JobApplicationEntity application, boolean isProcessed) {
+    private void setNotification(CharacterDto dto, JobApplicationEntity application, boolean isProcessed, boolean isContract) {
         NotificationDTO notificationDTO = new NotificationDTO();
 
         notificationDTO.setUserId(dto.getId());
@@ -566,7 +834,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         notificationDTO.setResourceId(application.getId());
         notificationDTO.setRead(false);
         notificationDTO.setActionUrl("/profile");
-
+        if (!isContract) {
         if (isProcessed) {
             if (application.getStatus() == EnumAll.ApplicationStatus.INTERVIEW_SCHEDULED) {
                 notificationDTO.setTitle("🎉 ¡Buenas noticias! Tu postulación ha avanzado");
@@ -596,6 +864,12 @@ public class JobApplicationServiceImpl implements JobApplicationService {
                     application.getMatchScore()
             ));
             notificationDTO.setEventType(NotificationEventType.JOB_APPLICATION_ACCEPTED);
+        }} else {
+            notificationDTO.setTitle("📄 ¡Nuevo contrato recibido!");
+            notificationDTO.setSubTitle("Tu contrato laboral está listo para revisar");
+            notificationDTO.setMessage(String.format(
+                    "¡Enhorabuena! Has recibido el contrato esperado. Revisaló en Solicitudes y Contratos"
+            ));
         }
 
         notificationDTO.setMetadata(String.format("""
@@ -1215,5 +1489,68 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         Page<JobContractEntity> contractsPage = jobContractRepository.findAll(spec, pageable);
 
         return contractsPage.map(this::convertToDTO);
+    }
+    public Map<String, Object> processAndGenerateContractsAfterDays(Long characterId, int daysToWait) {
+        log.info("Processing pending contracts for character: {} after {} days", characterId, daysToWait);
+
+        CharacterDto characterDto = businessTransactions.getCharacter(characterId);
+        SystemDto systemDto = businessTransactions.getSystem(characterDto.getUid());
+
+        LocalDateTime deadlineDate = systemDto.getActualityAt().minusDays(daysToWait);
+
+        List<JobApplicationEntity> applications = jobApplicationRepository
+                .findByCharacterIdAndStatusAndInterviewDateBefore(
+                        characterId,
+                        EnumAll.ApplicationStatus.OFFERED,
+                        deadlineDate);
+
+        Map<String, Object> result = new HashMap<>();
+
+        if (applications == null || applications.isEmpty()) {
+            result.put("success", true);
+            result.put("totalProcessed", 0);
+            result.put("contractsGenerated", 0);
+            result.put("message", "No hay aplicaciones pendientes de contrato");
+            return result;
+        }
+
+        List<Map<String, Object>> results = new ArrayList<>();
+        long contractsGenerated = 0;
+
+        for (JobApplicationEntity application : applications) {
+            Map<String, Object> appResult = new HashMap<>();
+            appResult.put("applicationId", application.getId());
+
+            try {
+                JobContractDTO contract = generateContract(application.getId());
+                if (contract != null) {
+                    application.setStatus(EnumAll.ApplicationStatus.CONTRACTED);
+                    application.setStage(EnumAll.ApplicationStage.HIRED);
+                    jobApplicationRepository.save(application);
+
+                    appResult.put("status", "SUCCESS");
+                    setNotification(characterDto, application, false,true);
+
+                    contractsGenerated++;
+                } else {
+                    appResult.put("status", "FAILED");
+                    appResult.put("message", "Error al generar contrato");
+                }
+            } catch (Exception e) {
+                appResult.put("status", "ERROR");
+                appResult.put("message", e.getMessage());
+            }
+            results.add(appResult);
+
+        }
+
+        result.put("success", true);
+        result.put("totalProcessed", applications.size());
+        result.put("contractsGenerated", contractsGenerated);
+        result.put("deadlineDate", deadlineDate);
+        result.put("characterId", characterId);
+        result.put("results", results);
+
+        return result;
     }
 }

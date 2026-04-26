@@ -2,13 +2,13 @@
 ---
 
 eureka:
-    client:
-        serviceUrl:
-            defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka}
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka}
 
 server:
   port:8080
-  
+
 spring:
   application:
     name: apigateway
@@ -21,137 +21,162 @@ spring:
           allowed-headers: "*"
           allow-credentials: true
       routes:
-      - id: user_full
-        uri: lb://businessdomain-userservice
-        predicates:
-          - Path=/api/users/full/**
-        filter:
-          - AuthenticationFiltering
+        - id: user_full
+          uri: lb://businessdomain-userservice
+          predicates:
+            - Path=/api/users/full/**
+          filter:
+            - AuthenticationFiltering
 
-      - id: user_service
-        uri: lb://businessdomain-userservice
-        predicates:
-        - Path=/api/users/**
+        - id: user_service
+          uri: lb://businessdomain-userservice
+          predicates:
+            - Path=/api/users/**
 
-      - id: person_service
-        uri: lb://businessdomain-personservice
-        predicates:
-        - Path=/api/characters/**
+        - id: person_service
+          uri: lb://businessdomain-personservice
+          predicates:
+            - Path=/api/characters/**
 
-      - id: system_service
-        uri: lb://businessdomain-systemservice
-        predicates:
-          - Path=/api/systems/**
+        - id: system_service
+          uri: lb://businessdomain-systemservice
+          predicates:
+            - Path=/api/systems/**
 
-      - id: formation_service_formations
-        uri: lb://businessdomain-formationservice
-        predicates:
-          - Path=/api/formations/**
+        - id: formation_service_formations
+          uri: lb://businessdomain-formationservice
+          predicates:
+            - Path=/api/formations/**
 
-      - id: formation_service_trainer
-        uri: lb://businessdomain-formationservice
-        predicates:
-          - Path=/api/trainer/**
+        - id: formation_service_trainer
+          uri: lb://businessdomain-formationservice
+          predicates:
+            - Path=/api/trainer/**
 
-      - id: formation_service_trainer
-        uri: lb://businessdomain-formationservice
-        predicates:
-          - Path=/api/scholarships/**
+        - id: formation_service_scholarships
+          uri: lb://businessdomain-formationservice
+          predicates:
+            - Path=/api/scholarships/**
 
-      - id: formation_service_trainer
-        uri: lb://businessdomain-formationservice
-        predicates:
-          - Path=/api/exams/**
+        - id: formation_service_exams
+          uri: lb://businessdomain-formationservice
+          predicates:
+            - Path=/api/exams/**
 
-      - id: formation_service_trainer
-        uri: lb://businessdomain-formationservice
-        predicates:
-          - Path=/api/character-exams/**
+        - id: formation_service_character_exams
+          uri: lb://businessdomain-formationservice
+          predicates:
+            - Path=/api/character-exams/**
 
-      - id: finances_service_trainer
-        uri: lb://businessdomain-financeservice
-        predicates:
-          - Path=/api/accounts/**
+        - id: finances_service_accounts
+          uri: lb://businessdomain-financeservice
+          predicates:
+            - Path=/api/accounts/**
 
-      - id: finances_service_trainer
-        uri: lb://businessdomain-financeservice
-        predicates:
-          - Path=/api/expenses/**
+        - id: finances_service_expenses
+          uri: lb://businessdomain-financeservice
+          predicates:
+            - Path=/api/expenses/**
 
-      - id: finances_service_trainer
-        uri: lb://businessdomain-financeservice
-        predicates:
-          - Path=/api/incomes/**
+        - id: finances_service_incomes
+          uri: lb://businessdomain-financeservice
+          predicates:
+            - Path=/api/incomes/**
 
-      - id: finances_service_trainer
-        uri: lb://businessdomain-financeservice
-        predicates:
-          - Path=/api/transactions/**
+        - id: finances_service_transactions
+          uri: lb://businessdomain-financeservice
+          predicates:
+            - Path=/api/transactions/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/character-jobs/**
+        - id: jobs_service_character_jobs
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/character-jobs/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/companies/**
+        - id: jobs_service_companies
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/companies/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/job-positions/**
+        - id: jobs_service_job_positions
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/job-positions/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/job-applications/**
+        - id: jobs_service_job_applications
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/job-applications/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/job-events/**
+        - id: jobs_service_job_events
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/job-events/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/job-vacancies/**
+        - id: jobs_service_job_vacancies
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/job-vacancies/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/work-relationships/**
+        - id: jobs_service_work_relationships
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/work-relationships/**
 
-      - id: jobs_service_trainer
-        uri: lb://businessdomain-jobservice
-        predicates:
-          - Path=/api/payrolls/**
+        - id: jobs_service_payrolls
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/payrolls/**
 
-      - id: products_service_trainer
-        uri: lb://businessdomain-productservice
-        predicates:
-          - Path=/api/products/**
+        - id: jobs_service_tax_withholdings
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/tax/withholdings/**
 
-      - id: products_service_trainer
-        uri: lb://businessdomain-productservice
-        predicates:
-          - Path=/api/inventory/**
+        - id: jobs_service_tax_filings
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/tax/filings/**
 
-      - id: notification_service
-        uri: lb://businessdomain-notificationservice
-        predicates:
-          - Path=/api/notifications/**
+        - id: jobs_service_tax_periods
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/tax/periods/**
 
-      - id: event_service_mission_templates
-        uri: lb://businessdomain-eventservice
-        predicates:
-          - Path=/api/events/**
+        - id: jobs_service_tax_notifications
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/tax/notifications/**
 
-      - id: event_service_event_templates
-        uri: lb://businessdomain-eventservice
-        predicates:
-          - Path=/api/missions/**
+        - id: jobs_service_tax_dashboard
+          uri: lb://businessdomain-jobservice
+          predicates:
+            - Path=/api/tax/dashboard/**
+
+        - id: products_service_products
+          uri: lb://businessdomain-productservice
+          predicates:
+            - Path=/api/products/**
+
+        - id: products_service_inventory
+          uri: lb://businessdomain-productservice
+          predicates:
+            - Path=/api/inventory/**
+
+        - id: notification_service
+          uri: lb://businessdomain-notificationservice
+          predicates:
+            - Path=/api/notifications/**
+
+        - id: event_service_events
+          uri: lb://businessdomain-eventservice
+          predicates:
+            - Path=/api/events/**
+
+        - id: event_service_missions
+          uri: lb://businessdomain-eventservice
+          predicates:
+            - Path=/api/missions/**
 
 logging:
   level:

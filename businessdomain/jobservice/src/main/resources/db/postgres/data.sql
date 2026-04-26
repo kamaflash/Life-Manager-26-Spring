@@ -268,3 +268,219 @@ INSERT INTO job_requirements (vacancy_id, type, skill_key, min_value, mandatory)
 (34, 'SKILL', 'communication', 2, true),
 (35, 'SKILL', 'office', 1, false),
 (35, 'EDUCATION', 'high_school', 1, false);
+
+-- ============================================
+-- IRPF - SOLO TABLAS (SIN FUNCIONES NI TRIGGERS)
+-- ============================================
+
+-- 5. TABLA DE RETENCIONES
+CREATE TABLE IF NOT EXISTS tax_withholdings (
+    id BIGSERIAL PRIMARY KEY,
+    payroll_id BIGINT NOT NULL,
+    character_id BIGINT NOT NULL,
+    account_id BIGINT,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    gross_income DECIMAL(12,2) NOT NULL,
+    irpf_rate DECIMAL(5,2) NOT NULL,
+    irpf_withheld DECIMAL(12,2) NOT NULL,
+    accumulated_tax_base DECIMAL(12,2),
+    accumulated_withheld DECIMAL(12,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_withholdings_character_year ON tax_withholdings(character_id, year);
+
+-- 6. TABLA DE DECLARACIONES
+CREATE TABLE IF NOT EXISTS tax_filings (
+    id BIGSERIAL PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    account_id BIGINT,
+    tax_year INTEGER NOT NULL,
+    total_gross_income DECIMAL(12,2) DEFAULT 0,
+    total_deductions DECIMAL(12,2) DEFAULT 0,
+    taxable_base DECIMAL(12,2) DEFAULT 0,
+    calculated_tax DECIMAL(12,2) DEFAULT 0,
+    total_withheld DECIMAL(12,2) DEFAULT 0,
+    result DECIMAL(12,2) DEFAULT 0,
+    result_type VARCHAR(20) DEFAULT 'DRAFT',
+    status VARCHAR(20) DEFAULT 'DRAFT',
+    filing_date DATE,
+    payment_deadline DATE,
+    amount_to_pay DECIMAL(12,2) DEFAULT 0,
+    amount_to_receive DECIMAL(12,2) DEFAULT 0,
+    payment_status VARCHAR(20) DEFAULT 'PENDING',
+    payment_fractionated BOOLEAN DEFAULT FALSE,
+    number_of_installments INTEGER,
+    installment_amount DECIMAL(12,2),
+    submitted_at TIMESTAMP,
+    submitted_by VARCHAR(100),
+    processed_at TIMESTAMP,
+    payment_processed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_filings_character_year ON tax_filings(character_id, tax_year);
+
+-- 7. TABLA DE PERÍODOS DE DECLARACIÓN
+CREATE TABLE IF NOT EXISTS tax_filing_periods (
+    id BIGSERIAL PRIMARY KEY,
+    tax_year INTEGER NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    filing_start_date TIMESTAMP NOT NULL,
+    filing_end_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) DEFAULT 'UPCOMING',
+    minimum_taxable DECIMAL(12,2) DEFAULT 22000,
+    late_filing_allowed BOOLEAN DEFAULT TRUE,
+    late_filing_penalty DECIMAL(5,2) DEFAULT 5,
+    applicable_rules TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_filing_periods_status ON tax_filing_periods(status);
+
+-- 8. TABLA DE NOTIFICACIONES
+CREATE TABLE IF NOT EXISTS tax_notifications (
+    id BIGSERIAL PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    tax_filing_id BIGINT,
+    notification_type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    amount DECIMAL(12,2),
+    scheduled_at TIMESTAMP,
+    sent_at TIMESTAMP,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_notifications_character ON tax_notifications(character_id);
+
+-- 9. CAMPAÑA ACTIVA (INSERT SIMPLE, SIN ON CONFLICT)
+INSERT INTO tax_filing_periods (
+    tax_year, name, filing_start_date, filing_end_date, status,
+    minimum_taxable, late_filing_allowed, late_filing_penalty,
+    applicable_rules, created_at, updated_at
+) VALUES (
+    2026, 'Campaña Renta 2026',
+    '2026-04-01 00:00:00', '2026-06-30 23:59:59',
+    'ACTIVE', 22000, true, 5.00,
+    '{"tramos": [[0,12450,19], [12451,20200,24], [20201,35200,30], [35201,60000,37], [60001,300000,45]]}',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+);
+
+-- 10. CAMPAÑAS PASADAS (INSERT SIMPLE)
+INSERT INTO tax_filing_periods (
+    tax_year, name, filing_start_date, filing_end_date, status,
+    minimum_taxable, late_filing_allowed, late_filing_penalty,
+    applicable_rules, created_at, updated_at
+) VALUES
+(2025, 'Campaña Renta 2025', '2025-04-01 00:00:00', '2025-06-30 23:59:59', 'CLOSED', 22000, true, 5.00, '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2024, 'Campaña Renta 2024', '2024-04-01 00:00:00', '2024-06-30 23:59:59', 'CLOSED', 22000, true, 5.00, '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- ============================================
+-- IRPF - SOLO TABLAS (SIN FUNCIONES NI TRIGGERS)
+-- ============================================
+
+-- 5. TABLA DE RETENCIONES
+CREATE TABLE IF NOT EXISTS tax_withholdings (
+    id BIGSERIAL PRIMARY KEY,
+    payroll_id BIGINT NOT NULL,
+    character_id BIGINT NOT NULL,
+    account_id BIGINT,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    gross_income DECIMAL(12,2) NOT NULL,
+    irpf_rate DECIMAL(5,2) NOT NULL,
+    irpf_withheld DECIMAL(12,2) NOT NULL,
+    accumulated_tax_base DECIMAL(12,2),
+    accumulated_withheld DECIMAL(12,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_withholdings_character_year ON tax_withholdings(character_id, year);
+
+-- 6. TABLA DE DECLARACIONES
+CREATE TABLE IF NOT EXISTS tax_filings (
+    id BIGSERIAL PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    account_id BIGINT,
+    tax_year INTEGER NOT NULL,
+    total_gross_income DECIMAL(12,2) DEFAULT 0,
+    total_deductions DECIMAL(12,2) DEFAULT 0,
+    taxable_base DECIMAL(12,2) DEFAULT 0,
+    calculated_tax DECIMAL(12,2) DEFAULT 0,
+    total_withheld DECIMAL(12,2) DEFAULT 0,
+    result DECIMAL(12,2) DEFAULT 0,
+    result_type VARCHAR(20) DEFAULT 'DRAFT',
+    status VARCHAR(20) DEFAULT 'DRAFT',
+    filing_date DATE,
+    payment_deadline DATE,
+    amount_to_pay DECIMAL(12,2) DEFAULT 0,
+    amount_to_receive DECIMAL(12,2) DEFAULT 0,
+    payment_status VARCHAR(20) DEFAULT 'PENDING',
+    payment_fractionated BOOLEAN DEFAULT FALSE,
+    number_of_installments INTEGER,
+    installment_amount DECIMAL(12,2),
+    submitted_at TIMESTAMP,
+    submitted_by VARCHAR(100),
+    processed_at TIMESTAMP,
+    payment_processed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_filings_character_year ON tax_filings(character_id, tax_year);
+
+-- 7. TABLA DE PERÍODOS DE DECLARACIÓN
+CREATE TABLE IF NOT EXISTS tax_filing_periods (
+    id BIGSERIAL PRIMARY KEY,
+    tax_year INTEGER NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    filing_start_date TIMESTAMP NOT NULL,
+    filing_end_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) DEFAULT 'UPCOMING',
+    minimum_taxable DECIMAL(12,2) DEFAULT 22000,
+    late_filing_allowed BOOLEAN DEFAULT TRUE,
+    late_filing_penalty DECIMAL(5,2) DEFAULT 5,
+    applicable_rules TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_filing_periods_status ON tax_filing_periods(status);
+
+-- 8. TABLA DE NOTIFICACIONES
+CREATE TABLE IF NOT EXISTS tax_notifications (
+    id BIGSERIAL PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    tax_filing_id BIGINT,
+    notification_type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    amount DECIMAL(12,2),
+    scheduled_at TIMESTAMP,
+    sent_at TIMESTAMP,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tax_notifications_character ON tax_notifications(character_id);
+
+-- 9. CAMPAÑAS (INSERTAR SOLO UNA VEZ)
+-- Primero, eliminar si existen datos previos (para pruebas limpias)
+DELETE FROM tax_filing_periods WHERE tax_year IN (2024, 2025, 2026);
+
+-- Insertar todas las campañas de una vez
+INSERT INTO tax_filing_periods (
+    tax_year, name, filing_start_date, filing_end_date, status,
+    minimum_taxable, late_filing_allowed, late_filing_penalty,
+    applicable_rules, created_at, updated_at
+) VALUES
+(2024, 'Campaña Renta 2024', '2024-04-01 00:00:00', '2024-06-30 23:59:59', 'CLOSED', 22000, true, 5.00, '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2025, 'Campaña Renta 2025', '2025-04-01 00:00:00', '2025-06-30 23:59:59', 'CLOSED', 22000, true, 5.00, '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2026, 'Campaña Renta 2026', '2026-04-01 00:00:00', '2026-07-31 23:59:59', 'ACTIVE', 22000, true, 5.00, '{"tramos": [[0,12450,19], [12451,20200,24], [20201,35200,30], [35201,60000,37], [60001,300000,45]]}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

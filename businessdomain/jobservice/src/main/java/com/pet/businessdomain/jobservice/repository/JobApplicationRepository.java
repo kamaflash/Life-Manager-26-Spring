@@ -35,7 +35,11 @@ public interface JobApplicationRepository  extends JpaRepository<JobApplicationE
 
     // Aplicaciones por etapa del proceso
     List<JobApplicationEntity> findByStage(String stage);
-
+    List<JobApplicationEntity> findByCharacterIdAndStatusAndInterviewDateBefore(
+            Long characterId,
+            EnumAll.ApplicationStatus status,
+            LocalDateTime date
+    );
     List<JobApplicationEntity> findByCharacterIdAndStatus(Long characterId, EnumAll.ApplicationStatus status);
     List<JobApplicationEntity> findByCharacterIdAndStatusAndInterviewDateBetween(
             Long characterId,

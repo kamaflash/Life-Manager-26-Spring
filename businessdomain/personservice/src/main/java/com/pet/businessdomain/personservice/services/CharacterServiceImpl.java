@@ -145,6 +145,7 @@ public class CharacterServiceImpl implements CharacterService {
 
         entity.setXpAcademy(characterDto.getXpAcademy());
         entity.setXpJobs(characterDto.getXpJobs());
+        entity.setLevel(characterDto.getLevel());
 
         // ===== STATS =====
         if (characterDto.getStats() != null) {

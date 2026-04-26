@@ -2,6 +2,7 @@ package com.pet.businessdomain.systemservice.transactions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pet.businessdomain.shareddto.dto.*;
+import com.pet.businessdomain.shareddto.dto.IRPF.TaxDashboardDTO;
 import com.pet.businessdomain.shareddto.enumentities.EnumAll;
 import com.pet.businessdomain.shareddto.enumentities.EnumFormation;
 import io.netty.channel.ChannelOption;
@@ -22,6 +23,7 @@ import reactor.netty.http.client.HttpClient;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -349,6 +351,42 @@ public class BusinessTransactions {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
     }
+    /**
+     * Procesa las entrevistas aprobadas que tienen al menos 2 días de antigüedad
+     * y genera los contratos correspondientes
+     */
+    public Map<String, Object> processPendingContracts(Long characterId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/job-applications")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/character/{characterId}/process-contracts")
+                            .queryParam("daysToWait", 2)
+                            .build(characterId))
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error processing pending contracts for characterId={}: {}", characterId, e.getMessage());
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("error", e.getMessage());
+            return errorResult;
+        }
+    }
     public JobContractDTO generateContract(Long applicationId) {
 
         WebClient webClient = webClientBuilder
@@ -452,6 +490,253 @@ public class BusinessTransactions {
                     .block();
 
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Añade estos métodos a la clase BusinessTransactions
+
+    /**
+     * Obtiene el dashboard fiscal de un personaje para un año específico
+     */
+    public TaxDashboardDTO getTaxDashboard(Long characterId, Integer year) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/dashboard")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/character/{characterId}/year/{year}", characterId, year)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(TaxDashboardDTO.class)
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error getting tax dashboard for characterId={}, year={}: {}", characterId, year, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Verifica si hay un período fiscal activo para presentar declaración
+     * Retorna un Boolean simple
+     */
+    public Boolean isTaxPeriodActive() {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/periods")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/can-file")
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(Boolean.class)
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error checking if tax period is active: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene o crea el borrador de la declaración de un personaje
+     * Retorna Map porque no existe DTO específico para TaxFiling
+     */
+    public Map<String, Object> createOrUpdateTaxFilingDraft(Long characterId, Integer taxYear) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/filings")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/draft/character/{characterId}/year/{taxYear}", characterId, taxYear)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error creating/updating tax filing draft for characterId={}, year={}: {}", characterId, taxYear, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Presenta la declaración de un personaje
+     * Retorna Map porque no existe DTO específico para TaxFiling
+     */
+    public Map<String, Object> submitTaxFiling(Long filingId, Long characterId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/filings")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/{filingId}/submit?characterId={characterId}", filingId, characterId)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error submitting tax filing for filingId={}, characterId={}: {}", filingId, characterId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Procesa el pago de una declaración (cuando el resultado es a pagar)
+     */
+    public Map<String, Object> processTaxPayment(Long filingId, Long accountId, boolean fullPayment) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/filings")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/{filingId}/payment?accountId={accountId}&fullPayment={fullPayment}", filingId, accountId, fullPayment)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error processing tax payment for filingId={}, accountId={}: {}", filingId, accountId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Procesa la devolución de una declaración (cuando el resultado es a devolver)
+     */
+    public Map<String, Object> processTaxRefund(Long filingId, Long accountId) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/filings")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.post()
+                    .uri("/{filingId}/refund?accountId={accountId}", filingId, accountId)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error processing tax refund for filingId={}, accountId={}: {}", filingId, accountId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene el período fiscal activo
+     * Retorna Map porque TaxFilingPeriodDTO no existe
+     */
+    public Map<String, Object> getActiveTaxPeriod() {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/periods")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/active")
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error getting active tax period: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene la declaración de un personaje por año
+     * Retorna Map porque no existe DTO específico para TaxFiling
+     */
+    public Map<String, Object> getTaxFilingByCharacterAndYear(Long characterId, Integer taxYear) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl("http://BUSINESSDOMAIN-JOBSERVICE/api/tax/filings")
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.get()
+                    .uri("/character/{characterId}/year/{taxYear}", characterId, taxYear)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from JobService: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+
+        } catch (Exception e) {
+            log.error("Error getting tax filing for characterId={}, year={}: {}", characterId, taxYear, e.getMessage());
             return null;
         }
     }

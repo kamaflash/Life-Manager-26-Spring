@@ -439,7 +439,14 @@ public class JobApplicationController {
             @PathVariable(name = "applicationId") Long applicationId) {
         return jobApplicationService.generateContract(applicationId);
     }
+    @PostMapping("/character/{characterId}/process-contracts")
+    public ResponseEntity<Map<String, Object>> processPendingContracts(
+            @PathVariable(name = "characterId") Long characterId,
+            @RequestParam(name = "daysToWait",defaultValue = "2") int daysToWait) {
 
+        Map<String, Object> result = jobApplicationService.processAndGenerateContractsAfterDays(characterId, daysToWait);
+        return ResponseEntity.ok(result);
+    }
     @GetMapping("/character/{characterId}/contracts")
     public ResponseEntity<List<JobContractDTO>> getCharacterContracts(
             @PathVariable(name = "characterId") Long characterId) {

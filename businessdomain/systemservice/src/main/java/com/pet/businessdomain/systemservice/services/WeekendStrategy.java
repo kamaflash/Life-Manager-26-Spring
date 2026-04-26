@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -62,8 +63,31 @@ public class WeekendStrategy implements AdvanceStrategy {
             response = executeWeekendRestDay(request, system, character, currentDateTime);
         }
 
-        // Procesar datos pendientes (común para ambos casos)
-        processPendingData(character);
+        // 3. Procesar datos pendientes y obtener sus eventos
+        List<DayEventDTO> pendingEvents = processPendingData(character);
+
+        // 4. COMBINAR los eventos de la respuesta con los eventos de datos pendientes
+        if (response.getEvents() != null) {
+            response.getEvents().addAll(pendingEvents);
+        } else {
+            List<DayEventDTO> allEvents = new ArrayList<>();
+            if (response.getEvents() != null) {
+                allEvents.addAll(response.getEvents());
+            }
+            allEvents.addAll(pendingEvents);
+
+            response = TimeAdvanceResponseDTO.builder()
+                    .success(response.isSuccess())
+                    .message(response.getMessage())
+                    .newActualityAt(response.getNewActualityAt())
+                    .paRemaining(response.getPaRemaining())
+                    .energyChange(response.getEnergyChange())
+                    .stressChange(response.getStressChange())
+                    .xpEarned(response.getXpEarned())
+                    .statChanges(response.getStatChanges())
+                    .events(allEvents)
+                    .build();
+        }
 
         return response;
     }
@@ -178,6 +202,8 @@ public class WeekendStrategy implements AdvanceStrategy {
         LocalTime arrivalTime = timeCalculator.calculateArrivalTime(travelMinutes);
         character.getStats().setEnergy(newEnergy);
         character.getStats().setStress(newStress);
+        character.getStats().setHappiness(character.getStats().getHappiness()-2);
+        character.getStats().setHealth(character.getStats().getHealth()-2);
 
         // 💰 SOLO ingresar ganancias DIARIAS (NO salario semanal)
         if (dailyEarnings > 0 && character.getAccounts() != null && !character.getAccounts().isEmpty()) {
@@ -315,7 +341,7 @@ public class WeekendStrategy implements AdvanceStrategy {
                 .type("sleep_in")
                 .title("Dormir hasta tarde")
                 .description(String.format("Has descansado %d horas", hoursDiff))
-                .date(String.format("%s", 10))
+                .date("10:00")
                 .energyGain(energyGain)
                 .build());
 
@@ -330,7 +356,17 @@ public class WeekendStrategy implements AdvanceStrategy {
             newStress = 20;
         }
         character.getStats().setStress(newStress);
-
+        Integer levelObj = character.getLevel();
+        int level = levelObj != null ? levelObj : 1;
+        int xp = character.getXpAcademy() + character.getXpJobs();
+        if(xp>=level*100) {
+            character.setLevel(level+1);
+            events.add(DayEventDTO.builder()
+                    .type("rest")
+                    .title("¡Subida de nivel!")
+                    .description(String.format("Has subido al nivel (%d)", character.getLevel()))
+                    .build());
+        }
         businessTransactions.updatePerson(character);
 
         LocalDateTime newActuality = currentDateTime
@@ -357,19 +393,136 @@ public class WeekendStrategy implements AdvanceStrategy {
                 .build();
     }
 
-    private void processPendingData(CharacterDto character) {
+    private List<DayEventDTO> processPendingData(CharacterDto character) {
+        List<DayEventDTO> events = new ArrayList<>();
+
         try {
             log.info("Procesando datos pendientes para personaje: {}", character.getId());
-            businessTransactions.processPendingInterviews(character.getId());
-            businessTransactions.processedAdvance(character.getId(), 70);
+
+            // 1. Procesar entrevistas pendientes
+            Map<String, Object> interviewResult = businessTransactions.processPendingInterviews(character.getId());
+            if (interviewResult != null && !interviewResult.isEmpty()) {
+                addInterviewEvents(events, interviewResult);
+            }
+
+            // 2. Procesar avance de aplicaciones
+            Map<String, Object> advanceResult = businessTransactions.processedAdvance(character.getId(), 70);
+            if (advanceResult != null && !advanceResult.isEmpty()) {
+                addAdvanceEvents(events, advanceResult);
+            }
+
+            // 3. Procesar contratos pendientes
+            Map<String, Object> contractResult = businessTransactions.processPendingContracts(character.getId());
+            if (contractResult != null && !contractResult.isEmpty()) {
+                addContractEvents(events, contractResult);
+            }
+
+            // 4. Revisar datos del personaje
             systemService.revisedData(character);
+
         } catch (Exception e) {
-            log.error("Error procesando datos pendientes: {}", e.getMessage());
+            log.error("Error procesando datos pendientes: {}", e.getMessage(), e);
+            events.add(DayEventDTO.builder()
+                    .type("error")
+                    .title("⚠️ Error en procesamiento")
+                    .description("Ha ocurrido un error al procesar datos pendientes: " + e.getMessage())
+                    .build());
         }
+
+        return events;
     }
 
     @Override
     public EnumSystems.AdvanceType getType() {
         return EnumSystems.AdvanceType.WEEKEND;
+    }
+
+    /**
+     * Añade eventos basados en resultados de entrevistas
+     */
+    private void addInterviewEvents(List<DayEventDTO> events, Map<String, Object> interviewResult) {
+        int totalProcessed = (int) interviewResult.getOrDefault("totalProcessed", 0);
+        int passed = (int) interviewResult.getOrDefault("passed", 0);
+        int failed = (int) interviewResult.getOrDefault("failed", 0);
+
+        if (totalProcessed > 0) {
+            if (passed > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("interview_passed")
+                        .title("🎉 ¡Entrevista superada!")
+                        .description(String.format("Has superado %d entrevista(s). ¡Pronto recibirás las ofertas!", passed))
+                        .build());
+            }
+
+            if (failed > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("interview_failed")
+                        .title("😔 Entrevista no superada")
+                        .description(String.format("No has superado %d entrevista(s). Sigue preparándote para las próximas.", failed))
+                        .build());
+            }
+
+            events.add(DayEventDTO.builder()
+                    .type("interview_summary")
+                    .title("📊 Resumen de entrevistas")
+                    .description(String.format("Entrevistas procesadas: %d | Aprobadas: %d | Rechazadas: %d",
+                            totalProcessed, passed, failed))
+                    .build());
+        }
+    }
+
+    /**
+     * Añade eventos basados en resultados de avance de aplicaciones
+     */
+    private void addAdvanceEvents(List<DayEventDTO> events, Map<String, Object> advanceResult) {
+        int totalProcessed = (int) advanceResult.getOrDefault("totalProcessed", 0);
+        int accepted = (int) advanceResult.getOrDefault("accepted", 0);
+        int rejected = (int) advanceResult.getOrDefault("rejected", 0);
+
+        if (totalProcessed > 0) {
+            if (accepted > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("application_accepted")
+                        .title("📝 ¡Postulación avanzada!")
+                        .description(String.format("%d de tus postulaciones han pasado a la siguiente fase.", accepted))
+                        .build());
+            }
+
+            if (rejected > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("application_rejected")
+                        .title("📝 Postulación no seleccionada")
+                        .description(String.format("%d de tus postulaciones no cumplen los requisitos mínimos.", rejected))
+                        .build());
+            }
+        }
+    }
+
+    /**
+     * Añade eventos basados en resultados de generación de contratos
+     */
+    private void addContractEvents(List<DayEventDTO> events, Map<String, Object> contractResult) {
+        int totalProcessed = (int) contractResult.getOrDefault("totalProcessed", 0);
+        int contractsGenerated = (int) contractResult.getOrDefault("contractsGenerated", 0);
+
+        if (contractsGenerated > 0) {
+            events.add(DayEventDTO.builder()
+                    .type("contract_generated")
+                    .title("📄 ¡Nuevo contrato recibido!")
+                    .description(String.format("Se ha generado %d contrato(s). ¡Revisa tus ofertas y acepta el que más te guste!", contractsGenerated))
+                    .build());
+        }
+
+        if (totalProcessed > 0 && contractsGenerated == 0) {
+            // Puede que ya tuvieran contrato o hubiera errores
+            int alreadyHaveContract = (int) contractResult.getOrDefault("alreadyHaveContract", 0);
+            if (alreadyHaveContract > 0) {
+                events.add(DayEventDTO.builder()
+                        .type("contract_info")
+                        .title("ℹ️ Contratos actualizados")
+                        .description("Tus contratos ya están actualizados. Revisa el estado en tu panel.")
+                        .build());
+            }
+        }
     }
 }

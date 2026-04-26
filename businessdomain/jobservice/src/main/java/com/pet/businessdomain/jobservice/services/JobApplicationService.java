@@ -76,5 +76,13 @@ public interface JobApplicationService {
     // En JobApplicationService interface
     Page<JobContractDTO> getCharacterContractsByFilters(JobContractFiltersDTO filters, Pageable pageable);
 
-
+    /**
+     * Procesa las entrevistas aprobadas que tienen al menos X días de antigüedad
+     * y genera los contratos correspondientes
+     *
+     * @param characterId ID del personaje
+     * @param daysToWait Número de días que deben pasar desde la entrevista
+     * @return Resultado del procesamiento con estadísticas
+     */
+    Map<String, Object> processAndGenerateContractsAfterDays(Long characterId, int daysToWait);
 }

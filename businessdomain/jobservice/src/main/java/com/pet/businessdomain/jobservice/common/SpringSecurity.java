@@ -19,16 +19,26 @@ import org.springframework.security.web.header.writers.frameoptions.XFrameOption
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
-    public static final String URLCHARACTERJOB = "/api/character-jobs/**";
-    public static final String URLCOMPANY = "/api/companies/**";
-    public static final String URLJOBAPP = "/api/job-applications/**";
-    public static final String URLJOBEVENT = "/api/job-events/**";
-    public static final String URLJOBVACANCIES = "/api/job-vacancies/**";
-    public static final String URLWORK = "/api/work-relationships/**";
-    public static final String URLJOBPOS = "/api/job-positions/**";
-    public static final String URLMISSIONS = "/api/missions/**";
-    public static final String URLPAYROLLS = "/api/payrolls/**";
 
+    // Todas las URLs del sistema
+    private static final String[] ALL_URLS = {
+            // URLs existentes
+            "/api/character-jobs/**",
+            "/api/companies/**",
+            "/api/job-applications/**",
+            "/api/job-events/**",
+            "/api/job-vacancies/**",
+            "/api/work-relationships/**",
+            "/api/job-positions/**",
+            "/api/missions/**",
+            "/api/payrolls/**",
+            // URLs del sistema de IRPF
+            "/api/tax/withholdings/**",
+            "/api/tax/filings/**",
+            "/api/tax/periods/**",
+            "/api/tax/notifications/**",
+            "/api/tax/dashboard/**"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -41,15 +51,22 @@ public class SpringSecurity {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // ✅ AÑADIR ESTO: Permitir acceso a la consola H2
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
-                        .requestMatchers(HttpMethod.POST, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
-                        .requestMatchers(HttpMethod.PUT, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
-                        .requestMatchers(HttpMethod.DELETE, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
+
+                        // GET - Permitidos
+                        .requestMatchers(HttpMethod.GET, ALL_URLS).permitAll()
+
+                        // POST - Permitidos
+                        .requestMatchers(HttpMethod.POST, ALL_URLS).permitAll()
+
+                        // PUT - Permitidos
+                        .requestMatchers(HttpMethod.PUT, ALL_URLS).permitAll()
+
+                        // DELETE - Permitidos
+                        .requestMatchers(HttpMethod.DELETE, ALL_URLS).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .build();
     }
 }
-

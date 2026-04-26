@@ -41,7 +41,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
 
     @Override
     public TimeAdvanceResponseDTO execute(TimeAdvanceRequestDTO request) {
-        log.info("=== INICIANDO AVANCE DE FIN DE MES ===");
+        log.info("=== INICIANDO CIERRE DE FIN DE MES ===");
         log.info("Personaje ID: {}", request.getCharacterId());
 
         SystemEntity system = systemRepository.findById(request.getCharacterId())
@@ -50,30 +50,25 @@ public class MonthEndStrategy implements AdvanceStrategy {
         CharacterDto character = businessTransactions.getPerson(systemDto.getUid());
 
         LocalDateTime currentDateTime = systemDto.getActualityAt();
-        log.info("📅 Fecha/Hora actual: {}", currentDateTime);
+        log.info("📅 Fecha/Hora actual (último día del mes): {}", currentDateTime);
 
-        TimeAdvanceResponseDTO response = executeMonthlyAdvance(system, character, currentDateTime);
-        processPendingData(character);
+        // ✅ Solo procesar el cierre de mes, NO avanzar el tiempo
+        TimeAdvanceResponseDTO response = executeMonthlyClose(character, currentDateTime);
 
+        // ✅ Mantener la misma fecha, NO avanzar
         return response;
     }
 
-    private TimeAdvanceResponseDTO executeMonthlyAdvance(SystemEntity system,
-                                                         CharacterDto character,
-                                                         LocalDateTime currentDateTime) {
+    /**
+     * Ejecuta el cierre de mes (nóminas, salarios, etc.) SIN avanzar el tiempo
+     */
+    private TimeAdvanceResponseDTO executeMonthlyClose(CharacterDto character, LocalDateTime currentDateTime) {
         List<DayEventDTO> events = new ArrayList<>();
         int totalXpGained = 0;
         int totalMonthlySalary = 0;
         List<PayrollDTO> createdPayrolls = new ArrayList<>();
 
-        log.info("📊 Procesando avance mensual...");
-
-        // ✅ SIEMPRE avanzar el tiempo, incluso sin trabajos
-        LocalDateTime newActuality = currentDateTime.plusDays(1)
-                .withHour(10)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
+        log.info("📊 Procesando cierre de mes...");
 
         // Verificar si tiene trabajos activos
         boolean hasActiveJobs = false;
@@ -102,7 +97,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     // ✨ CREAR NÓMINA PARA ESTE TRABAJO
                     PayrollDTO payroll = createPayrollForJob(character, job, monthlySalary,
                             currentDateTime.getYear(), currentDateTime.getMonthValue());
-                    totalMonthlySalary = payroll.getNetSalary().intValue();
+
                     if (payroll != null) {
                         createdPayrolls.add(payroll);
                         log.info("Nómina creada para trabajo ID: {}, Neto: {}€",
@@ -157,7 +152,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
                 }
                 character.setXpJobs(character.getXpJobs() + totalXpGained);
 
-                // Verificar subida de nivel
+                // Verificar subida de nivel laboral
                 int currentLevel = character.getLevel() != null ? character.getLevel() : 1;
                 int xpForNextLevel = calculateXpForNextLevel(currentLevel);
 
@@ -174,36 +169,44 @@ public class MonthEndStrategy implements AdvanceStrategy {
         }
 
         if (!hasActiveJobs) {
-            log.info("⚠️ Personaje sin trabajos activos - Solo avanzando tiempo");
+            log.info("⚠️ Personaje sin trabajos activos - Solo cierre de mes");
             events.add(DayEventDTO.builder()
                     .type("info")
-                    .title("Fin de mes")
+                    .title("Cierre de mes")
                     .description("No tienes trabajos activos. El mes ha terminado sin cambios laborales.")
                     .build());
         }
 
-        // ✅ SIEMPRE guardar cambios del personaje
+        // Verificar subida de nivel general
+        Integer levelObj = character.getLevel();
+        int level = levelObj != null ? levelObj : 1;
+        int xp = character.getXpAcademy() + character.getXpJobs();
+        if (xp >= level * 100) {
+            character.setLevel(level + 1);
+            events.add(DayEventDTO.builder()
+                    .type("level_up")
+                    .title("¡Subida de nivel!")
+                    .description(String.format("Has subido al nivel (%d)", character.getLevel()))
+                    .build());
+        }
+
+        // ✅ Guardar cambios del personaje
         businessTransactions.updatePerson(character);
 
-        // ✅ SIEMPRE actualizar sistema
-        system.setActualityAt(newActuality);
-        system.setUpdateAt(LocalDateTime.now());
-        system.setVeces(system.getVeces() + 1);
-        system.setPa(Math.max(0, system.getPa() - 1));
-        systemRepository.save(system);
+        // ✅ NO actualizar el sistema aquí (NO avanzar tiempo)
 
         StringBuilder message = new StringBuilder();
         if (hasActiveJobs) {
-            message.append(String.format("Avance mensual completado. Has ganado %d XP laboral y %d€ de salario.",
+            message.append(String.format("Cierre de mes completado. Has ganado %d XP laboral y %d€ de salario.",
                     totalXpGained, totalMonthlySalary));
             if (!createdPayrolls.isEmpty()) {
                 message.append(String.format(" Se han generado %d nóminas.", createdPayrolls.size()));
             }
         } else {
-            message.append("Avance mensual completado. No tenías trabajos activos.");
+            message.append("Cierre de mes completado. No tenías trabajos activos.");
         }
 
-        return buildResponse(system, character, newActuality, events, totalXpGained, totalMonthlySalary, message.toString());
+        return buildResponse(events, totalXpGained, totalMonthlySalary, message.toString(), currentDateTime);
     }
 
     /**
@@ -272,7 +275,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
     }
 
     /**
-     * ✅ CORREGIDO: Crea SOLO UN registro de ingreso de salario mensual
+     * Crea UN registro de ingreso de salario mensual
      */
     private void createMonthlySalaryIncomeRecord(CharacterDto character, int totalMonthlySalary, List<CharacterJobDTO> jobs) {
         try {
@@ -283,12 +286,10 @@ public class MonthEndStrategy implements AdvanceStrategy {
 
             SFinanceAccountResponseDto account = character.getAccounts().get(0);
 
-            // ✅ Crear SOLO UN ingreso por el total del salario mensual
             SIncomeResponseDto incomeDto = new SIncomeResponseDto();
             incomeDto.setExternalRefType("MONTHLY_SALARY");
             incomeDto.setAmount(BigDecimal.valueOf(totalMonthlySalary));
 
-            // Listar los trabajos que contribuyeron al salario
             String jobNames = jobs.stream()
                     .map(job -> String.format("%s en %s", job.getPositionTitle(), job.getCompanyName()))
                     .collect(java.util.stream.Collectors.joining(", "));
@@ -298,7 +299,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
             incomeDto.setCategory(EnumAll.ExpenseCategory.SALARY);
             incomeDto.setFrequency(EnumAll.Frequency.MONTHLY);
 
-            // ✅ Solo una llamada a setIncome
             businessTransactions.setIncome(incomeDto, account.getId());
             log.info("Registro de ingreso mensual creado en sistema financiero por {}€", totalMonthlySalary);
 
@@ -349,17 +349,15 @@ public class MonthEndStrategy implements AdvanceStrategy {
         return (int) (100 * currentLevel * 1.5);
     }
 
-    private TimeAdvanceResponseDTO buildResponse(SystemEntity system,
-                                                 CharacterDto character,
-                                                 LocalDateTime newActuality,
-                                                 List<DayEventDTO> events,
+    private TimeAdvanceResponseDTO buildResponse(List<DayEventDTO> events,
                                                  int xpGained,
                                                  int moneyEarned,
-                                                 String message) {
+                                                 String message,
+                                                 LocalDateTime currentDateTime) {
         events.add(DayEventDTO.builder()
                 .type("system")
-                .title("Avance mensual completado")
-                .description(String.format("Has completado el avance mensual. Fecha: %s", newActuality.toLocalDate()))
+                .title("Cierre de mes completado")
+                .description(String.format("Has completado el cierre del mes. Fecha: %s", currentDateTime.toLocalDate()))
                 .xpEarned(xpGained)
                 .moneyEarned(moneyEarned)
                 .build());
@@ -367,8 +365,8 @@ public class MonthEndStrategy implements AdvanceStrategy {
         return TimeAdvanceResponseDTO.builder()
                 .success(true)
                 .message(message)
-                .newActualityAt(newActuality)
-                .paRemaining(system.getPa())
+                .newActualityAt(currentDateTime) // ✅ Mantiene la misma fecha
+                .paRemaining(0) // No se modifica PA en el cierre
                 .energyChange(0)
                 .stressChange(0)
                 .xpEarned(xpGained)
@@ -377,22 +375,10 @@ public class MonthEndStrategy implements AdvanceStrategy {
                 .build();
     }
 
-    private void processPendingData(CharacterDto character) {
-        try {
-            log.info("Procesando datos pendientes para personaje: {}", character.getId());
-            businessTransactions.processPendingInterviews(character.getId());
-            businessTransactions.processedAdvance(character.getId(), 70);
-            systemService.revisedData(character);
-        } catch (Exception e) {
-            log.error("Error procesando datos pendientes: {}", e.getMessage());
-        }
-    }
-
     @Override
     public EnumSystems.AdvanceType getType() {
         return EnumSystems.AdvanceType.MONTH_END;
     }
-
 
     /**
      * Crea una nómina para un trabajo específico
@@ -400,7 +386,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
     private PayrollDTO createPayrollForJob(CharacterDto character, CharacterJobDTO job,
                                            int monthlySalary, int year, int month) {
         try {
-            // Validaciones iniciales
             if (character == null || character.getId() == null) {
                 log.error("Character or character ID is null");
                 return null;
@@ -411,7 +396,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
                 return null;
             }
 
-            // Obtener ID de la cuenta principal
             Long accountId = null;
             if (character.getAccounts() != null && !character.getAccounts().isEmpty()) {
                 accountId = character.getAccounts().get(0).getId();
@@ -420,21 +404,18 @@ public class MonthEndStrategy implements AdvanceStrategy {
                 log.warn("No accounts found for character {}", character.getId());
             }
 
-            // Calcular neto (deducciones estándar: 20% IRPF + 6.35% Seguridad Social)
             BigDecimal grossSalary = BigDecimal.valueOf(monthlySalary);
             BigDecimal taxDeduction = grossSalary.multiply(BigDecimal.valueOf(0.20));
             BigDecimal socialSecurity = grossSalary.multiply(BigDecimal.valueOf(0.0635));
             BigDecimal totalDeductions = taxDeduction.add(socialSecurity);
             BigDecimal netSalary = grossSalary.subtract(totalDeductions);
 
-            // Calcular horas y días trabajados
             int daysWorked = estimateDaysWorkedInMonth(job, year, month);
             int hoursWorked = daysWorked * 8;
 
             log.info("Creating payroll for character={}, job={}, salary={}, net={}",
                     character.getId(), job.getId(), monthlySalary, netSalary);
 
-            // Construir el DTO de nómina
             PayrollDTO payroll = PayrollDTO.builder()
                     .characterId(character.getId())
                     .jobId(job.getId())
@@ -459,7 +440,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     .processedBy("SYSTEM_MONTH_END")
                     .build();
 
-            // Validar que el payroll tenga datos mínimos
             if (payroll.getCharacterId() == null || payroll.getJobId() == null) {
                 log.error("Payroll validation failed: characterId={}, jobId={}",
                         payroll.getCharacterId(), payroll.getJobId());
@@ -468,7 +448,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
 
             log.info("Payroll DTO created: {}", payroll);
 
-            // Llamar a BusinessTransactions para crear la nómina
             PayrollDTO created = businessTransactions.createPayroll(payroll);
 
             if (created != null && created.getId() != null) {
@@ -507,7 +486,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
         try {
             JobVacancyDTO vacancy = job.getVacancy();
             if (vacancy == null || vacancy.getWorkingDays() == null) {
-                return 20; // Días estimados por defecto
+                return 20;
             }
 
             List<EnumAll.WorkingDay> workingDays = vacancy.getWorkingDays();
@@ -515,7 +494,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
                 return 20;
             }
 
-            // Contar días laborables en el mes
             LocalDate firstDay = LocalDate.of(year, month, 1);
             LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
 
@@ -541,9 +519,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
         }
     }
 
-    /**
-     * Convierte WorkingDay a DayOfWeek
-     */
     private DayOfWeek convertToDayOfWeek(EnumAll.WorkingDay workingDay) {
         return switch (workingDay) {
             case MONDAY -> DayOfWeek.MONDAY;
@@ -556,9 +531,6 @@ public class MonthEndStrategy implements AdvanceStrategy {
         };
     }
 
-    /**
-     * Obtiene los días del mes
-     */
     private int getDaysInMonth(int year, int month) {
         return LocalDate.of(year, month, 1).lengthOfMonth();
     }
