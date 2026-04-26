@@ -2,14 +2,21 @@ package com.pet.businessdomain.jobservice.controller;
 
 import com.pet.businessdomain.jobservice.services.PayrollService;
 import com.pet.businessdomain.shareddto.dto.PayrollDTO;
+import com.pet.businessdomain.shareddto.dto.PayrollSearchFiltersDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -161,5 +168,73 @@ public class PayrollController {
         log.info("GET /api/payrolls/character/{}/total/year - Total pagado en año {}", characterId, year);
         BigDecimal total = payrollService.getTotalPaidByCharacterAndYear(characterId, year);
         return ResponseEntity.ok(total);
+    }
+
+    // PayrollController.java
+
+    /**
+     * Búsqueda de nóminas por personaje y trabajo, con filtro por período
+     *
+     * @param characterId ID del personaje
+     * @param jobId ID del trabajo
+     * @param filters Objeto con los filtros de búsqueda
+     * @return Lista de PayrollDTO paginada y ordenada
+     *
+     * @example POST /api/payrolls/search/character/1/job/1
+     * @example Body: { "period": "2026-09", "page": 0, "size": 10, "sortBy": "periodStart", "sortDir": "desc" }
+     */
+    @PostMapping("/search/character/{characterId}/job/{jobId}")
+    public ResponseEntity<Map<String, Object>> searchByCharacterAndJob(
+            @PathVariable(name = "characterId") Long characterId,
+            @PathVariable(name = "jobId") Long jobId,
+            @RequestBody PayrollSearchFiltersDTO filters) {
+
+        log.info("POST /api/payrolls/search/character/{}/job/{} - period: {}, sortBy: {}, sortDir: {}",
+                characterId, jobId, filters.getPeriod(), filters.getSortBy(), filters.getSortDir());
+
+        filters.setCharacterId(characterId);
+        filters.setJobId(jobId);
+
+        String sortByEntity = mapPayrollSortField(filters.getSortBy());
+        Sort sort = Sort.by(filters.getSortDir().equalsIgnoreCase("desc") ?
+                Sort.Direction.DESC : Sort.Direction.ASC, sortByEntity);
+        Pageable pageable = PageRequest.of(filters.getPage(), filters.getSize(), sort);
+
+        Page<PayrollDTO> payrollsPage = payrollService.search(filters, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("payrolls", payrollsPage.getContent());
+        response.put("currentPage", payrollsPage.getNumber());
+        response.put("totalItems", payrollsPage.getTotalElements());
+        response.put("totalPages", payrollsPage.getTotalPages());
+        response.put("pageSize", payrollsPage.getSize());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Mapea el campo de ordenamiento para nóminas
+     */
+    private String mapPayrollSortField(String sortBy) {
+        if (sortBy == null || sortBy.isEmpty()) {
+            return "periodStart";
+        }
+
+        return switch (sortBy) {
+            case "period" -> "periodStart";
+            case "companyName" -> "companyName";
+            case "jobTitle" -> "jobTitle";
+            case "baseSalary" -> "baseSalary";
+            case "bonus" -> "bonus";
+            case "deductions" -> "deductions";
+            case "netSalary" -> "netSalary";
+            case "hoursWorked" -> "hoursWorked";
+            case "daysWorked" -> "daysWorked";
+            case "performance" -> "performance";
+            case "satisfaction" -> "satisfaction";
+            case "status" -> "status";
+            case "createdAt" -> "createdAt";
+            default -> "periodStart";
+        };
     }
 }

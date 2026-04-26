@@ -102,7 +102,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     // ✨ CREAR NÓMINA PARA ESTE TRABAJO
                     PayrollDTO payroll = createPayrollForJob(character, job, monthlySalary,
                             currentDateTime.getYear(), currentDateTime.getMonthValue());
-                    monthlySalary = payroll.getNetSalary().intValue();
+                    totalMonthlySalary = payroll.getNetSalary().intValue();
                     if (payroll != null) {
                         createdPayrolls.add(payroll);
                         log.info("Nómina creada para trabajo ID: {}, Neto: {}€",

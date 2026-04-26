@@ -4,8 +4,12 @@ import com.pet.businessdomain.jobservice.entities.PayrollEntity;
 import com.pet.businessdomain.jobservice.mapper.PayrollMapper;
 import com.pet.businessdomain.jobservice.repository.PayrollRepository;
 import com.pet.businessdomain.shareddto.dto.PayrollDTO;
+import com.pet.businessdomain.shareddto.dto.PayrollSearchFiltersDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -179,5 +183,84 @@ public class PayrollServiceImpl implements PayrollService {
         log.info("Calculando total pagado a personaje {} en año {}", characterId, year);
         BigDecimal total = payrollRepository.sumNetSalaryByCharacterAndYear(characterId, year);
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    // PayrollService.java
+    @Override
+    public Page<PayrollDTO> search(PayrollSearchFiltersDTO filters, Pageable pageable) {
+        log.info("Searching payrolls with filters: characterId={}, jobId={}, period={}",
+                filters.getCharacterId(), filters.getJobId(), filters.getPeriod());
+
+        Specification<PayrollEntity> spec = buildSpecification(filters);
+
+        Page<PayrollEntity> entities = payrollRepository.findAll(spec, pageable);
+
+        return entities.map(payrollMapper::toDto);
+    }
+
+    private Specification<PayrollEntity> buildSpecification(PayrollSearchFiltersDTO filters) {
+        return Specification
+                .where(hasCharacterId(filters.getCharacterId()))
+                .and(hasJobId(filters.getJobId()))
+                .and(hasPeriod(filters.getPeriod()))
+                .and(searchByTerm(filters.getSearchTerm()));
+    }
+
+    private Specification<PayrollEntity> hasCharacterId(Long characterId) {
+        return (root, query, cb) -> {
+            if (characterId == null) return cb.conjunction();
+            return cb.equal(root.get("characterId"), characterId);
+        };
+    }
+
+    private Specification<PayrollEntity> hasJobId(Long jobId) {
+        return (root, query, cb) -> {
+            if (jobId == null) return cb.conjunction();
+            return cb.equal(root.get("jobId"), jobId);
+        };
+    }
+
+    private Specification<PayrollEntity> hasPeriod(String period) {
+        return (root, query, cb) -> {
+            if (period == null || period.isEmpty()) return cb.conjunction();
+
+            try {
+                int year;
+                int month;
+
+                if (period.length() == 7) { // YYYY-MM
+                    String[] parts = period.split("-");
+                    year = Integer.parseInt(parts[0]);
+                    month = Integer.parseInt(parts[1]);
+                } else if (period.length() >= 10) { // YYYY-MM-DD
+                    String[] parts = period.split("-");
+                    year = Integer.parseInt(parts[0]);
+                    month = Integer.parseInt(parts[1]);
+                } else {
+                    return cb.conjunction();
+                }
+
+                return cb.and(
+                        cb.equal(root.get("year"), year),
+                        cb.equal(root.get("month"), month)
+                );
+            } catch (Exception e) {
+                log.warn("Error parsing period: {}", period);
+                return cb.conjunction();
+            }
+        };
+    }
+
+    private Specification<PayrollEntity> searchByTerm(String searchTerm) {
+        return (root, query, cb) -> {
+            if (searchTerm == null || searchTerm.isEmpty()) return cb.conjunction();
+
+            String likePattern = "%" + searchTerm.toLowerCase() + "%";
+
+            return cb.or(
+                    cb.like(cb.lower(root.get("jobTitle")), likePattern),
+                    cb.like(cb.lower(root.get("companyName")), likePattern)
+            );
+        };
     }
 }
