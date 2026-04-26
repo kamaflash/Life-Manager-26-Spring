@@ -13,14 +13,10 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -172,7 +168,14 @@ public class WeekendStrategy implements AdvanceStrategy {
 
         int totalEnergyChange = newEnergy - currentEnergy;
         int totalStressChange = newStress - currentStress;
+// Obtener minutos de viaje según vehículo
+        int travelMinutes = timeCalculator.getTravelTimeMinutes(character);
+        String vehicle = timeCalculator.getTravelVehicle(character);
+        log.info("Tiempo de viaje: {} minutos", travelMinutes);
 
+        // Calcular hora de salida y llegada según vehículo
+        LocalTime departureTime = timeCalculator.calculateDepartureTime(travelMinutes);
+        LocalTime arrivalTime = timeCalculator.calculateArrivalTime(travelMinutes);
         character.getStats().setEnergy(newEnergy);
         character.getStats().setStress(newStress);
 
@@ -200,28 +203,44 @@ public class WeekendStrategy implements AdvanceStrategy {
         if (restHours > 0) {
             events.add(DayEventDTO.builder()
                     .type("rest")
-                    .title("Descanso nocturno")
+                    .title("Despertandote")
                     .description(String.format("Has descansado %d horas antes de trabajar", restHours))
+                    .date(String.format("%s", jobStartTime.minusMinutes(20)))
                     .energyGain(energyGainFromRest)
                     .stressReduction(stressReductionFromRest)
                     .build());
         }
-
+// Evento: Desplazamiento a clase
+        events.add(DayEventDTO.builder()
+                .type("travel")
+                .title("Desplazamiento")
+                .description(String.format("Sales de casa para llegar al trabajo (%s)", vehicle))
+                .date(String.format("%s", departureTime))
+                .build());
         events.add(DayEventDTO.builder()
                 .type("work_start")
-                .title("💼 Comenzando jornada laboral")
-                .description(String.format("Te diriges a trabajar como %s en %s", jobTitle, companyName))
+                .title("Comenzando jornada laboral")
+                .description(String.format(" %s en %s", jobTitle, companyName))
+                .date(String.format("%s", jobStartTime))
                 .build());
 
         events.add(DayEventDTO.builder()
                 .type("work")
-                .title("💼 Jornada laboral")
-                .description(String.format("Has trabajado %d horas como %s en %s", workHours, jobTitle, companyName))
+                .title("Finalizando jornada laboral")
+                .description(String.format("Has trabajado %d horas", workHours))
                 .energyGain(energyCostFromWork)
                 .stressReduction(-stressIncreaseFromWork)
                 .moneyEarned(dailyEarnings)
-                .build());
+                .date(String.format("%s", jobEndTime))
 
+                .build());
+// Evento: Desplazamiento a casa
+        events.add(DayEventDTO.builder()
+                .type("travel")
+                .title("Regreso a casa")
+                .description(String.format("Vuelves a casa (%s)", vehicle))
+                .date(String.format("%s", arrivalTime))
+                .build());
         String message = String.format("Jornada laboral completada. Has ganado %d€ trabajando %d horas.",
                 dailyEarnings, workHours);
 
@@ -296,6 +315,7 @@ public class WeekendStrategy implements AdvanceStrategy {
                 .type("sleep_in")
                 .title("Dormir hasta tarde")
                 .description(String.format("Has descansado %d horas", hoursDiff))
+                .date(String.format("%s", 10))
                 .energyGain(energyGain)
                 .build());
 
@@ -306,20 +326,8 @@ public class WeekendStrategy implements AdvanceStrategy {
         int newStress;
         if (currentStress > 60) {
             newStress = 50;
-            events.add(DayEventDTO.builder()
-                    .type("stress_reset")
-                    .title("Reducción de estrés")
-                    .description(String.format("Estrés reducido de %d%% a 50%%", currentStress))
-                    .stressReduction(currentStress - newStress)
-                    .build());
         } else {
             newStress = 20;
-            events.add(DayEventDTO.builder()
-                    .type("stress_reset")
-                    .title("Gran reducción de estrés")
-                    .description(String.format("Estrés reducido de %d%% a 20%%", currentStress))
-                    .stressReduction(currentStress - newStress)
-                    .build());
         }
         character.getStats().setStress(newStress);
 
@@ -337,12 +345,6 @@ public class WeekendStrategy implements AdvanceStrategy {
         system.setVeces(system.getVeces() + 1);
         system.setPa(PA);
         systemRepository.save(system);
-
-        events.add(DayEventDTO.builder()
-                .type("system")
-                .title("Tiempo avanzado")
-                .description(String.format("Fin de semana completado. Nueva fecha: %s", newActuality))
-                .build());
 
         return TimeAdvanceResponseDTO.builder()
                 .success(true)

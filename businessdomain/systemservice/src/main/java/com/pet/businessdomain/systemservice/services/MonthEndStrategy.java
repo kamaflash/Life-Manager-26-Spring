@@ -102,16 +102,16 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     // ✨ CREAR NÓMINA PARA ESTE TRABAJO
                     PayrollDTO payroll = createPayrollForJob(character, job, monthlySalary,
                             currentDateTime.getYear(), currentDateTime.getMonthValue());
-
+                    monthlySalary = payroll.getNetSalary().intValue();
                     if (payroll != null) {
                         createdPayrolls.add(payroll);
-                        log.info("📄 Nómina creada para trabajo ID: {}, Neto: {}€",
+                        log.info("Nómina creada para trabajo ID: {}, Neto: {}€",
                                 job.getId(), payroll.getNetSalary());
                     }
 
                     events.add(DayEventDTO.builder()
                             .type("monthly_work_advance")
-                            .title("📈 Avance mensual en " + job.getPositionTitle())
+                            .title("Avance mensual en " + job.getPositionTitle())
                             .description(String.format(
                                     "Has progresado en tu trabajo como %s en %s. Ganaste %d XP laboral.",
                                     job.getPositionTitle(), job.getCompanyName(), jobXp))
@@ -120,7 +120,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
 
                     events.add(DayEventDTO.builder()
                             .type("monthly_salary")
-                            .title("💰 Salario mensual")
+                            .title("Salario mensual")
                             .description(String.format(
                                     "Has recibido tu salario mensual de %d€ por tu trabajo como %s en %s.\n",
                                     monthlySalary, job.getPositionTitle(), job.getCompanyName()) +
@@ -129,7 +129,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
                             .moneyEarned(monthlySalary)
                             .build());
 
-                    log.info("✅ Trabajo procesado: {} - {} XP, {}€ salario",
+                    log.info("Trabajo procesado: {} - {} XP, {}€ salario",
                             job.getPositionTitle(), jobXp, monthlySalary);
                 }
 
@@ -144,11 +144,11 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     // ✅ Marcar nóminas como pagadas
                     for (PayrollDTO payroll : createdPayrolls) {
                         markPayrollAsPaid(payroll.getId(), primaryAccount.getId());
-                        log.info("💰 Nómina ID: {} marcada como pagada a cuenta: {}",
+                        log.info("Nómina ID: {} marcada como pagada a cuenta: {}",
                                 payroll.getId(), primaryAccount.getId());
                     }
 
-                    log.info("💰 Salario mensual total ingresado: {}€", totalMonthlySalary);
+                    log.info("Salario mensual total ingresado: {}€", totalMonthlySalary);
                 }
 
                 // Actualizar XP laboral
@@ -165,7 +165,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     character.setLevel(currentLevel + 1);
                     events.add(DayEventDTO.builder()
                             .type("level_up")
-                            .title("🎉 ¡Subida de nivel laboral!")
+                            .title("¡Subida de nivel laboral!")
                             .description(String.format("Has subido al nivel %d en tu carrera profesional.", character.getLevel()))
                             .xpEarned(totalXpGained)
                             .build());
@@ -177,7 +177,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
             log.info("⚠️ Personaje sin trabajos activos - Solo avanzando tiempo");
             events.add(DayEventDTO.builder()
                     .type("info")
-                    .title("📅 Fin de mes")
+                    .title("Fin de mes")
                     .description("No tienes trabajos activos. El mes ha terminado sin cambios laborales.")
                     .build());
         }
@@ -241,7 +241,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
             BigDecimal performanceBonus = monthlySalary.multiply(BigDecimal.valueOf(job.getPerformance()))
                     .divide(BigDecimal.valueOf(500), 2, RoundingMode.HALF_UP);
             monthlySalary = monthlySalary.add(performanceBonus);
-            log.info("🎯 Bonus por rendimiento ({}%): +{}€", job.getPerformance(), performanceBonus);
+            log.info("Bonus por rendimiento ({}%): +{}€", job.getPerformance(), performanceBonus);
         }
 
         // Bonus por satisfacción (hasta +10%)
@@ -249,7 +249,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
             BigDecimal satisfactionBonus = monthlySalary.multiply(BigDecimal.valueOf(job.getSatisfaction()))
                     .divide(BigDecimal.valueOf(1000), 2, RoundingMode.HALF_UP);
             monthlySalary = monthlySalary.add(satisfactionBonus);
-            log.info("😊 Bonus por satisfacción ({}%): +{}€", job.getSatisfaction(), satisfactionBonus);
+            log.info("Bonus por satisfacción ({}%): +{}€", job.getSatisfaction(), satisfactionBonus);
         }
 
         // Bonus por promociones (+10% por cada promoción)
@@ -257,17 +257,17 @@ public class MonthEndStrategy implements AdvanceStrategy {
             BigDecimal promotionBonus = monthlySalary.multiply(BigDecimal.valueOf(job.getPromotionsReceived()))
                     .divide(BigDecimal.valueOf(10), 2, RoundingMode.HALF_UP);
             monthlySalary = monthlySalary.add(promotionBonus);
-            log.info("📈 Bonus por {} promociones: +{}€", job.getPromotionsReceived(), promotionBonus);
+            log.info("Bonus por {} promociones: +{}€", job.getPromotionsReceived(), promotionBonus);
         }
 
         // Bonus por bonos recibidos
         if (job.getBonusesReceived() != null && job.getBonusesReceived() > 0) {
             BigDecimal bonusAmount = BigDecimal.valueOf(job.getBonusesReceived() * 50);
             monthlySalary = monthlySalary.add(bonusAmount);
-            log.info("🎁 Bonus especiales: +{}€", bonusAmount);
+            log.info("Bonus especiales: +{}€", bonusAmount);
         }
 
-        log.info("💰 Salario mensual calculado para {}: {}€", job.getPositionTitle(), monthlySalary.intValue());
+        log.info("Salario mensual calculado para {}: {}€", job.getPositionTitle(), monthlySalary.intValue());
         return monthlySalary.intValue();
     }
 
@@ -300,7 +300,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
 
             // ✅ Solo una llamada a setIncome
             businessTransactions.setIncome(incomeDto, account.getId());
-            log.info("📝 Registro de ingreso mensual creado en sistema financiero por {}€", totalMonthlySalary);
+            log.info("Registro de ingreso mensual creado en sistema financiero por {}€", totalMonthlySalary);
 
         } catch (Exception e) {
             log.error("Error creando registro de ingreso mensual: {}", e.getMessage(), e);
@@ -358,7 +358,7 @@ public class MonthEndStrategy implements AdvanceStrategy {
                                                  String message) {
         events.add(DayEventDTO.builder()
                 .type("system")
-                .title("⏰ Avance mensual completado")
+                .title("Avance mensual completado")
                 .description(String.format("Has completado el avance mensual. Fecha: %s", newActuality.toLocalDate()))
                 .xpEarned(xpGained)
                 .moneyEarned(moneyEarned)
@@ -400,10 +400,24 @@ public class MonthEndStrategy implements AdvanceStrategy {
     private PayrollDTO createPayrollForJob(CharacterDto character, CharacterJobDTO job,
                                            int monthlySalary, int year, int month) {
         try {
+            // Validaciones iniciales
+            if (character == null || character.getId() == null) {
+                log.error("Character or character ID is null");
+                return null;
+            }
+
+            if (job == null || job.getId() == null) {
+                log.error("Job or job ID is null");
+                return null;
+            }
+
             // Obtener ID de la cuenta principal
             Long accountId = null;
             if (character.getAccounts() != null && !character.getAccounts().isEmpty()) {
                 accountId = character.getAccounts().get(0).getId();
+                log.info("Using account ID: {}", accountId);
+            } else {
+                log.warn("No accounts found for character {}", character.getId());
             }
 
             // Calcular neto (deducciones estándar: 20% IRPF + 6.35% Seguridad Social)
@@ -417,11 +431,14 @@ public class MonthEndStrategy implements AdvanceStrategy {
             int daysWorked = estimateDaysWorkedInMonth(job, year, month);
             int hoursWorked = daysWorked * 8;
 
+            log.info("Creating payroll for character={}, job={}, salary={}, net={}",
+                    character.getId(), job.getId(), monthlySalary, netSalary);
+
             // Construir el DTO de nómina
             PayrollDTO payroll = PayrollDTO.builder()
                     .characterId(character.getId())
                     .jobId(job.getId())
-                    .accountId(accountId)  // ✅ Ahora sí existe el campo
+                    .accountId(accountId)
                     .jobTitle(job.getPositionTitle())
                     .companyName(job.getCompanyName())
                     .year(year)
@@ -442,6 +459,15 @@ public class MonthEndStrategy implements AdvanceStrategy {
                     .processedBy("SYSTEM_MONTH_END")
                     .build();
 
+            // Validar que el payroll tenga datos mínimos
+            if (payroll.getCharacterId() == null || payroll.getJobId() == null) {
+                log.error("Payroll validation failed: characterId={}, jobId={}",
+                        payroll.getCharacterId(), payroll.getJobId());
+                return null;
+            }
+
+            log.info("Payroll DTO created: {}", payroll);
+
             // Llamar a BusinessTransactions para crear la nómina
             PayrollDTO created = businessTransactions.createPayroll(payroll);
 
@@ -449,7 +475,8 @@ public class MonthEndStrategy implements AdvanceStrategy {
                 log.info("✅ Nómina creada exitosamente - ID: {}, Neto: {}€", created.getId(), created.getNetSalary());
                 return created;
             } else {
-                log.warn("⚠️ No se pudo crear la nómina para trabajo: {}", job.getPositionTitle());
+                log.warn("⚠️ No se pudo crear la nómina para trabajo: {}. Created response is null or missing ID",
+                        job.getPositionTitle());
                 return null;
             }
 
@@ -466,10 +493,10 @@ public class MonthEndStrategy implements AdvanceStrategy {
         try {
             PayrollDTO updated = businessTransactions.markPayrollAsPaid(payrollId, accountId);
             if (updated != null && "PAID".equals(updated.getStatus())) {
-                log.info("✅ Nómina {} marcada como pagada", payrollId);
+                log.info("Nómina {} marcada como pagada", payrollId);
             }
         } catch (Exception e) {
-            log.error("❌ Error marcando nómina {} como pagada: {}", payrollId, e.getMessage());
+            log.error("Error marcando nómina {} como pagada: {}", payrollId, e.getMessage());
         }
     }
 

@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,8 +62,34 @@ public class NormalDayStrategy implements AdvanceStrategy {
             response = executeEducationDay(request, system, character, currentDateTime);
         }
 
-        // 3. Procesar datos pendientes (esto incluye procesar aplicaciones de trabajo)
-        processPendingData(character);
+        // 3. Procesar datos pendientes y obtener sus eventos
+        List<DayEventDTO> pendingEvents = new ArrayList<>();
+        processPendingData(character, pendingEvents);
+
+        // 4. COMBINAR los eventos de la respuesta con los eventos de datos pendientes
+        if (response.getEvents() != null) {
+            response.getEvents().addAll(pendingEvents);
+        } else {
+            // Si response no tiene eventos, crear una nueva lista
+            List<DayEventDTO> allEvents = new ArrayList<>();
+            if (response.getEvents() != null) {
+                allEvents.addAll(response.getEvents());
+            }
+            allEvents.addAll(pendingEvents);
+
+            // Reconstruir la respuesta con los eventos combinados
+            response = TimeAdvanceResponseDTO.builder()
+                    .success(response.isSuccess())
+                    .message(response.getMessage())
+                    .newActualityAt(response.getNewActualityAt())
+                    .paRemaining(response.getPaRemaining())
+                    .energyChange(response.getEnergyChange())
+                    .stressChange(response.getStressChange())
+                    .xpEarned(response.getXpEarned())
+                    .statChanges(response.getStatChanges())
+                    .events(allEvents)
+                    .build();
+        }
 
         return response;
     }
@@ -98,6 +125,7 @@ public class NormalDayStrategy implements AdvanceStrategy {
 
         // Obtener minutos de viaje según vehículo
         int travelMinutes = timeCalculator.getTravelTimeMinutes(character);
+        String vehicle = timeCalculator.getTravelVehicle(character);
         log.info("Tiempo de viaje: {} minutos", travelMinutes);
 
         // Calcular hora de salida y llegada según vehículo
@@ -152,9 +180,10 @@ public class NormalDayStrategy implements AdvanceStrategy {
         if (restHours > 0) {
             events.add(DayEventDTO.builder()
                     .type("rest")
-                    .title("Descanso nocturno")
+                    .title("Despertandote")
                     .description(String.format("Has descansado %d horas", restHours))
                     .energyGain(energyGainFromRest)
+                    .date(String.format("%s", departureTime.minusMinutes(20)))
                     .stressReduction(stressReductionFromRest)
                     .build());
         }
@@ -162,25 +191,32 @@ public class NormalDayStrategy implements AdvanceStrategy {
         // Evento: Desplazamiento a clase
         events.add(DayEventDTO.builder()
                 .type("travel")
-                .title("🚌 Desplazamiento")
-                .description(String.format("Sales de casa a las %s para llegar a clase", departureTime))
+                .title("Desplazamiento")
+                .description(String.format("Sales de casa para llegar a clase (%s)", vehicle))
+                .date(String.format("%s", departureTime))
                 .build());
 
         // Evento: Jornada de estudio
         events.add(DayEventDTO.builder()
                 .type("study")
-                .title("Jornada de estudio")
-                .description(String.format("Has estudiado %d horas (de %s a %s)",
-                        studyHours, TimeCalculator.SCHOOL_START_TIME, TimeCalculator.SCHOOL_END_TIME))
+                .title("Entrando a clase")
+                .date(String.format("%s", TimeCalculator.SCHOOL_START_TIME))
+                .build());
+        events.add(DayEventDTO.builder()
+                .type("study")
+                .title("Saliendo de clase")
+                .description(String.format("Has estudiado %d horas ",
+                        studyHours))
                 .energyGain(energyCostFromStudy)
                 .stressReduction(-stressIncreaseFromStudy)
+                .date(String.format("%s", TimeCalculator.SCHOOL_END_TIME))
                 .build());
-
         // Evento: Desplazamiento a casa
         events.add(DayEventDTO.builder()
                 .type("travel")
                 .title("Regreso a casa")
-                .description(String.format("Llegas a casa a las %s", arrivalTime))
+                .description(String.format("Vuelves a casa (%s)", vehicle))
+                .date(String.format("%s", arrivalTime))
                 .build());
 
         character.getStats().setEnergy(newEnergy);
@@ -204,12 +240,13 @@ public class NormalDayStrategy implements AdvanceStrategy {
 
         log.info("✅ Sistema actualizado - Nueva fecha: {}, PA restantes: {}", newActuality, system.getPa());
 
-        events.add(DayEventDTO.builder()
-                .type("system")
-                .title("Tiempo avanzado")
-                .description(String.format("Has completado la jornada. Ahora son las %s del día %s",
-                        arrivalTime, newActuality.toLocalDate()))
-                .build());
+//        events.add(DayEventDTO.builder()
+//                .type("system")
+//                .title("Tiempo avanzado")
+//                .description(String.format("Has completado la jornada. Ahora son las %s del día %s",
+//                        arrivalTime, newActuality.toLocalDate()))
+//                .date(String.format("%s", departureTime))
+//                .build());
 
         return TimeAdvanceResponseDTO.builder()
                 .success(true)
@@ -358,32 +395,39 @@ public class NormalDayStrategy implements AdvanceStrategy {
                     .title("Descanso nocturno")
                     .description(String.format("Has descansado %d horas antes de trabajar", restHours))
                     .energyGain(energyGainFromRest)
+                    .date(jobStartTime.toString())
                     .stressReduction(stressReductionFromRest)
                     .build());
         }
 
         events.add(DayEventDTO.builder()
                 .type("work_start")
-                .title("💼 Comenzando jornada laboral")
+                .title("Comenzando jornada laboral")
                 .description(String.format("Te diriges a trabajar como %s en %s a las %s",
                         jobTitle, companyName, jobStartTime))
+                .date(jobStartTime.toString())
+
                 .build());
 
         events.add(DayEventDTO.builder()
                 .type("work")
-                .title("💼 Jornada laboral completada")
+                .title("Jornada laboral completada")
                 .description(String.format("Has trabajado %d horas como %s en %s de %s a %s",
                         workHours, jobTitle, companyName, jobStartTime, jobEndTime))
                 .energyGain(energyCostFromWork)
                 .stressReduction(-stressIncreaseFromWork)
                 .moneyEarned(dailyEarnings)
+                .date(jobEndTime.toString())
+
                 .build());
 
         events.add(DayEventDTO.builder()
                 .type("system")
-                .title("⏰ Tiempo avanzado")
+                .title("Tiempo avanzado")
                 .description(String.format("Has completado tu jornada laboral. Ahora son las %s del día %s",
                         jobEndTime, newActuality.toLocalDate()))
+                .date(jobEndTime.toString())
+
                 .build());
 
         String message = String.format("Jornada laboral completada. Has ganado %d€ trabajando %d horas.",
@@ -453,18 +497,62 @@ public class NormalDayStrategy implements AdvanceStrategy {
      * Procesa datos pendientes (aplicaciones, entrevistas, etc.)
      * ✅ Usa los métodos existentes de BusinessTransactions
      */
-    private void processPendingData(CharacterDto character) {
+    private void processPendingData(CharacterDto character, List<DayEventDTO> events) {
         try {
             log.info("🔄 Procesando datos pendientes para personaje: {}", character.getId());
 
-            // Procesar entrevistas pendientes (método existente)
-            businessTransactions.processPendingInterviews(character.getId());
+            // 1. Procesar entrevistas pendientes
+            Map<String, Object> interviewResp = businessTransactions.processPendingInterviews(character.getId());
+            log.info("Respuesta entrevistas: {}", interviewResp);
 
-            // Procesar aplicaciones de trabajo (método existente - processedAdvance)
-            // Esto procesa automáticamente las aplicaciones con minMatchScore=70
-            businessTransactions.processedAdvance(character.getId(), 70);
+            if (interviewResp != null && interviewResp.containsKey("interviews")) {
+                List<Map<String, Object>> interviews = (List<Map<String, Object>>) interviewResp.get("interviews");
+                if (interviews != null && !interviews.isEmpty()) {
+                    events.add(DayEventDTO.builder()
+                            .type("interview")
+                            .title("📅 ¡Nuevas entrevistas programadas!")
+                            .description(String.format("Tienes %d entrevista(s) pendiente(s). Revisa tu calendario.", interviews.size()))
+                            .build());
+                }
+            }
 
-            // Revisar datos del personaje
+            // 2. Procesar aplicaciones de trabajo
+            Map<String, Object> advanceResp = businessTransactions.processedAdvance(character.getId(), 70);
+            log.info("Respuesta avance: {}", advanceResp);
+
+            if (advanceResp != null && advanceResp.containsKey("applications")) {
+                List<Map<String, Object>> applications = (List<Map<String, Object>>) advanceResp.get("applications");
+
+                if (applications != null && !applications.isEmpty()) {
+                    int acceptedCount = 0;
+                    int rejectedCount = 0;
+
+                    for (Map<String, Object> app : applications) {
+                        String status = (String) app.get("status");
+                        String jobTitle = (String) app.get("jobTitle");
+
+                        if ("ACCEPTED".equals(status)) {
+                            acceptedCount++;
+                            events.add(DayEventDTO.builder()
+                                    .type("job_application")
+                                    .title("🎯 ¡Postulación avanzada!")
+                                    .description(String.format("Tu postulación para '%s' ha pasado a la fase de entrevista.", jobTitle))
+                                    .build());
+                        } else if ("REJECTED".equals(status)) {
+                            rejectedCount++;
+                        }
+                    }
+
+                    if (acceptedCount > 0) {
+                        log.info("✅ {} postulaciones aceptadas", acceptedCount);
+                    }
+                    if (rejectedCount > 0) {
+                        log.info("❌ {} postulaciones rechazadas", rejectedCount);
+                    }
+                }
+            }
+
+            // 3. Revisar datos del personaje
             systemService.revisedData(character);
 
         } catch (Exception e) {

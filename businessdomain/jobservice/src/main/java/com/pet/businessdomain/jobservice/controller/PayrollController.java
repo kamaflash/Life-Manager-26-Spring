@@ -58,7 +58,7 @@ public class PayrollController {
     // ========== BÚSQUEDAS POR PERSONAJE ==========
 
     @GetMapping("/character/{characterId}")
-    public ResponseEntity<List<PayrollDTO>> getPayrollsByCharacterId(@PathVariable Long characterId) {
+    public ResponseEntity<List<PayrollDTO>> getPayrollsByCharacterId(@PathVariable(name = "characterId")  Long characterId) {
         log.info("GET /api/payrolls/character/{} - Obteniendo nóminas del personaje", characterId);
         List<PayrollDTO> payrolls = payrollService.getPayrollsByCharacterId(characterId);
         return ResponseEntity.ok(payrolls);
@@ -67,7 +67,7 @@ public class PayrollController {
     // ========== BÚSQUEDAS POR TRABAJO ==========
 
     @GetMapping("/job/{jobId}")
-    public ResponseEntity<List<PayrollDTO>> getPayrollsByJobId(@PathVariable Long jobId) {
+    public ResponseEntity<List<PayrollDTO>> getPayrollsByJobId(@PathVariable(name = "jobId") Long jobId) {
         log.info("GET /api/payrolls/job/{} - Obteniendo nóminas del trabajo", jobId);
         List<PayrollDTO> payrolls = payrollService.getPayrollsByJobId(jobId);
         return ResponseEntity.ok(payrolls);

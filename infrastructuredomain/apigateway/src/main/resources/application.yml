@@ -123,6 +123,11 @@ spring:
         predicates:
           - Path=/api/work-relationships/**
 
+      - id: jobs_service_trainer
+        uri: lb://businessdomain-jobservice
+        predicates:
+          - Path=/api/payrolls/**
+
       - id: products_service_trainer
         uri: lb://businessdomain-productservice
         predicates:

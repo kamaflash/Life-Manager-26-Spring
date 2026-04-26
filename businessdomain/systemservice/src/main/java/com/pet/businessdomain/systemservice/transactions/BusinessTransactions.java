@@ -391,26 +391,39 @@ public class BusinessTransactions {
                     .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .build();
 
-            return webClient.post()
+            PayrollDTO response = webClient.post()
                     .uri("/create")
                     .bodyValue(payrollDTO)
                     .retrieve()
                     .onStatus(
                             status -> status.is4xxClientError() || status.is5xxServerError(),
-                            response -> response.bodyToMono(String.class)
-                                    .flatMap(body -> Mono.error(new RuntimeException(
-                                            "Error from Systems service: " + response.statusCode() + " - " + body
-                                    )))
+                            clientResponse  -> clientResponse .bodyToMono(String.class)
+                                    .flatMap(body -> {
+                                        log.error("Error response from payroll service: {} - {}", clientResponse .statusCode(), body);
+                                        return Mono.error(new RuntimeException(
+                                                "Error from Systems service: " + clientResponse .statusCode() + " - " + body
+                                        ));
+                                    })
                     )
                     .bodyToMono(PayrollDTO.class)
                     .block();
+
+            if (response == null) {
+                log.error("Received null response from payroll service for characterId={}, jobId={}",
+                        payrollDTO.getCharacterId(), payrollDTO.getJobId());
+            } else {
+                log.info("Payroll created successfully with ID: {}", response.getId());
+            }
+
+            return response;
 
         } catch (Exception e) {
             log.error("Error calling BUSINESSDOMAIN-JOBSERVICE /api/payrolls/create for payroll characterId={} jobId={}: {}",
                     payrollDTO != null ? payrollDTO.getCharacterId() : null,
                     payrollDTO != null ? payrollDTO.getJobId() : null,
                     e.getMessage(), e);
-            throw e;
+            // NO relanzar la excepción, retornar null explícitamente
+            return null;
         }
     }
     /**

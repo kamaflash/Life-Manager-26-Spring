@@ -27,6 +27,7 @@ public class SpringSecurity {
     public static final String URLWORK = "/api/work-relationships/**";
     public static final String URLJOBPOS = "/api/job-positions/**";
     public static final String URLMISSIONS = "/api/missions/**";
+    public static final String URLPAYROLLS = "/api/payrolls/**";
 
 
     @Bean
@@ -42,10 +43,10 @@ public class SpringSecurity {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // ✅ AÑADIR ESTO: Permitir acceso a la consola H2
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
-                        .requestMatchers(HttpMethod.POST, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
-                        .requestMatchers(HttpMethod.PUT, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
-                        .requestMatchers(HttpMethod.DELETE, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS).permitAll()
+                        .requestMatchers(HttpMethod.GET, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
+                        .requestMatchers(HttpMethod.POST, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
+                        .requestMatchers(HttpMethod.PUT, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, URLCHARACTERJOB, URLCOMPANY, URLJOBAPP, URLJOBEVENT, URLJOBVACANCIES, URLWORK, URLJOBPOS, URLMISSIONS, URLPAYROLLS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

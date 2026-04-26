@@ -137,6 +137,35 @@ public class TimeCalculator {
 
         return 60;
     }
+    /**
+     * Obtiene el vehículo del personaje
+     */
+    public String getTravelVehicle(CharacterDto character) {
+        if (character.getInventory() == null || character.getInventory().isEmpty()) {
+            return "Caminando"; // Sin vehículo: 60 minutos (transporte público)
+        }
+
+        for (CharacterInventoryResponseDTO item : character.getInventory()) {
+            Long productId = item.getProductId();
+
+            switch (productId.intValue()) {
+                case 6:   // Bicicleta
+                    return "bicicleta";
+                case 7:   // Transporte público
+                    return "transporte público";
+                case 8:   // Moto
+                    return "moto";
+                case 9:   // Coche
+                    return "coche";
+                case 10:  // Caminando
+                    return "caminando";
+                default:
+                    return "caminando";
+            }
+        }
+
+        return "Caminando";
+    }
 
     /**
      * Calcula el modificador de tiempo según el vehículo
