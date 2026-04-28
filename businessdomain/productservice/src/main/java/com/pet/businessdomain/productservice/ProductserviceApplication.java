@@ -5,7 +5,7 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.pet.businessdomain.productservice")
 public class ProductserviceApplication {
 
     public static void main(String[] args) {

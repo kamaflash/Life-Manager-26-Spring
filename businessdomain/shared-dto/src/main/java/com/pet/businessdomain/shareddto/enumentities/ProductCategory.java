@@ -7,5 +7,6 @@ public enum ProductCategory {
     ENTRETENIMIENTO,
     TECNOLOGIA,
     ALIMENTACION,
+    HEALTH,
     SOCIAL
 }

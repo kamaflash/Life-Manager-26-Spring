@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Service
+@Service("timeAdvanceService")
 @RequiredArgsConstructor
 public class TimeAdvanceServiceImpl implements TimeAdvanceService {
 

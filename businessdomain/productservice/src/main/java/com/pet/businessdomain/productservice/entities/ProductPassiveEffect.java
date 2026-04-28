@@ -1,7 +1,11 @@
 package com.pet.businessdomain.productservice.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.pet.businessdomain.shareddto.enumentities.products.TriggerCondition;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "product_passive_effects")
@@ -12,11 +16,22 @@ public class ProductPassiveEffect {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String stat;  // ENERGY, HEALTH, INTELLIGENCE, etc.
-    private Integer value;  // Valor del efecto (+5, -2)
-    private boolean percentage;  // Si es porcentaje o valor fijo
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    @JsonBackReference  // ← Cambiar de @JsonIgnore a @JsonBackReference
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private Product product;
 
-    // Condiciones para activar el efecto pasivo
-    private String condition;  // Ej: "TIME_OF_DAY", "HAS_BUFF", etc.
-    private String conditionValue;  // Ej: "MORNING", "STUDYING"
+    private String stat;
+    private Integer value;
+    private Boolean isPercentage = false;
+
+    @Enumerated(EnumType.STRING)
+    private TriggerCondition trigger;
+
+    private String condition;
+    private String conditionValue;
+    private Integer chancePercentage = 100;
+    private String description;
 }

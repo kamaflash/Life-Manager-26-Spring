@@ -6,6 +6,7 @@ import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -21,7 +22,9 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class BusinessTransactions {
-
+    // URL base del microservicio de personaje
+    @Value("${services.person-service.url:http://BUSINESSDOMAIN-PERSONSERVICE/api/characters}")
+    private String personServiceUrl;
 
     @Autowired
     private WebClient.Builder webClientBuilder;
@@ -93,6 +96,33 @@ public class BusinessTransactions {
 
         } catch (Exception e) {
             System.err.println("Error updating character stats: " + e.getMessage());
+            return null;
+        }
+    }
+    public CharacterDto updatePerson(CharacterDto character) {
+        try {
+            WebClient webClient = webClientBuilder
+                    .clientConnector(new ReactorClientHttpConnector(client))
+                    .baseUrl(personServiceUrl)
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .build();
+
+            return webClient.put()
+                    .uri("/stats/{id}", character.getId())
+                    .bodyValue(character)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            response -> response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new RuntimeException(
+                                            "Error from User service: " + response.statusCode() + " - " + body
+                                    )))
+                    )
+                    .bodyToMono(CharacterDto.class)
+                    .block();
+
+        } catch (Exception e) {
+            System.err.println("Error updating user: " + e.getMessage());
             return null;
         }
     }

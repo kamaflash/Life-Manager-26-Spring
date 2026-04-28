@@ -6,7 +6,7 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.pet.businessdomain.financeservice")
 public class FinanceserviceApplication {
 
     public static void main(String[] args) {

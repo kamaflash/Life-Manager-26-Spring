@@ -3,7 +3,7 @@ package com.pet.businessdomain.productservice.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "character_inventory")
@@ -21,5 +21,26 @@ public class CharacterInventory {
     private Product product;
 
     private Integer quantity = 1;
-    private LocalDate ExpirationDate;
+
+    // NUEVOS CAMPOS
+    private Boolean equipped = false;           // Si está equipado (para slot items)
+    private Integer durabilityLeft = 0;         // Usos restantes (0 = ilimitado)
+    private LocalDateTime equippedSince;        // Desde cuándo está equipado
+    private LocalDateTime acquiredAt;           // Cuándo lo consiguió
+    private LocalDateTime expiresAt;            // Si caduca (null = no caduca)
+
+    // Para efectos activos actualmente
+    private LocalDateTime activeUntil;          // Hasta cuándo está activo el efecto
+    private LocalDateTime lastUsedAt;           // Última vez usado (para cooldown)
+
+    // Notas personales del jugador
+    private String notes;
+
+    @PrePersist
+    protected void onCreate() {
+        acquiredAt = LocalDateTime.now();
+        if (product != null && product.getDurability() != null && product.getDurability() > 0) {
+            durabilityLeft = product.getDurability();
+        }
+    }
 }

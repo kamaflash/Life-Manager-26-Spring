@@ -117,7 +117,7 @@ public class TimeCalculator {
         }
 
         for (CharacterInventoryResponseDTO item : character.getInventory()) {
-            Long productId = item.getProductId();
+            Long productId = item.getProduct().getId();
 
             switch (productId.intValue()) {
                 case 6:   // Bicicleta
