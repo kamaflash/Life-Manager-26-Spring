@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -39,5 +40,5 @@ public interface SystemService {
     String getSeason(LocalDate date);
     boolean isVacationPeriod(LocalDate date);
     String getDayNameInSpanish(int dayOfWeekNumber);
-    void revisedData(CharacterDto character);
+    Map<String, Object> revisedData(CharacterDto character);
 }

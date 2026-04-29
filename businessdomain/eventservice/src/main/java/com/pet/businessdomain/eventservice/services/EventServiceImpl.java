@@ -49,7 +49,7 @@ public class EventServiceImpl implements EventService {
         validateEventDates(eventDto.getStartDate(), eventDto.getEndDate());
 
         EventEntity event = eventMapper.toEntity(eventDto);
-        event.setStatus(EnumAll.EventStatus.SCHEDULED);
+        event.setStatus(EnumAll.EventStatus.IN_PROGRESS);
         event.setCreatedAt(LocalDateTime.now());
 
         EventEntity savedEvent = eventRepository.save(event);
@@ -300,8 +300,7 @@ public class EventServiceImpl implements EventService {
 
         LocalDateTime now = LocalDateTime.now();
         return eventRepository.findByAutoTriggerTrue().stream()
-//                .filter(event -> event.getStatus() == EnumAll.EventStatus.IN_PROGRESS)
-//                .filter(event -> isEventAvailableForCharacter(event, character))
+                .filter(event -> isEventVisibleForCharacter(event, characterId))
                 .map(eventMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -325,6 +324,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public EventResponseDto createEventForCharacter(Long characterId, EventResponseDto eventDto) {
+        eventDto.setOwnerCharacterId(characterId);
+        return createEvent(eventDto);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<EventResponseDto> getAvailableEventsForCharacter(Long characterId) {
         log.debug("Fetching available events for character {}", characterId);
@@ -337,6 +342,7 @@ public class EventServiceImpl implements EventService {
         LocalDateTime now = LocalDateTime.now();
         return eventRepository.findByStatus(EnumAll.EventStatus.IN_PROGRESS).stream()
                 .filter(event -> isEventAvailableForCharacter(event, character))
+                .filter(event -> isEventVisibleForCharacter(event, characterId))
                 .filter(event -> !recordRepository.existsByCharacterIdAndEventId(characterId, event.getId()))
                 .map(eventMapper::toDto)
                 .collect(Collectors.toList());
@@ -375,10 +381,22 @@ public class EventServiceImpl implements EventService {
             throw new BusinessValidationException("Character already registered for this event");
         }
 
+        if (event.getScope() == EnumAll.EventScope.PERSONAL &&
+                !character.getId().equals(event.getOwnerCharacterId())) {
+            throw new BusinessValidationException("Character cannot register to a personal event that belongs to another character");
+        }
+
         if (event.getScope() == EnumAll.EventScope.CITY &&
                 !event.getCity().equals(character.getCity())) {
             throw new BusinessValidationException("Character must be in " + event.getCity() + " to attend this event");
         }
+    }
+
+    private boolean isEventVisibleForCharacter(EventEntity event, Long characterId) {
+        if (event.getScope() == EnumAll.EventScope.PERSONAL) {
+            return characterId != null && characterId.equals(event.getOwnerCharacterId());
+        }
+        return true;
     }
 
     private boolean isEventAvailableForCharacter(EventEntity event, CharacterDto character) {

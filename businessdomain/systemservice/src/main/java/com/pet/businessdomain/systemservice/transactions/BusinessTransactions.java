@@ -740,4 +740,34 @@ public class BusinessTransactions {
             return null;
         }
     }
+
+    /**
+     * Crea un nuevo evento para un personaje específico
+     * @param characterId ID del personaje
+     * @param eventDto DTO del evento a crear
+     * @return EventResponseDto con el evento creado
+     */
+    public EventResponseDto createEvent(Long characterId, EventResponseDto eventDto) {
+        log.info("📝 Creating event for character ID: {} with code: {}", characterId, eventDto.getCode());
+
+        WebClient webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(client))
+                .baseUrl("http://BUSINESSDOMAIN-EVENTSERVICE/api/events")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return webClient.post()
+                .uri("/character/{characterId}", characterId)
+                .bodyValue(eventDto)
+                .retrieve()
+                .onStatus(
+                        status -> status.is4xxClientError() || status.is5xxServerError(),
+                        response -> response.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new RuntimeException(
+                                        "EventService Error: " + response.statusCode() + " - " + body
+                                )))
+                )
+                .bodyToMono(EventResponseDto.class)
+                .block();
+    }
 }

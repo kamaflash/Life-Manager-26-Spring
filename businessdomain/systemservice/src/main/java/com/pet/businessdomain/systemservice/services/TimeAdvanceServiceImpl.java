@@ -31,6 +31,7 @@ public class TimeAdvanceServiceImpl implements TimeAdvanceService {
     private final SystemMapper systemMapper;
     private final MonthEndStrategy monthEndStrategy;
     private final WeekendStrategy weekendStrategy;
+    private final ProcessAndDelegateStrategy processAndDelegateStrategy;
     private final NormalDayStrategy normalDayStrategy;
     private final List<AdvanceStrategy> strategyList;
 
@@ -54,10 +55,10 @@ public class TimeAdvanceServiceImpl implements TimeAdvanceService {
             return executeMonthEndComposite(request);
         }
 
-        // Comportamiento normal (no es fin de mes)
-        AdvanceStrategy strategy = strategies.get(request.getAdvanceType());
+        // Comportamiento normal (no es fin de mes) - USAR LA NUEVA ESTRATEGIA
+        AdvanceStrategy strategy = strategies.get(EnumSystems.AdvanceType.PROCESS_AND_DELEGATE);
         if (strategy == null) {
-            log.warn("No se encontró estrategia para tipo: {}, usando NORMAL_DAY", request.getAdvanceType());
+            log.warn("No se encontró estrategia para tipo: PROCESS_AND_DELEGATE, usando NORMAL_DAY");
             strategy = normalDayStrategy;
         }
 
@@ -96,7 +97,7 @@ public class TimeAdvanceServiceImpl implements TimeAdvanceService {
 
         TimeAdvanceRequestDTO dayRequest = TimeAdvanceRequestDTO.builder()
                 .characterId(request.getCharacterId())
-                .advanceType(isWeekend ? EnumSystems.AdvanceType.WEEKEND : EnumSystems.AdvanceType.NORMAL_DAY)
+                .advanceType( EnumSystems.AdvanceType.PROCESS_AND_DELEGATE )
                 .forceAdvance(false)
                 .build();
 

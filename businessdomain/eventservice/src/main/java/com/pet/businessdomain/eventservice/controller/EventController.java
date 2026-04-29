@@ -76,6 +76,15 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
     }
 
+    @PostMapping("/character/{characterId}")
+    public ResponseEntity<EventResponseDto> createEventCharacter(@Valid @RequestBody EventResponseDto eventDto,
+                                                                 @PathVariable(name = "characterId") Long characterId) {
+        log.info("📝 Creating personal event for character {} with code: {}", characterId, eventDto.getCode());
+        EventResponseDto createdEvent = eventService.createEventForCharacter(characterId, eventDto);
+        log.info("✅ Personal event created successfully with ID: {}", createdEvent.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
+    }
+
     /**
      * Crea múltiples eventos en una sola petición (operación batch).
      *

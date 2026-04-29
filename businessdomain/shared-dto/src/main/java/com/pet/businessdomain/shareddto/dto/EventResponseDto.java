@@ -30,6 +30,7 @@ public class EventResponseDto {
 
     private String status;
     private boolean autoTrigger;
+    private Long ownerCharacterId;
 
     private List<RewardDto> rewards;
     private List<MissionRequirementDto> requirements;

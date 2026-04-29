@@ -64,33 +64,33 @@ public class NormalDayStrategy implements AdvanceStrategy {
         }
 
         // 3. Procesar datos pendientes y obtener sus eventos
-        List<DayEventDTO> pendingEvents = processPendingData(character);
+//        List<DayEventDTO> pendingEvents = processPendingData(character);
 
         // 4. Procesar IRPF
-        processIRPFIfNeeded(character, currentDateTime, pendingEvents);
+//        processIRPFIfNeeded(character, currentDateTime, pendingEvents);
 
         // 5. COMBINAR los eventos de la respuesta con los eventos de datos pendientes
-        if (response.getEvents() != null) {
-            response.getEvents().addAll(pendingEvents);
-        } else {
-            List<DayEventDTO> allEvents = new ArrayList<>();
-            if (response.getEvents() != null) {
-                allEvents.addAll(response.getEvents());
-            }
-            allEvents.addAll(pendingEvents);
-
-            response = TimeAdvanceResponseDTO.builder()
-                    .success(response.isSuccess())
-                    .message(response.getMessage())
-                    .newActualityAt(response.getNewActualityAt())
-                    .paRemaining(response.getPaRemaining())
-                    .energyChange(response.getEnergyChange())
-                    .stressChange(response.getStressChange())
-                    .xpEarned(response.getXpEarned())
-                    .statChanges(response.getStatChanges())
-                    .events(allEvents)
-                    .build();
-        }
+//        if (response.getEvents() != null) {
+//            response.getEvents().addAll(pendingEvents);
+//        } else {
+//            List<DayEventDTO> allEvents = new ArrayList<>();
+//            if (response.getEvents() != null) {
+//                allEvents.addAll(response.getEvents());
+//            }
+//            allEvents.addAll(pendingEvents);
+//
+//            response = TimeAdvanceResponseDTO.builder()
+//                    .success(response.isSuccess())
+//                    .message(response.getMessage())
+//                    .newActualityAt(response.getNewActualityAt())
+//                    .paRemaining(response.getPaRemaining())
+//                    .energyChange(response.getEnergyChange())
+//                    .stressChange(response.getStressChange())
+//                    .xpEarned(response.getXpEarned())
+//                    .statChanges(response.getStatChanges())
+//                    .events(allEvents)
+//                    .build();
+//        }
 
         return response;
     }

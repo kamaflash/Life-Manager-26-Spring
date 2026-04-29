@@ -33,6 +33,7 @@ public interface EventService {
     // Eventos automáticos y disponibles
     List<EventResponseDto> getAutoTriggerEventsForCharacter(Long characterId);
     void processAutoTriggerEvents(Long characterId);
+    EventResponseDto createEventForCharacter(Long characterId, EventResponseDto eventDto);
     List<EventResponseDto> getAvailableEventsForCharacter(Long characterId);
     List<EventResponseDto> createEventBatch(List<EventResponseDto> dtos);
 }

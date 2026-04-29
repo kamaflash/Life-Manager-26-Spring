@@ -46,6 +46,8 @@ public class EventEntity {
 
     private boolean autoTrigger;       // Se activa solo sin que el jugador lo acepte
 
+    private Long ownerCharacterId;     // Solo el personaje creador puede ver/usar eventos personales
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "event_id")
     private List<RewardEntity> rewards;

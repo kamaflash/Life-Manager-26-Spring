@@ -120,16 +120,16 @@ public class TimeCalculator {
             Long productId = item.getProduct().getId();
 
             switch (productId.intValue()) {
-                case 6:   // Bicicleta
-                    return 30;
-                case 7:   // Transporte público
+                case 1:   // Bicicleta
+                    return 50;
+                case 2:   // Transporte público
                     return 45;
-                case 8:   // Moto
-                    return 15;
-                case 9:   // Coche
+                case 3:   // Moto
+                    return 30;
+                case 4:   // Coche
                     return 20;
-                case 10:  // Caminando
-                    return 60;
+                case 5:  // Caminando
+                    return 10;
                 default:
                     return 60;
             }
@@ -146,19 +146,19 @@ public class TimeCalculator {
         }
 
         for (CharacterInventoryResponseDTO item : character.getInventory()) {
-            Long productId = item.getProductId();
+            Long productId = item.getProduct().getId();
 
             switch (productId.intValue()) {
-                case 6:   // Bicicleta
-                    return "bicicleta";
-                case 7:   // Transporte público
+                case 1:   // Bicicleta
+                    return "Bicicleta Urbana";
+                case 2:   // Transporte público
                     return "transporte público";
-                case 8:   // Moto
-                    return "moto";
-                case 9:   // Coche
-                    return "coche";
-                case 10:  // Caminando
-                    return "caminando";
+                case 3:   // Moto
+                    return "Scooter Eléctrico";
+                case 4:   // Coche
+                    return "Coche Compacto";
+                case 5:  // Caminando
+                    return "Coche de Lujo";
                 default:
                     return "caminando";
             }

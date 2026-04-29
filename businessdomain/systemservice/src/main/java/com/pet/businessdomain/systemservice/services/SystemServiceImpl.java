@@ -13,10 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.pet.businessdomain.systemservice.transactions.BusinessTransactions;
@@ -282,13 +279,23 @@ public class SystemServiceImpl implements SystemService {
         return (int) Math.round((invested / durationHours) * 100);
     }
     @Override
-    public void revisedData(CharacterDto character) {
+    public Map<String, Object> revisedData(CharacterDto character) {
+        Map<String, Object> result = new HashMap<>();
+        int applicationsProcessed = 0;
+        int approved = 0;
+        int rejected = 0;
+        List<String> details = new ArrayList<>();
+
         // 1. Obtener todas las solicitudes de becas del personaje
         List<ScholarshipApplicationDto> applications = businessTransactions.getBecas(character.getId());
 
         if (applications == null || applications.isEmpty()) {
             log.info("No hay solicitudes de becas para el personaje {}", character.getId());
-            return;
+            result.put("totalProcessed", 0);
+            result.put("approved", 0);
+            result.put("rejected", 0);
+            result.put("details", details);
+            return result;
         }
 
         // 2. Filtrar solo las solicitudes PENDIENTES
@@ -298,18 +305,25 @@ public class SystemServiceImpl implements SystemService {
 
         if (pendingApplications.isEmpty()) {
             log.info("No hay solicitudes pendientes para el personaje {}", character.getId());
-            return;
+            result.put("totalProcessed", 0);
+            result.put("approved", 0);
+            result.put("rejected", 0);
+            result.put("details", details);
+            return result;
         }
 
         log.info("Procesando {} solicitudes de becas pendientes para personaje {}", pendingApplications.size(), character.getId());
 
         // 3. Procesar cada solicitud pendiente
         for (ScholarshipApplicationDto application : pendingApplications) {
+            applicationsProcessed++;
+
             // Obtener los detalles de la beca
             ScholarshipDto scholarship = businessTransactions.getScholarshipById(application.getScholarshipId());
 
             if (scholarship == null) {
                 log.warn("No se encontró la beca con ID {} para la solicitud {}", application.getScholarshipId(), application.getId());
+                details.add(String.format("Beca ID %d no encontrada", application.getScholarshipId()));
                 continue;
             }
 
@@ -319,11 +333,30 @@ public class SystemServiceImpl implements SystemService {
             if (meetsRequirements) {
                 // APROBAR beca
                 approveScholarship(character, application, scholarship);
+                approved++;
+                details.add(String.format("✅ Beca '%s' APROBADA", scholarship.getTitle()));
             } else {
                 // RECHAZAR beca
                 rejectScholarship(character, application, scholarship);
+                rejected++;
+                details.add(String.format("❌ Beca '%s' RECHAZADA - No cumple requisitos", scholarship.getTitle()));
             }
         }
+
+        // Actualizar personaje si hubo cambios
+        if (applicationsProcessed > 0) {
+            businessTransactions.updatePerson(character);
+        }
+
+        result.put("totalProcessed", applicationsProcessed);
+        result.put("approved", approved);
+        result.put("rejected", rejected);
+        result.put("details", details);
+
+        log.info("📋 Becas procesadas: Total: {}, Aprobadas: {}, Rechazadas: {}",
+                applicationsProcessed, approved, rejected);
+
+        return result;
     }
 
     /**
